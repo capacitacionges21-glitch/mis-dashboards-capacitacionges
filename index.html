@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboards Corporativos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-8px);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #355C9D 0%, #8DA4D0 100%);
+    }
+    
+    .icon-circle {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-[#C4D3E8] to-[#8DA4D0] min-h-screen flex flex-col">
+  
+  <!-- Header -->
+  <header class="bg-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-[#355C9D] rounded-lg flex items-center justify-center text-white text-xl">
+          📊
+        </div>
+        <h1 class="text-3xl font-bold text-[#355C9D]">Dashboards Corporativos</h1>
+      </div>
+      <p class="text-[#8DA4D0] text-base ml-13">Selecciona el dashboard que deseas visualizar</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-7xl mx-auto w-full p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <!-- Card 1: Código de Ética -->
+      <a href="codigo-etica.html" class="card-hover bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-t-4 border-[#355C9D]">
+        <div class="icon-circle bg-[#C4D3E8]">
+          <span>📘</span>
+        </div>
+        <h2 class="font-bold text-xl text-[#355C9D] mb-2">Código de Ética</h2>
+        <p class="text-[#8DA4D0] text-sm leading-relaxed">Indicadores de cumplimiento</p>
+        <div class="mt-4 flex items-center text-[#355C9D] text-sm font-medium">
+          Ver más →
+        </div>
+      </a>
+
+      <!-- Card 2: Comisiones Mixtas -->
+      <a href="comisiones-mixtas.html" class="card-hover bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-t-4 border-[#8DA4D0]">
+        <div class="icon-circle bg-[#8DA4D0]">
+          <span>🤝</span>
+        </div>
+        <h2 class="font-bold text-xl text-[#355C9D] mb-2">Comisiones Mixtas</h2>
+        <p class="text-[#8DA4D0] text-sm leading-relaxed">Seguimiento de comisiones</p>
+        <div class="mt-4 flex items-center text-[#355C9D] text-sm font-medium">
+          Ver más →
+        </div>
+      </a>
+
+      <!-- Card 3: Ges Contigo 360 -->
+      <a href="ges-contigo-360.html" class="card-hover bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-t-4 border-[#355C9D]">
+        <div class="icon-circle bg-[#C4D3E8]">
+          <span>🧭</span>
+        </div>
+        <h2 class="font-bold text-xl text-[#355C9D] mb-2">Ges Contigo 360</h2>
+        <p class="text-[#8DA4D0] text-sm leading-relaxed">Vista 360 del desempeño</p>
+        <div class="mt-4 flex items-center text-[#355C9D] text-sm font-medium">
+          Ver más →
+        </div>
+      </a>
+
+      <!-- Card 4: Mystery -->
+      <a href="mystery.html" class="card-hover bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-t-4 border-[#8DA4D0]">
+        <div class="icon-circle bg-[#8DA4D0]">
+          <span>🕵️</span>
+        </div>
+        <h2 class="font-bold text-xl text-[#355C9D] mb-2">Mystery</h2>
+        <p class="text-[#8DA4D0] text-sm leading-relaxed">Resultados de Mystery Shopper</p>
+        <div class="mt-4 flex items-center text-[#355C9D] text-sm font-medium">
+          Ver más →
+        </div>
+      </a>
+
+      <!-- Card 5: NOM-035 -->
+      <a href="nom035.html" class="card-hover bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-t-4 border-[#355C9D]">
+        <div class="icon-circle bg-[#C4D3E8]">
+          <span>🧠</span>
+        </div>
+        <h2 class="font-bold text-xl text-[#355C9D] mb-2">NOM-035</h2>
+        <p class="text-[#8DA4D0] text-sm leading-relaxed">Riesgos psicosociales</p>
+        <div class="mt-4 flex items-center text-[#355C9D] text-sm font-medium">
+          Ver más →
+        </div>
+      </a>
+
+      <!-- Card 6: Reconocimientos -->
+      <a href="reconocimientos.html" class="card-hover bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all border-t-4 border-[#8DA4D0]">
+        <div class="icon-circle bg-[#8DA4D0]">
+          <span>🏆</span>
+        </div>
+        <h2 class="font-bold text-xl text-[#355C9D] mb-2">Reconocimientos</h2>
+        <p class="text-[#8DA4D0] text-sm leading-relaxed">Reconocimientos por cadena</p>
+        <div class="mt-4 flex items-center text-[#355C9D] text-sm font-medium">
+          Ver más →
+        </div>
+      </a>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white/30 backdrop-blur-sm mt-12">
+    <div class="max-w-7xl mx-auto px-6 py-6 text-center">
+      <p class="text-[#355C9D] text-sm font-medium">© 2026 Dashboards Internos</p>
+    </div>
+  </footer>
+
+</body>
+</html>
