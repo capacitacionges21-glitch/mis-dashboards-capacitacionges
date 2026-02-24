@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Dirección - Ejecutivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        
+        /* Paleta de Colores Solicitada */
+        :root {
+            --azul-fuerte: #355C9D;
+            --azul-claro: #8DA4D0;
+            --azul-muy-claro: #C4D3E8;
+            --bg-accent: #f8fafc;
+        }
+
+        .card { transition: all 0.2s ease; border-radius: 1.25rem; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--azul-fuerte); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .bg-azul-fuerte { background-color: var(--azul-fuerte); }
+        .text-azul-fuerte { color: var(--azul-fuerte); }
+        .border-azul-claro { border-color: var(--azul-claro); }
+        .bg-azul-muy-claro { background-color: var(--azul-muy-claro); }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="loading" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center text-center px-4">
+        <div class="loader mb-4"></div>
+        <p class="text-slate-600 font-semibold uppercase tracking-widest text-sm">Sincronizando Mystery Shopper</p>
+        <p id="loadingStatus" class="text-slate-400 text-xs mt-2 italic">Conectando con la fuente de datos...</p>
+    </div>
+
+    <div id="dashboard" class="hidden min-h-screen flex flex-col">
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-azul-fuerte text-white p-2.5 rounded-xl shadow-lg"><i class="fas fa-gas-pump text-xl"></i></div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Evaluaciones Mystery Shopper</h1>
+                        <p class="text-[10px] text-azul-fuerte font-bold uppercase tracking-wider">Dashboard de Dirección Operativa</p>
+                    </div>
+                </div>
+                <button id="btnRefresh" onclick="refreshData()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Actualizar
+                </button>
+            </div>
+        </header>
+
+        <!-- Filtros -->
+        <div class="bg-white border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Regional</label>
+                        <select id="filterRegional" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#355C9D] outline-none"><option value="all">Todas</option></select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Gerente Distrito</label>
+                        <select id="filterGerente" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#355C9D] outline-none"><option value="all">Todos</option></select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Trimestre</label>
+                        <select id="filterTrimestre" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#355C9D] outline-none"><option value="all">Todo el año</option></select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mes</label>
+                        <select id="filterMes" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#355C9D] outline-none"><option value="all">Comparativo Anual</option></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+            <!-- KPIs -->
+            <div id="kpiContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Promedio General</p>
+                    <div class="flex justify-between items-center">
+                        <h3 id="kpiPromedio" class="text-4xl font-black text-azul-fuerte">--</h3>
+                        <span id="kpiPromedioStatus" class="text-[10px] font-bold px-2 py-1 rounded-full uppercase">--</span>
+                    </div>
+                </div>
+                
+                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">% Cumplimiento</p>
+                    <div class="flex justify-between items-end">
+                        <h3 id="kpiCumplimiento" class="text-4xl font-black text-slate-800">--%</h3>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Meta 90%</span>
+                    </div>
+                    <div class="w-full bg-azul-muy-claro rounded-full h-1.5 mt-4"><div id="kpiCumplimientoBar" class="bg-azul-fuerte h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div></div>
+                </div>
+
+                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Evaluaciones Totales</p>
+                    <h3 id="kpiTotalEvals" class="text-4xl font-black text-azul-claro mt-1">--</h3>
+                </div>
+
+                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Puntos Críticos (<90)</p>
+                    <h3 id="kpiBajoMeta" class="text-4xl font-black text-rose-500 mt-1">--</h3>
+                </div>
+            </div>
+
+            <!-- Gráficos Reorganizados -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Tendencia Mensual -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
+                        <span class="w-2 h-2 bg-azul-fuerte rounded-full mr-2"></span>
+                        COMPARATIVO MENSUAL
+                    </h3>
+                    <div class="h-64"><canvas id="chartTendencia"></canvas></div>
+                </div>
+                
+                <!-- Regional -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
+                        <span class="w-2 h-2 bg-azul-claro rounded-full mr-2"></span>
+                        DESEMPEÑO REGIONAL
+                    </h3>
+                    <div class="h-64"><canvas id="chartRegional"></canvas></div>
+                </div>
+
+                <!-- Distrito (Nuevo) -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
+                        <span class="w-2 h-2 bg-azul-muy-claro border border-azul-claro rounded-full mr-2"></span>
+                        DESEMPEÑO DISTRITAL
+                    </h3>
+                    <div class="h-64"><canvas id="chartDistrito"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Tabla Ranking -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-award mr-3 text-azul-fuerte"></i>Estaciones con Mayor Oportunidad</h3>
+                        <p class="text-sm text-slate-400 mt-1">Ranking de estaciones basado en los filtros aplicados.</p>
+                    </div>
+                </div>
+                <div id="listBottom" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </div>
+            
+            <div id="noDataContainer" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 mt-8">
+                <i class="fas fa-exclamation-circle text-4xl text-slate-300 mb-4"></i>
+                <p class="text-slate-500 font-medium">No se encontraron datos para mostrar.</p>
+                <p class="text-slate-400 text-xs mt-1">Verifica la selección de los filtros.</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?output=csv';
+        const monthNames = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        
+        let rawData = [];
+        let chartInstances = {};
+
+        function parseCSV(text) {
+            const lines = text.trim().split(/\r?\n/);
+            return lines.map(line => {
+                const row = [];
+                let cell = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) {
+                        row.push(cell.trim());
+                        cell = '';
+                    } else {
+                        cell += char;
+                    }
+                }
+                row.push(cell.trim());
+                return row;
+            });
+        }
+
+        async function fetchData() {
+            const status = document.getElementById('loadingStatus');
+            try {
+                status.textContent = "Conectando con base de datos...";
+                const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
+                const text = await response.text();
+                
+                const rows = parseCSV(text);
+                if (rows.length < 2) throw new Error("Archivo vacío");
+
+                const headers = rows[0];
+                const normalized = [];
+
+                rows.slice(1).forEach(row => {
+                    const regional = row[0] || "S/R";
+                    const gerente = row[1] || "S/G";
+                    const sucursal = row[2] || "S/N";
+
+                    for (let i = 3; i < row.length; i++) {
+                        let valStr = row[i];
+                        if (!valStr || valStr === "" || valStr.toUpperCase() === "N/A" || valStr === "-") continue;
+
+                        let cleanVal = valStr.replace('%', '').replace(',', '.').trim();
+                        let val = parseFloat(cleanVal);
+
+                        if (!isNaN(val)) {
+                            if (val <= 1.2) val = val * 100;
+
+                            let mesNum = (i - 2); 
+                            if (headers[i] && headers[i].includes('-')) {
+                                mesNum = parseInt(headers[i].split('-')[1]);
+                            }
+
+                            normalized.push({
+                                regional, gerente, sucursal, calificacion: val, mes: mesNum,
+                                trimestre: "T" + Math.ceil(mesNum / 3)
+                            });
+                        }
+                    }
+                });
+
+                rawData = normalized;
+                return true;
+            } catch (e) {
+                status.textContent = "Error de red. Reintente.";
+                return false;
+            }
+        }
+
+        function populateFilters() {
+            const getUnique = (key) => [...new Set(rawData.map(d => d[key]))].filter(x => x).sort();
+            fillSelect('filterRegional', getUnique('regional'), "Todas");
+            fillSelect('filterGerente', getUnique('gerente'), "Todos");
+            fillSelect('filterTrimestre', ['T1', 'T2', 'T3', 'T4'], "Todo el año");
+            
+            const activeMonths = [...new Set(rawData.map(d => d.mes))].sort((a,b) => a-b);
+            const selectMes = document.getElementById('filterMes');
+            selectMes.innerHTML = '<option value="all">Comparativo Anual</option>';
+            activeMonths.forEach(m => {
+                if (m >= 1 && m <= 12) {
+                    const opt = document.createElement('option');
+                    opt.value = m; opt.textContent = monthNames[m];
+                    selectMes.appendChild(opt);
+                }
+            });
+        }
+
+        function fillSelect(id, items, def) {
+            const el = document.getElementById(id);
+            const current = el.value;
+            el.innerHTML = `<option value="all">${def}</option>`;
+            items.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i; opt.textContent = i;
+                el.appendChild(opt);
+            });
+            if ([...el.options].some(o => o.value === current)) el.value = current;
+        }
+
+        function updateDashboard() {
+            const fReg = document.getElementById('filterRegional').value;
+            const fGer = document.getElementById('filterGerente').value;
+            const fTri = document.getElementById('filterTrimestre').value;
+            const fMes = document.getElementById('filterMes').value;
+
+            const filtered = rawData.filter(d => {
+                return (fReg === 'all' || d.regional === fReg) &&
+                       (fGer === 'all' || d.gerente === fGer) &&
+                       (fTri === 'all' || d.trimestre === fTri) &&
+                       (fMes === 'all' || d.mes.toString() === fMes);
+            });
+
+            const trendData = rawData.filter(d => {
+                return (fReg === 'all' || d.regional === fReg) &&
+                       (fGer === 'all' || d.gerente === fGer) &&
+                       (fTri === 'all' || d.trimestre === fTri);
+            });
+
+            const kpiCont = document.getElementById('kpiContainer');
+            const noData = document.getElementById('noDataContainer');
+
+            if (filtered.length === 0) {
+                noData.classList.remove('hidden');
+                kpiCont.classList.add('opacity-20');
+                return;
+            }
+            
+            noData.classList.add('hidden');
+            kpiCont.classList.remove('opacity-20');
+
+            const totalEvals = filtered.length;
+            const avg = filtered.reduce((a, b) => a + b.calificacion, 0) / totalEvals;
+            const cumplePct = (filtered.filter(d => d.calificacion >= 90).length / totalEvals) * 100;
+
+            document.getElementById('kpiPromedio').textContent = avg.toFixed(1);
+            document.getElementById('kpiCumplimiento').textContent = cumplePct.toFixed(0) + "%";
+            document.getElementById('kpiCumplimientoBar').style.width = cumplePct + "%";
+            document.getElementById('kpiTotalEvals').textContent = totalEvals;
+
+            const status = document.getElementById('kpiPromedioStatus');
+            status.textContent = avg >= 90 ? "Sano" : "Bajo Meta";
+            status.className = `text-[10px] font-bold px-2 py-1 rounded-full uppercase ${avg >= 90 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`;
+
+            const map = {};
+            filtered.forEach(d => {
+                if(!map[d.sucursal]) map[d.sucursal] = {s:0, c:0};
+                map[d.sucursal].s += d.calificacion;
+                map[d.sucursal].c++;
+            });
+            const ranking = Object.keys(map).map(k => ({n: k, v: map[k].s/map[k].c})).sort((a,b) => a.v - b.v);
+            document.getElementById('kpiBajoMeta').textContent = ranking.filter(x => x.v < 90).length;
+
+            const listEl = document.getElementById('listBottom');
+            listEl.innerHTML = '';
+            ranking.slice(0, 12).forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-4 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between hover:border-[#8DA4D0] transition-colors cursor-default";
+                div.innerHTML = `
+                    <span class="text-[9px] font-bold text-slate-400 uppercase truncate mb-2" title="${item.n}">${item.n}</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-black ${item.v < 90 ? 'text-rose-600' : 'text-[#355C9D]'}">${item.v.toFixed(1)}</span>
+                        <div class="h-6 w-6 flex items-center justify-center rounded-full ${item.v < 90 ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-[#355C9D]'}">
+                            <i class="fas ${item.v < 90 ? 'fa-arrow-down' : 'fa-check'} text-[10px]"></i>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+
+            renderCharts(filtered, trendData);
+        }
+
+        function renderCharts(filtered, trendData) {
+            // Ranking por Regional
+            const rG = {};
+            filtered.forEach(d => { 
+                if(!rG[d.regional]) rG[d.regional] = {s:0, c:0}; 
+                rG[d.regional].s += d.calificacion; 
+                rG[d.regional].c++; 
+            });
+            const rL = Object.keys(rG).sort((a,b) => (rG[b].s/rG[b].c) - (rG[a].s/rG[a].c));
+            updateChart('chartRegional', 'bar', rL, rL.map(l => rG[l].s/rG[l].c), true, '#8DA4D0');
+
+            // Ranking por Distrito (Gerente)
+            const dG = {};
+            filtered.forEach(d => { 
+                if(!dG[d.gerente]) dG[d.gerente] = {s:0, c:0}; 
+                dG[d.gerente].s += d.calificacion; 
+                dG[d.gerente].c++; 
+            });
+            const dL = Object.keys(dG).sort((a,b) => (dG[b].s/dG[b].c) - (dG[a].s/dG[a].c)).slice(0, 8);
+            updateChart('chartDistrito', 'bar', dL, dL.map(l => dG[l].s/dG[l].c), true, '#355C9D');
+
+            // Comparativo Mensual
+            const tG = {};
+            trendData.forEach(d => { 
+                if(!tG[d.mes]) tG[d.mes] = {s:0, c:0}; 
+                tG[d.mes].s += d.calificacion; 
+                tG[d.mes].c++; 
+            });
+            const fMes = document.getElementById('filterMes').value;
+            let tK = fMes === 'all' ? [1,2,3,4,5,6,7,8,9,10,11,12] : [parseInt(fMes)];
+            updateChart('chartTendencia', 'line', tK.map(k => monthNames[k]), tK.map(k => tG[k] ? tG[k].s/tG[k].c : null), false, '#355C9D');
+        }
+
+        function updateChart(id, type, labels, values, horiz = false, primaryColor = '#355C9D') {
+            if(chartInstances[id]) chartInstances[id].destroy();
+            
+            chartInstances[id] = new Chart(document.getElementById(id), {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: values.map(v => v === null ? 'transparent' : (v >= 90 ? primaryColor : '#f43f5e')),
+                        borderColor: primaryColor,
+                        borderWidth: type === 'line' ? 3 : 0,
+                        tension: 0.4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: primaryColor,
+                        pointBorderWidth: 2,
+                        borderRadius: 6,
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    indexAxis: horiz ? 'y' : 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1e293b', padding: 10, cornerRadius: 8 }
+                    },
+                    scales: { 
+                        y: { min: horiz ? undefined : 30, max: 100, grid: { color: '#f1f5f9', drawBorder: false }, ticks: { font: { size: 9 } } },
+                        x: { min: horiz ? 30 : undefined, max: 100, grid: { display: false }, ticks: { font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+        async function refreshData() {
+            const btn = document.getElementById('btnRefresh');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const ok = await fetchData();
+            if(ok) {
+                populateFilters();
+                updateDashboard();
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Actualizar';
+        }
+
+        window.onload = async () => {
+            const ok = await fetchData();
+            if(ok) {
+                populateFilters();
+                updateDashboard();
+            }
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            ['filterRegional', 'filterGerente', 'filterTrimestre', 'filterMes'].forEach(id => {
+                document.getElementById(id).addEventListener('change', updateDashboard);
+            });
+        };
+    </script>
+</body>
+</html>

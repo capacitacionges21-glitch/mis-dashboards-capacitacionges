@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código de Ética - Dashboard Corporativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'azul-fuerte': '#355C9D',
+                        'azul-claro': '#8DA4D0',
+                        'azul-muy-claro': '#C4D3E8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f0f4f8; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #8DA4D0; border-radius: 10px; }
+        .kpi-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(53, 92, 157, 0.1); }
+    </style>
+</head>
+<body class="text-slate-900 antialiased">
+
+    <!-- Pantalla de Carga -->
+    <div id="loadingOverlay" class="fixed inset-0 z-[60] bg-azul-fuerte/10 backdrop-blur-md flex items-center justify-center transition-opacity duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full mx-4 border border-azul-muy-claro">
+            <div id="loaderIcon" class="mb-6 flex justify-center">
+                <div class="w-12 h-12 border-4 border-azul-fuerte border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h2 id="loadingTitle" class="text-xl font-bold mb-2 text-azul-fuerte">Sincronizando Dashboard</h2>
+            <p id="loadingMessage" class="text-azul-claro text-sm">Cargando paleta de colores corporativa...</p>
+        </div>
+    </div>
+
+    <div class="min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-azul-muy-claro sticky top-0 z-50">
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-azul-fuerte rounded-2xl flex items-center justify-center shadow-lg shadow-azul-fuerte/30">
+                        <i data-lucide="shield-check" class="text-white w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold tracking-tight text-slate-800">Código de <span class="text-azul-fuerte">Ética</span></h1>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <p id="lastUpdateLabel" class="text-[10px] text-azul-claro font-bold uppercase tracking-widest">Sincronizado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="exportToCSV()" class="p-2.5 rounded-xl border border-azul-muy-claro hover:bg-azul-muy-claro/20 transition-colors text-azul-claro">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="refreshData()" class="bg-azul-fuerte text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-all shadow-md">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden sm:inline">Actualizar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filtros -->
+        <section class="bg-white border-b border-azul-muy-claro py-6 shadow-sm">
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-azul-claro uppercase tracking-widest ml-1">Filtro por Cadena</label>
+                        <div class="relative">
+                            <i data-lucide="building-2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-azul-claro"></i>
+                            <select id="filterCadena" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-azul-muy-claro rounded-2xl text-sm font-semibold outline-none focus:ring-2 focus:ring-azul-fuerte appearance-none cursor-pointer">
+                                <option value="all">Todas las Cadenas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-azul-claro uppercase tracking-widest ml-1">Filtro por Mes</label>
+                        <div class="relative">
+                            <i data-lucide="calendar" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-azul-claro"></i>
+                            <select id="filterMes" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-azul-muy-claro rounded-2xl text-sm font-semibold outline-none focus:ring-2 focus:ring-azul-fuerte appearance-none cursor-pointer">
+                                <option value="all">Acumulado Anual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="hidden lg:flex items-center gap-8 px-6 py-3 bg-azul-muy-claro/20 rounded-2xl border border-azul-muy-claro justify-center">
+                        <div class="text-center">
+                            <p class="text-[9px] font-bold text-azul-claro uppercase">Estado Meta</p>
+                            <p id="metaStatus" class="text-lg font-black text-azul-fuerte">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main class="flex-grow max-w-[1600px] mx-auto px-4 sm:px-6 py-8 w-full space-y-8">
+            
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Asistentes - Azul Fuerte -->
+                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
+                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4">Acuse de Encuesta</p>
+                    <div class="flex items-end justify-between">
+                        <h3 id="kpiAsistentes" class="text-5xl font-black text-slate-900 tracking-tighter">--</h3>
+                        <div class="p-3 bg-azul-fuerte/10 rounded-2xl text-azul-fuerte">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plantilla - Azul Claro -->
+                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
+                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4">Política (Plantilla)</p>
+                    <div class="flex items-end justify-between">
+                        <h3 id="kpiPlantilla" class="text-5xl font-black text-slate-900 tracking-tighter">--</h3>
+                        <div class="p-3 bg-azul-claro/10 rounded-2xl text-azul-claro">
+                            <i data-lucide="users-round" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Porcentaje - Azul Fuerte -->
+                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
+                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-1">% de Ingreso</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 id="kpiPorcentaje" class="text-5xl font-black text-slate-900 tracking-tighter">--%</h3>
+                        <div id="statusDot" class="w-4 h-4 rounded-full bg-azul-muy-claro animate-pulse"></div>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div id="kpiProgressBar" class="bg-azul-fuerte h-full w-0 transition-all duration-1000"></div>
+                    </div>
+                </div>
+
+                <!-- Faltante - Azul Muy Claro -->
+                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
+                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4">Plan de Acción (Faltante)</p>
+                    <div class="flex items-end justify-between">
+                        <h3 id="kpiFaltante" class="text-5xl font-black text-azul-fuerte tracking-tighter">--</h3>
+                        <div class="p-3 bg-azul-muy-claro/30 rounded-2xl text-azul-fuerte">
+                            <i data-lucide="target" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro p-8">
+                    <h3 class="font-bold text-xl mb-8 flex items-center gap-3 text-slate-800">
+                        <i data-lucide="bar-chart-3" class="text-azul-fuerte"></i> Cumplimiento por Cadena
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="chartCadenas"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro p-8">
+                    <h3 class="font-bold text-xl mb-8 flex items-center gap-3 text-slate-800">
+                        <i data-lucide="trending-up" class="text-azul-claro"></i> Evolución de Asistencia
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="chartEvolucion"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Detalle -->
+            <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro overflow-hidden">
+                <div class="p-8 border-b border-azul-muy-claro bg-azul-muy-claro/5">
+                    <h3 class="font-bold text-xl text-slate-800">Resumen Detallado por Cadena</h3>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-8 py-5 text-[11px] font-bold text-azul-claro uppercase tracking-widest">Nombre de la Cadena</th>
+                                <th class="px-8 py-5 text-[11px] font-bold text-azul-claro uppercase tracking-widest text-center">Meta</th>
+                                <th class="px-8 py-5 text-[11px] font-bold text-azul-claro uppercase tracking-widest text-center">Asistentes</th>
+                                <th class="px-8 py-5 text-[11px] font-bold text-azul-claro uppercase tracking-widest text-center">Plantilla</th>
+                                <th class="px-8 py-5 text-[11px] font-bold text-azul-claro uppercase tracking-widest text-center">% Ingreso</th>
+                                <th class="px-8 py-5 text-[11px] font-bold text-azul-claro uppercase tracking-widest text-center">Faltante</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-azul-muy-claro/30 bg-white">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=1791382880&single=true&output=csv';
+        
+        let rawData = [];
+        let charts = {};
+
+        window.onload = async () => {
+            lucide.createIcons();
+            await refreshData();
+            document.getElementById('filterCadena').addEventListener('change', updateDashboard);
+            document.getElementById('filterMes').addEventListener('change', updateDashboard);
+        };
+
+        async function refreshData() {
+            setLoading(true);
+            try {
+                const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
+                const text = await response.text();
+                processCSV(text);
+                populateFilters();
+                updateDashboard();
+                updateLastSync();
+            } catch (error) {
+                console.error("Error cargando CSV:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function processCSV(text) {
+            const lines = text.trim().split(/\r?\n/);
+            const data = [];
+            
+            for(let i = 1; i < lines.length; i++) {
+                const cells = parseCSVLine(lines[i]);
+                if(cells.length < 6) continue;
+
+                const mes = cells[0].trim();
+                const cadena = cells[1].trim();
+                if(!cadena || cadena === "-") continue;
+
+                data.push({
+                    mes: mes,
+                    cadena: cadena,
+                    meta: parseFloat(cells[2].replace(/[^0-9.]/g, '')) || 0,
+                    asistentes: parseFloat(cells[3].replace(/[^0-9.]/g, '')) || 0,
+                    plantilla: parseFloat(cells[4].replace(/[^0-9.]/g, '')) || 0,
+                    porcentaje: parseFloat(cells[5].replace('%', '').replace(',', '.')) || 0
+                });
+            }
+            rawData = data;
+        }
+
+        function parseCSVLine(line) {
+            const row = [];
+            let cell = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) {
+                    row.push(cell.trim());
+                    cell = '';
+                } else {
+                    cell += char;
+                }
+            }
+            row.push(cell.trim());
+            return row;
+        }
+
+        function populateFilters() {
+            const selectCadena = document.getElementById('filterCadena');
+            const selectMes = document.getElementById('filterMes');
+            
+            const cadenas = [...new Set(rawData.map(d => d.cadena))].sort();
+            const meses = [...new Set(rawData.map(d => d.mes))].sort((a,b) => {
+                const mesesOrden = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                return mesesOrden.indexOf(a) - mesesOrden.indexOf(b);
+            });
+
+            selectCadena.innerHTML = '<option value="all">Todas las Cadenas</option>';
+            cadenas.forEach(c => selectCadena.innerHTML += `<option value="${c}">${c}</option>`);
+
+            selectMes.innerHTML = '<option value="all">Acumulado Anual</option>';
+            meses.forEach(m => selectMes.innerHTML += `<option value="${m}">${m}</option>`);
+        }
+
+        function updateDashboard() {
+            const fCadena = document.getElementById('filterCadena').value;
+            const fMes = document.getElementById('filterMes').value;
+
+            let data = rawData;
+            if(fCadena !== 'all') data = data.filter(d => d.cadena === fCadena);
+            if(fMes !== 'all') data = data.filter(d => d.mes === fMes);
+
+            const agrupado = {};
+            data.forEach(d => {
+                if(!agrupado[d.cadena]) {
+                    agrupado[d.cadena] = { cadena: d.cadena, meta: 0, asistentes: 0, plantilla: 0 };
+                }
+                agrupado[d.cadena].meta += d.meta;
+                agrupado[d.cadena].asistentes += d.asistentes;
+                agrupado[d.cadena].plantilla += d.plantilla;
+            });
+
+            const finalData = Object.values(agrupado).map(d => ({
+                ...d,
+                porcentaje: d.plantilla > 0 ? (d.asistentes / d.plantilla) * 100 : 0,
+                faltante: Math.max(0, d.meta - d.asistentes)
+            }));
+
+            renderKPIs(finalData);
+            renderCharts(finalData, data);
+            renderTable(finalData);
+        }
+
+        function renderKPIs(data) {
+            const totalAsis = data.reduce((s, d) => s + d.asistentes, 0);
+            const totalPlan = data.reduce((s, d) => s + d.plantilla, 0);
+            const totalMeta = data.reduce((s, d) => s + d.meta, 0);
+            const avgPct = totalPlan > 0 ? (totalAsis / totalPlan) * 100 : 0;
+            const totalFalt = Math.max(0, totalMeta - totalAsis);
+
+            document.getElementById('kpiAsistentes').textContent = Math.round(totalAsis).toLocaleString();
+            document.getElementById('kpiPlantilla').textContent = Math.round(totalPlan).toLocaleString();
+            document.getElementById('kpiPorcentaje').textContent = avgPct.toFixed(1) + "%";
+            document.getElementById('kpiFaltante').textContent = Math.round(totalFalt).toLocaleString();
+
+            const bar = document.getElementById('kpiProgressBar');
+            bar.style.width = Math.min(avgPct, 100) + "%";
+            bar.className = `h-full transition-all duration-1000 ${avgPct >= 95 ? 'bg-emerald-500' : (avgPct >= 80 ? 'bg-azul-fuerte' : 'bg-rose-500')}`;
+            
+            const status = document.getElementById('metaStatus');
+            status.textContent = totalFalt <= 0 ? "Meta Cumplida" : "En Proceso";
+            status.className = `text-lg font-black ${totalFalt <= 0 ? 'text-emerald-600' : 'text-azul-fuerte'}`;
+        }
+
+        function renderCharts(finalData, rawFiltered) {
+            // Chart Cadenas - Usando Azul Fuerte y Azul Claro
+            const ctxCadenas = document.getElementById('chartCadenas').getContext('2d');
+            if(charts.cadenas) charts.cadenas.destroy();
+            const sorted = finalData.sort((a,b) => b.porcentaje - a.porcentaje).slice(0, 12);
+            charts.cadenas = new Chart(ctxCadenas, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(d => d.cadena),
+                    datasets: [{
+                        data: sorted.map(d => d.porcentaje.toFixed(1)),
+                        backgroundColor: sorted.map((_, i) => i % 2 === 0 ? '#355C9D' : '#8DA4D0'),
+                        borderRadius: 8
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { beginAtZero: true, max: 110, grid: { color: '#C4D3E8' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Chart Evolución - Usando Azul Claro
+            const ctxEvo = document.getElementById('chartEvolucion').getContext('2d');
+            if(charts.evo) charts.evo.destroy();
+            
+            const evoMap = {};
+            rawFiltered.forEach(d => {
+                if(!evoMap[d.mes]) evoMap[d.mes] = 0;
+                evoMap[d.mes] += d.asistentes;
+            });
+            const evoLabels = Object.keys(evoMap);
+            charts.evo = new Chart(ctxEvo, {
+                type: 'line',
+                data: {
+                    labels: evoLabels,
+                    datasets: [{
+                        data: evoLabels.map(l => evoMap[l]),
+                        borderColor: '#8DA4D0',
+                        backgroundColor: 'rgba(141, 164, 208, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#355C9D'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderTable(data) {
+            const body = document.getElementById('tableBody');
+            body.innerHTML = '';
+            data.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-azul-muy-claro/10 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-8 py-5 font-bold text-slate-700">${d.cadena}</td>
+                    <td class="px-8 py-5 text-center font-semibold text-azul-claro">${Math.round(d.meta).toLocaleString()}</td>
+                    <td class="px-8 py-5 text-center font-bold text-azul-fuerte">${Math.round(d.asistentes).toLocaleString()}</td>
+                    <td class="px-8 py-5 text-center font-medium text-slate-500">${Math.round(d.plantilla).toLocaleString()}</td>
+                    <td class="px-8 py-5 text-center">
+                        <span class="text-lg font-black ${d.porcentaje >= 95 ? 'text-emerald-600' : 'text-slate-800'}">
+                            ${d.porcentaje.toFixed(1)}%
+                        </span>
+                    </td>
+                    <td class="px-8 py-5 text-center font-black text-azul-muy-claro bg-slate-50/50">${Math.round(d.faltante).toLocaleString()}</td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function setLoading(val) { document.getElementById('loadingOverlay').classList.toggle('hidden', !val); }
+        function updateLastSync() {
+            const n = new Date();
+            document.getElementById('lastUpdateLabel').textContent = `Sincronizado: ${n.getHours()}:${n.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        function exportToCSV() {
+            let csv = "Cadena,Meta,Asistentes,Plantilla,Porcentaje,Faltante\n";
+            rawData.forEach(d => { csv += `"${d.cadena}",${d.meta},${d.asistentes},${d.plantilla},${d.porcentaje},${d.meta-d.asistentes}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'Resumen_Etica.csv'; a.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ges Contigo 360 - Dashboard Corporativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Ocultar flechas de los select */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Pantalla de Carga -->
+    <div id="loadingOverlay" class="fixed inset-0 z-[60] bg-white/80 backdrop-blur-sm flex items-center justify-center transition-opacity duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm w-full mx-4 border border-slate-100">
+            <div id="loaderIcon" class="mb-6 flex justify-center">
+                <!-- Loader Azul Fuerte -->
+                <div class="w-10 h-10 border-4 border-[#355C9D] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h2 id="loadingTitle" class="text-lg font-bold mb-2 text-slate-800">Sincronizando...</h2>
+            <p id="loadingMessage" class="text-slate-500 text-sm">Obteniendo datos de la hoja de cálculo</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <!-- Logo Azul Fuerte -->
+                <div class="w-12 h-12 bg-[#355C9D] rounded-2xl flex items-center justify-center shadow-md shadow-blue-900/20">
+                    <i data-lucide="users" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-800 tracking-tight">
+                        <!-- Texto Azul Fuerte -->
+                        Dashboard <span class="text-[#355C9D]">Ges Contigo 360</span>
+                    </h1>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            Sincronizado: <span id="syncTime">--:--</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                </button>
+                <!-- Botón Principal Azul Fuerte -->
+                <button onclick="fetchData()" class="flex items-center gap-2 px-5 py-2.5 bg-[#355C9D] hover:bg-[#254375] text-white rounded-xl transition-colors text-sm font-semibold shadow-md">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Actualizar Datos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow p-6 max-w-[1400px] mx-auto w-full space-y-6">
+        
+        <!-- Filtros -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filtro por Cadena</label>
+                <div class="relative">
+                    <i data-lucide="building-2" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <select id="filterCadena" onchange="updateDashboard()" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#355C9D] focus:ring-1 focus:ring-[#355C9D] transition-all cursor-pointer">
+                        <option value="all">Todas las Cadenas</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filtro por Mes</label>
+                <div class="relative">
+                    <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <select id="filterMes" onchange="updateDashboard()" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#355C9D] focus:ring-1 focus:ring-[#355C9D] transition-all cursor-pointer">
+                        <option value="all">Acumulado Anual</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs Principales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Tarjeta 1 -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Asistentes</span>
+                <div id="kpiReconocimientos" class="text-4xl font-extrabold text-slate-900">0</div>
+                <!-- Fondo Azul Muy Claro y Logo Azul Fuerte -->
+                <div class="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-[#C4D3E8] flex items-center justify-center">
+                    <i data-lucide="user-check" class="w-4 h-4 text-[#355C9D]"></i>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2 -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Plantilla</span>
+                <div id="kpiPlantilla" class="text-4xl font-extrabold text-slate-900">0</div>
+                <div class="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
+                    <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+                </div>
+            </div>
+
+            <!-- Tarjeta 3 -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">% De Cumplimiento</span>
+                <div id="kpiCumplimiento" class="text-4xl font-extrabold text-slate-900">0.0%</div>
+                <div class="mt-4 flex items-center gap-2">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="progressCumplimiento" class="h-full rounded-full transition-all duration-1000 bg-emerald-500" style="width: 0%"></div>
+                    </div>
+                    <div class="w-2 h-2 rounded-full bg-slate-200"></div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 4 -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">% Faltante para Meta</span>
+                <div id="kpiRestante" class="text-4xl font-extrabold text-rose-600">0.0%</div>
+                <div class="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
+                    <i data-lucide="target" class="w-4 h-4 text-rose-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Gráfico de Barras -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#355C9D]"></i>
+                    % de Cumplimiento por Cadena
+                </h3>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <!-- Gráfico de Área (Línea) -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-[#355C9D]"></i>
+                    Evolución de Asistentes
+                </h3>
+                <div class="chart-container">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Datos -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mb-10">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[11px] uppercase tracking-wider text-slate-400 font-bold bg-white border-b border-slate-100">
+                            <th class="px-6 py-5 whitespace-nowrap">Nombre de la Cadena</th>
+                            <th class="px-6 py-5 text-center whitespace-nowrap">Meta</th>
+                            <th class="px-6 py-5 text-center whitespace-nowrap">Asistentes</th>
+                            <th class="px-6 py-5 text-center whitespace-nowrap">Plantilla</th>
+                            <th class="px-6 py-5 text-center whitespace-nowrap">% Cumpl.</th>
+                            <th class="px-6 py-5 text-center whitespace-nowrap">% Faltante</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Datos inyectados -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=225867571&single=true&output=csv';
+        
+        let rawData = [];
+        let barChart, lineChart;
+
+        // Diccionario para el orden cronológico de los meses
+        const monthOrder = {
+            'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+            'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+        };
+
+        // Inicializar Lucide
+        lucide.createIcons();
+
+        // Formateador de números (e.g. 10.400)
+        const formatNumber = (num) => new Intl.NumberFormat('es-ES').format(num);
+
+        async function fetchData() {
+            showLoading(true);
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                parseCSV(text);
+                populateFilters();
+                updateDashboard();
+                showLoading(false);
+                
+                // Actualizar hora de sincronización
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('syncTime').innerText = timeString;
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('loadingMessage').innerText = 'Error al cargar los datos.';
+                document.getElementById('loaderIcon').innerHTML = '<i data-lucide="alert-circle" class="text-rose-500 w-10 h-10"></i>';
+                lucide.createIcons();
+            }
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+                if (cols.length < 6) continue;
+
+                data.push({
+                    mes: cols[0],
+                    cadena: cols[1],
+                    meta: parseFloat(cols[2]) || 0,
+                    asistentes: parseFloat(cols[3]) || 0,
+                    plantilla: parseFloat(cols[4]) || 0,
+                    cumplimiento: parsePercent(cols[5])
+                });
+            }
+            rawData = data;
+        }
+
+        function parsePercent(val) {
+            if (!val) return 0;
+            let clean = val.toString().replace('%', '').replace(',', '.');
+            let num = parseFloat(clean);
+            if (num > 0 && num <= 1 && val.includes('.')) return num * 100;
+            return num || 0;
+        }
+
+        function populateFilters() {
+            const meses = [...new Set(rawData.map(d => d.mes))].sort((a, b) => 
+                (monthOrder[a.toLowerCase()] || 99) - (monthOrder[b.toLowerCase()] || 99)
+            );
+            const cadenas = [...new Set(rawData.map(d => d.cadena))].sort();
+
+            const selMes = document.getElementById('filterMes');
+            const selCadena = document.getElementById('filterCadena');
+
+            selMes.innerHTML = '<option value="all">Acumulado Anual</option>';
+            selCadena.innerHTML = '<option value="all">Todas las Cadenas</option>';
+
+            meses.forEach(m => selMes.innerHTML += `<option value="${m}">${m}</option>`);
+            cadenas.forEach(c => selCadena.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        function updateDashboard() {
+            const mesFiltro = document.getElementById('filterMes').value;
+            const cadenaFiltro = document.getElementById('filterCadena').value;
+
+            const filtered = rawData.filter(d => {
+                const matchMes = mesFiltro === 'all' || d.mes === mesFiltro;
+                const matchCadena = cadenaFiltro === 'all' || d.cadena === cadenaFiltro;
+                return matchMes && matchCadena;
+            });
+
+            renderKPIs(filtered);
+            renderCharts(filtered);
+            renderTable(filtered);
+        }
+
+        function renderKPIs(data) {
+            const totalMeta = data.reduce((acc, curr) => acc + curr.meta, 0);
+            const totalReconocimientos = data.reduce((acc, curr) => acc + curr.asistentes, 0);
+            const totalPlantilla = data.reduce((acc, curr) => acc + curr.plantilla, 0);
+            
+            let avgCumplimiento = 0;
+            if (totalMeta > 0) {
+                avgCumplimiento = (totalReconocimientos / totalMeta) * 100;
+            } else if (data.length > 0) {
+                avgCumplimiento = data.reduce((acc, curr) => acc + curr.cumplimiento, 0) / data.length;
+            }
+
+            const restante = Math.max(0, 100 - avgCumplimiento);
+
+            document.getElementById('kpiReconocimientos').innerText = formatNumber(totalReconocimientos);
+            document.getElementById('kpiPlantilla').innerText = formatNumber(totalPlantilla);
+            document.getElementById('kpiCumplimiento').innerText = avgCumplimiento.toFixed(1) + '%';
+            document.getElementById('kpiRestante').innerText = restante.toFixed(1) + '%';
+            
+            const progressBar = document.getElementById('progressCumplimiento');
+            progressBar.style.width = Math.min(avgCumplimiento, 100) + '%';
+            
+            if (avgCumplimiento >= 100) {
+                progressBar.className = "h-full rounded-full transition-all duration-1000 bg-emerald-500";
+            } else if (avgCumplimiento >= 50) {
+                progressBar.className = "h-full rounded-full transition-all duration-1000 bg-amber-400";
+            } else {
+                progressBar.className = "h-full rounded-full transition-all duration-1000 bg-rose-500";
+            }
+        }
+
+        function renderCharts(data) {
+            Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+            Chart.defaults.color = '#94a3b8';
+
+            const cadenasMap = {};
+            data.forEach(d => {
+                if (!cadenasMap[d.cadena]) cadenasMap[d.cadena] = { meta: 0, reco: 0 };
+                cadenasMap[d.cadena].meta += d.meta;
+                cadenasMap[d.cadena].reco += d.asistentes;
+            });
+
+            const cadenasLabels = Object.keys(cadenasMap);
+            const cumplimientoValues = cadenasLabels.map(c => {
+                const item = cadenasMap[c];
+                return item.meta > 0 ? (item.reco / item.meta) * 100 : 0;
+            });
+
+            if (barChart) barChart.destroy();
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: cadenasLabels,
+                    datasets: [{
+                        label: '% de Cumplimiento',
+                        data: cumplimientoValues,
+                        backgroundColor: '#355C9D', /* Color Azul Fuerte */
+                        borderRadius: 4,
+                        barThickness: 32
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            max: Math.max(110, ...cumplimientoValues) + 10,
+                            border: { display: false },
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { weight: '500' } }
+                        },
+                        x: { 
+                            border: { display: false },
+                            grid: { display: false }, 
+                            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 } 
+                        }
+                    }
+                }
+            });
+
+            const mesesMap = {};
+            data.forEach(d => {
+                if (!mesesMap[d.mes]) mesesMap[d.mes] = 0;
+                mesesMap[d.mes] += d.asistentes;
+            });
+
+            const mesesLabels = Object.keys(mesesMap).sort((a, b) => 
+                (monthOrder[a.toLowerCase()] || 99) - (monthOrder[b.toLowerCase()] || 99)
+            );
+            const mesesValues = mesesLabels.map(m => mesesMap[m]);
+
+            if (lineChart) lineChart.destroy();
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            
+            // Crear gradiente para el área usando Azul Muy Claro (#C4D3E8)
+            const gradient = ctxLine.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(196, 211, 232, 0.6)');
+            gradient.addColorStop(1, 'rgba(196, 211, 232, 0)');
+
+            lineChart = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: mesesLabels,
+                    datasets: [{
+                        label: 'Asistentes',
+                        data: mesesValues,
+                        borderColor: '#8DA4D0', /* Color Azul Claro */
+                        backgroundColor: gradient, /* Color Azul Muy Claro difuminado */
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#8DA4D0', /* Color Azul Claro */
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            border: { display: false },
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { weight: '500' } }
+                        },
+                        x: { 
+                            border: { display: false },
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { size: 11 } } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+
+            const tableData = [];
+            const isAllMonths = document.getElementById('filterMes').value === 'all';
+
+            if (isAllMonths) {
+                const map = {};
+                data.forEach(d => {
+                    if (!map[d.cadena]) {
+                        map[d.cadena] = { cadena: d.cadena, meta: 0, reco: 0, plantilla: 0 };
+                    }
+                    map[d.cadena].meta += d.meta;
+                    map[d.cadena].reco += d.asistentes;
+                    map[d.cadena].plantilla += d.plantilla;
+                });
+                for (const key in map) {
+                    const row = map[key];
+                    row.cumplimiento = row.meta > 0 ? (row.reco / row.meta) * 100 : 0;
+                    tableData.push(row);
+                }
+            } else {
+                data.forEach(d => {
+                    tableData.push({
+                        cadena: d.cadena,
+                        meta: d.meta,
+                        reco: d.asistentes,
+                        plantilla: d.plantilla,
+                        cumplimiento: d.meta > 0 ? (d.asistentes / d.meta) * 100 : 0
+                    });
+                });
+            }
+
+            tableData.forEach(d => {
+                const faltante = Math.max(0, 100 - d.cumplimiento);
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors font-semibold">
+                        <td class="px-6 py-4 text-slate-800">${d.cadena}</td>
+                        <td class="px-6 py-4 text-center text-slate-400 font-medium">${formatNumber(d.meta)}</td>
+                        <!-- Texto Azul Fuerte -->
+                        <td class="px-6 py-4 text-center text-[#355C9D]">${formatNumber(d.reco)}</td>
+                        <td class="px-6 py-4 text-center text-slate-500 font-medium">${formatNumber(d.plantilla)}</td>
+                        <td class="px-6 py-4 text-center text-emerald-600">${d.cumplimiento.toFixed(1)}%</td>
+                        <td class="px-6 py-4 text-center text-rose-600">${faltante.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function showLoading(show) {
+            const loader = document.getElementById('loadingOverlay');
+            if (show) {
+                loader.classList.remove('hidden');
+                loader.classList.add('flex');
+                setTimeout(() => loader.classList.remove('opacity-0'), 10);
+            } else {
+                loader.classList.add('opacity-0');
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                }, 500);
+            }
+        }
+
+        // Carga inicial
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
