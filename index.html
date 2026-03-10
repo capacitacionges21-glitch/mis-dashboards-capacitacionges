@@ -1,84 +1,70 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Dashboards Corporativos</title>
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Dashboards Corporativos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body class="bg-slate-100 min-h-screen flex flex-col">
 
-<header class="bg-white shadow p-6">
-<h1 class="text-2xl font-bold text-slate-800">📊 Dashboards Corporativos</h1>
-<p class="text-slate-500 text-sm">Selecciona el dashboard que deseas visualizar</p>
-</header>
+  <header class="bg-white shadow p-6">
+    <h1 class="text-2xl font-bold text-slate-800">📊 Dashboards Corporativos</h1>
+    <p class="text-slate-500 text-sm">Selecciona el dashboard que deseas visualizar</p>
+  </header>
 
-<main class="flex-grow p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <main class="flex-grow p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-<!-- CODIGO ETICA -->
-<a href="codigo-etica.html" data-enabled="true"
-class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg">📘 Código de Ética</h2>
-<p class="text-slate-500 text-sm">Indicadores de cumplimiento</p>
-</a>
+    <a href="codigo-etica.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+      <h2 class="font-bold text-lg">📘 Código de Ética</h2>
+      <p class="text-slate-500 text-sm">Indicadores de cumplimiento</p>
+    </a>
 
-<!-- COMISIONES -->
-<a href="comisiones-mixtas.html" data-enabled="true"
-class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg">🤝 Comisiones Mixtas</h2>
-<p class="text-slate-500 text-sm">Seguimiento de comisiones</p>
-</a>
+    <a href="comisiones-mixtas.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+      <h2 class="font-bold text-lg">🤝 Comisiones Mixtas</h2>
+      <p class="text-slate-500 text-sm">Seguimiento de comisiones</p>
+    </a>
 
-<!-- GES CONTIGO -->
-<a href="ges-contigo-360.html" data-enabled="false"
-class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg">🧭 Ges Contigo 360</h2>
-<p class="text-slate-500 text-sm">Vista 360 del desempeño</p>
-</a>
+    <a href="ges-contigo-360.html" data-enabled="false" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+      <h2 class="font-bold text-lg">🧭 Ges Contigo 360</h2>
+      <p class="text-slate-500 text-sm">Vista 360 del desempeño</p>
+    </a>
 
-<!-- MYSTERY (ICONO CAMBIADO) -->
-<a href="mystery.html" data-enabled="true"
-class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg">📈 Mystery</h2>
-<p class="text-slate-500 text-sm">Resultados de Mystery Shopper</p>
-</a>
+    <a href="mystery.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+      <h2 class="font-bold text-lg">📈 Mystery</h2>
+      <p class="text-slate-500 text-sm">Resultados de Mystery Shopper</p>
+    </a>
 
-<!-- NOM035 -->
-<a href="nom035.html" data-enabled="true"
-class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg">🧠 NOM-035</h2>
-<p class="text-slate-500 text-sm">Riesgos psicosociales</p>
-</a>
+    <a href="nom035.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+      <h2 class="font-bold text-lg">🧠 NOM-035</h2>
+      <p class="text-slate-500 text-sm">Riesgos psicosociales</p>
+    </a>
 
-<!-- RECONOCIMIENTOS -->
-<a href="reconocimientos.html" data-enabled="true"
-class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg">🏆 Reconocimientos</h2>
-<p class="text-slate-500 text-sm">Reconocimientos por cadena</p>
-</a>
+    <a href="reconocimientos.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+      <h2 class="font-bold text-lg">🏆 Reconocimientos</h2>
+      <p class="text-slate-500 text-sm">Reconocimientos por cadena</p>
+    </a>
 
-</main>
+  </main>
 
-<footer class="text-center text-xs text-slate-400 p-4">
-© 2026 Dashboards Internos
-</footer>
+  <footer class="text-center text-xs text-slate-400 p-4">
+    © 2026 Dashboards Internos
+  </footer>
 
 <script>
 
-//habilitar o deshabilitar dashboards
 document.querySelectorAll(".dashboard").forEach(card => {
 
-if(card.dataset.enabled === "false"){
+  if(card.dataset.enabled === "false"){
 
-card.classList.remove("hover:shadow-lg")
-card.classList.add("opacity-40","cursor-not-allowed")
+    card.classList.add("opacity-40","cursor-not-allowed")
+    card.classList.remove("hover:shadow-lg")
 
-card.addEventListener("click", function(e){
-e.preventDefault()
-alert("Este dashboard está temporalmente deshabilitado")
-})
+    card.addEventListener("click", function(e){
+      e.preventDefault()
+      alert("Este dashboard está temporalmente deshabilitado")
+    })
 
-}
+  }
 
 })
 
