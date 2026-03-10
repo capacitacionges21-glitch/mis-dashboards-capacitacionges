@@ -94,7 +94,7 @@
 
                     <div class="hidden xl:flex items-center gap-8 px-6 py-3 bg-[#C4D3E8]/30 rounded-2xl border border-[#C4D3E8] justify-center">
                         <div class="text-center">
-                            <p class="text-[9px] font-bold text-[#8DA4D0] uppercase">Estado General</p>
+                            <p class="text-[9px] font-bold text-[#8DA4D0] uppercase"></p>
                             <p id="metaStatus" class="text-lg font-black text-[#355C9D]">Analizando...</p>
                         </div>
                     </div>
@@ -423,7 +423,7 @@
             bar.className = `h-full transition-all duration-1000 bg-[#355C9D]`;
             
             const status = document.getElementById('metaStatus');
-            status.textContent = faltanteGlobal <= 0 ? "Meta Cumplida" : "En Proceso";
+            status.textContent = faltanteGlobal <= 0 ? "" : "";
             status.className = `text-lg font-black ${faltanteGlobal <= 0 ? 'text-[#355C9D]' : 'text-[#8DA4D0]'}`;
         }
 
@@ -567,3 +567,4 @@
     </script>
 </body>
 </html>
+
