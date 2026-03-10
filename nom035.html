@@ -4,17 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nom035 - Dashboard Corporativo</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js y Plugin DataLabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Iconos -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PapaParse para leer el CSV de Google Sheets correctamente -->
+    <!-- PapaParse para CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f4f7f9; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
         
-        /* Custom Scrollbar similar al diseño */
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f4f7f9; }
+        
+        /* Forzar fuente en controles de formulario */
+        select, option, input, button {
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+
+        .chart-container { position: relative; height: 320px; width: 100%; }
+        
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -29,263 +40,279 @@
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased custom-scrollbar">
+<body class="text-slate-800 antialiased custom-scrollbar overflow-x-hidden">
 
     <!-- Pantalla de Carga -->
     <div id="loadingOverlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div class="w-12 h-12 border-4 border-[#2F5597] border-t-transparent rounded-full animate-spin mb-4"></div>
         <h2 class="text-xl font-bold text-slate-800">Sincronizando Datos...</h2>
-        <p class="text-slate-500 text-sm mt-2">Agrupando registros y calculando promedios</p>
+        <p class="text-slate-500 text-sm mt-2">Aplicando filtros en cascada y calculando promedios</p>
     </div>
 
-    <div class="min-h-screen flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-        
-        <!-- Header -->
-        <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-50">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
-                    <i data-lucide="award" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">Nom035 <span class="text-indigo-500 font-semibold">Dashboard</span></h1>
-                    <div class="flex items-center gap-1.5 text-xs font-semibold mt-1">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span class="text-emerald-500 tracking-wide">SINCRONIZADO:</span>
-                        <span id="lastUpdated" class="text-slate-500 font-medium">--:--</span>
+    <!-- Contenedor Principal Flex -->
+    <div class="flex min-h-screen w-full">
+
+        <!-- Contenido Central -->
+        <main class="flex-1 flex flex-col min-w-0">
+            <div class="max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6">
+                
+                <!-- Header -->
+                <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-30">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-[#2F5597] rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-900/20">
+                            <i data-lucide="shield-check" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">Nom035 <span class="text-[#2F5597] font-semibold">Dashboard</span></h1>
+                            <div class="flex items-center gap-1.5 text-xs font-semibold mt-1">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <span class="text-emerald-500 tracking-wide">ACTUALIZADO:</span>
+                                <span id="lastUpdated" class="text-slate-500 font-medium">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="loadData()" class="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors w-full sm:w-auto">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        Sincronizar
+                    </button>
+                </header>
+
+                <!-- Filtros (Orden: Trimestre, Mes, Cadena, Regional, Distrito) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                    <!-- 1. Trimestre -->
+                    <div class="card-panel p-4">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Trimestre</label>
+                        <div class="relative">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <select id="filterTrimestre" onchange="handleFilterChange()" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                                <option value="Todos">Todo el año</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- 2. Mes -->
+                    <div class="card-panel p-4">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Mes</label>
+                        <div class="relative">
+                            <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <select id="filterMes" onchange="handleFilterChange()" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                                <option value="Todos">Acumulado</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. Cadena -->
+                    <div class="card-panel p-4">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
+                        <div class="relative">
+                            <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <select id="filterCadena" onchange="handleFilterChange()" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                                <option value="Todos">GES</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- 4. Regional -->
+                    <div class="card-panel p-4">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
+                        <div class="relative">
+                            <i data-lucide="map" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <select id="filterRegional" onchange="handleFilterChange()" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                                <option value="Todos">Todas las Regiones</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- 5. Gerente Distrito -->
+                    <div class="card-panel p-4">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
+                        <div class="relative">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <select id="filterDistrital" onchange="handleFilterChange()" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                                <option value="Todos">Todos los Distritos</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <button class="p-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors hidden sm:block">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                </button>
-                <button onclick="loadData()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    Actualizar Datos
-                </button>
-            </div>
-        </header>
 
-        <!-- Filtros -->
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <!-- Regional -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
-                <div class="relative">
-                    <i data-lucide="map" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterRegional" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todas</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
-            
-            <!-- Distrital -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
-                <div class="relative">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterDistrital" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todos</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
+                <!-- 5 Tarjetas KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    
+                    <!-- 1. KPI Sucursales -->
+                    <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
+                        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Total Sucursales</h3>
+                        <div class="flex items-center justify-between">
+                            <span id="kpiTotal" class="text-4xl font-extrabold text-slate-800">0</span>
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                                <i data-lucide="store" class="w-5 h-5 text-[#2F5597]"></i>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Cadena -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
-                <div class="relative">
-                    <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterCadena" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todas las Cadenas</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
+                    <!-- 2. KPI Acuse Encuesta (Azul Fuerte) -->
+                    <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
+                        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Acuse Encuesta</h3>
+                        <div class="flex items-baseline gap-1 mb-2">
+                            <span id="kpiAcuse" class="text-4xl font-extrabold text-[#2F5597]">0</span>
+                            <span class="text-xl font-bold text-[#2F5597]">%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mt-auto">
+                            <div id="barAcuse" class="bg-[#2F5597] h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
 
-            <!-- Trimestre -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Trimestre</label>
-                <div class="relative">
-                    <i data-lucide="pie-chart" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterTrimestre" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todo el año</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
+                    <!-- 3. KPI Política (Azul Claro) -->
+                    <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
+                        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Política</h3>
+                        <div class="flex items-baseline gap-1 mb-2">
+                            <span id="kpiPolitica" class="text-4xl font-extrabold text-[#8FAADC]">0</span>
+                            <span class="text-xl font-bold text-[#8FAADC]">%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mt-auto">
+                            <div id="barPolitica" class="bg-[#8FAADC] h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
 
-            <!-- Mes -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Mes</label>
-                <div class="relative">
-                    <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterMes" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Acumulado</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
-        </div>
+                    <!-- 4. KPI Plan de Acción (Azul Extra Claro / Decorativo) -->
+                    <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
+                        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Plan de Acción</h3>
+                        <div class="flex items-baseline gap-1 mb-2">
+                            <span id="kpiPlan" class="text-4xl font-extrabold text-[#B4C6E7]">0</span>
+                            <span class="text-xl font-bold text-[#B4C6E7]">%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mt-auto">
+                            <div id="barPlan" class="bg-[#B4C6E7] h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
 
-        <!-- KPIs Principales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            
-            <!-- KPI Sucursales -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Total Sucursales</h3>
-                <div class="flex items-center justify-between">
-                    <span id="kpiTotal" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
-                        <i data-lucide="store" class="w-4 h-4 text-indigo-500"></i>
+                    <!-- 5. KPI Decorativo Meta -->
+                    <div class="bg-white/50 rounded-2xl p-5 relative overflow-hidden flex flex-col items-center justify-center border-dashed border-2 border-slate-200 shadow-sm">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-slate-300 mb-2 stroke-[1.5]"></i>
+                        <h3 class="text-[13px] font-bold text-slate-400 uppercase tracking-widest">Meta 100%</h3>
+                    </div>
+
+                </div>
+
+                <!-- Gráficos -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    
+                    <!-- 1. Gráfico por Mes (Ancho Completo, condicional) -->
+                    <div id="chartMesContainer" class="card-panel p-5 lg:col-span-2">
+                        <div class="flex items-center gap-2 mb-6">
+                            <i data-lucide="calendar" class="w-5 h-5 text-[#2F5597]"></i>
+                            <h3 class="text-sm font-bold text-slate-800">Evolución por Mes</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartMes"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 2. Gráfico Cumplimiento por Cadena -->
+                    <div class="card-panel p-5">
+                        <div class="flex items-center gap-2 mb-6">
+                            <i data-lucide="building-2" class="w-5 h-5 text-[#2F5597]"></i>
+                            <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartCadena"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 3. Gráfico Cumplimiento por Región -->
+                    <div class="card-panel p-5">
+                        <div class="flex items-center gap-2 mb-6">
+                            <i data-lucide="map" class="w-5 h-5 text-[#2F5597]"></i>
+                            <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartRegion"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 4. Gráfico Cumplimiento por Distrito (Ocupa todo el ancho) -->
+                    <div class="card-panel p-5 lg:col-span-2">
+                        <div class="flex items-center gap-2 mb-6">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-[#2F5597]"></i>
+                            <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartDistrito"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- KPI Promedio General -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Promedio General</h3>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-baseline gap-1">
-                        <span id="kpiPromedio" class="text-4xl font-extrabold text-slate-800">0</span>
-                        <span class="text-xl font-bold text-slate-800">%</span>
+                <!-- Tabla de Desglose Detallado -->
+                <div class="card-panel flex-1 flex flex-col min-h-[400px] overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="table" class="w-5 h-5 text-[#2F5597]"></i>
+                            <h3 class="text-sm font-bold text-slate-800">Desglose General (Promedios Redondeados)</h3>
+                        </div>
                     </div>
-                    <span id="badgePromedio" class="text-xs font-bold px-2 py-1 rounded-md bg-rose-100 text-rose-600">BAJO META (100%) </span>
-                </div>
-            </div>
-
-            <!-- KPI Faltante para Meta -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Faltante para Meta</h3>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-baseline gap-1">
-                        <span id="kpiBrecha" class="text-4xl font-extrabold text-rose-600">0</span>
-                        <span class="text-xl font-bold text-rose-600">%</span>
+                    
+                    <div class="overflow-x-auto flex-1 custom-scrollbar">
+                        <table class="w-full text-left border-collapse min-w-[1000px]">
+                            <thead>
+                                <tr class="bg-[#f4f7f9] border-b border-slate-200">
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">Región</th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">Distrito</th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">Cadena</th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">Sucursal</th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">
+                                        <div class="flex flex-col items-center justify-center gap-0.5">
+                                            <span>%</span>
+                                            <span>Acuse</span>
+                                        </div>
+                                    </th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">
+                                        <div class="flex flex-col items-center justify-center gap-0.5">
+                                            <span>%</span>
+                                            <span>Política</span>
+                                        </div>
+                                    </th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">
+                                        <div class="flex flex-col items-center justify-center gap-0.5">
+                                            <span>%</span>
+                                            <span>Plan</span>
+                                        </div>
+                                    </th>
+                                    <th class="px-5 py-4 text-[11px] font-bold text-[#2F5597] uppercase tracking-wider align-middle">
+                                        <div class="flex flex-col items-center justify-center gap-0.5">
+                                            <span>%</span>
+                                            <span>Cumplimiento</span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Filas JS -->
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
-                        <i data-lucide="target" class="w-4 h-4 text-rose-500"></i>
-                    </div>
                 </div>
-            </div>
 
-            <!-- KPI Acuse -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Acuse Encuesta</h3>
-                <div class="flex items-baseline gap-1 mb-2">
-                    <span id="kpiAcuse" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <span class="text-xl font-bold text-slate-800">%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                    <div id="barAcuse" class="bg-[#355C9D] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
             </div>
-
-            <!-- KPI Política -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Política</h3>
-                <div class="flex items-baseline gap-1 mb-2">
-                    <span id="kpiPolitica" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <span class="text-xl font-bold text-slate-800">%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                    <div id="barPolitica" class="bg-[#8DA4D0] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- KPI Plan -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Plan de Acción</h3>
-                <div class="flex items-baseline gap-1 mb-2">
-                    <span id="kpiPlan" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <span class="text-xl font-bold text-slate-800">%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                    <div id="barPlan" class="bg-[#C4D3E8] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gráficos -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Gráfico Cumplimiento por Región -->
-            <div class="card-panel p-5">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chartRegion"></canvas>
-                </div>
-            </div>
-
-            <!-- Gráfico Cumplimiento por Cadena -->
-            <div class="card-panel p-5">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chartCadena"></canvas>
-                </div>
-            </div>
-
-            <!-- Gráfico Cumplimiento por Distrito (Ocupa todo el ancho) -->
-            <div class="card-panel p-5 lg:col-span-2">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chartDistrito"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabla de Desglose Detallado -->
-        <div class="card-panel flex-1 flex flex-col min-h-[400px] overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="table" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento Promediado (Región / Distrito / Cadena / Sucursal)</h3>
-                </div>
-                <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Meta: 100%</span>
-            </div>
-            
-            <div class="overflow-x-auto flex-1 custom-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[1000px]">
-                    <thead>
-                        <tr class="bg-slate-50/50 border-b border-slate-200">
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Región</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Distrito</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cadena</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sucursal</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Acuse</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Política</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Plan</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Promedio</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Faltante</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
-                        <!-- Las filas se llenan con JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+        </main>
     </div>
 
     <script>
-        // Inicializar iconos
+        // Registrar Plugin Globalmente
+        Chart.register(ChartDataLabels);
         lucide.createIcons();
 
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=985444433&single=true&output=csv';
         let rawData = [];
         let charts = {};
 
-        // Parseador de porcentajes robusto
+        const monthOrderFixed = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        // Parseador Robusto
         function parsePercentage(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim().replace(',', '.');
@@ -296,14 +323,26 @@
             return num;
         }
 
-        // Función para clasificar los meses por Trimestre
+        function normalizeMonth(m) {
+            if (!m) return 'N/A';
+            const str = m.toLowerCase().trim();
+            const map = {
+                'enero': 'Enero', 'ene': 'Enero', 'febrero': 'Febrero', 'feb': 'Febrero',
+                'marzo': 'Marzo', 'mar': 'Marzo', 'abril': 'Abril', 'abr': 'Abril',
+                'mayo': 'Mayo', 'may': 'Mayo', 'junio': 'Junio', 'jun': 'Junio',
+                'julio': 'Julio', 'jul': 'Julio', 'agosto': 'Agosto', 'ago': 'Agosto',
+                'septiembre': 'Septiembre', 'sep': 'Septiembre', 'octubre': 'Octubre', 'oct': 'Octubre',
+                'noviembre': 'Noviembre', 'nov': 'Noviembre', 'diciembre': 'Diciembre', 'dic': 'Diciembre'
+            };
+            return map[str] || m;
+        }
+
         function getQuarter(mes) {
-            if (!mes) return 'Desconocido';
-            const m = mes.toLowerCase().trim();
-            if (['enero', 'ene', 'febrero', 'feb', 'marzo', 'mar'].some(x => m.includes(x))) return 'Q1 (Ene-Mar)';
-            if (['abril', 'abr', 'mayo', 'may', 'junio', 'jun'].some(x => m.includes(x))) return 'Q2 (Abr-Jun)';
-            if (['julio', 'jul', 'agosto', 'ago', 'septiembre', 'sep'].some(x => m.includes(x))) return 'Q3 (Jul-Sep)';
-            if (['octubre', 'oct', 'noviembre', 'nov', 'diciembre', 'dic'].some(x => m.includes(x))) return 'Q4 (Oct-Dic)';
+            const m = normalizeMonth(mes);
+            if (['Enero', 'Febrero', 'Marzo'].includes(m)) return 'Q1 (Ene-Mar)';
+            if (['Abril', 'Mayo', 'Junio'].includes(m)) return 'Q2 (Abr-Jun)';
+            if (['Julio', 'Agosto', 'Septiembre'].includes(m)) return 'Q3 (Jul-Sep)';
+            if (['Octubre', 'Noviembre', 'Diciembre'].includes(m)) return 'Q4 (Oct-Dic)';
             return 'Sin Trimestre';
         }
 
@@ -319,16 +358,13 @@
                     complete: function(results) {
                         const rows = results.data.slice(1);
                         
-                        rawData = rows.map(row => {
-                            const mes = row[0] || 'N/A';
+                        let tempRawData = rows.map(row => {
                             const acuse = parsePercentage(row[5]);
                             const politica = parsePercentage(row[6]);
                             const plan = parsePercentage(row[7]);
-                            const promedio = (acuse + politica + plan) / 3;
-
                             return {
-                                mes: mes,
-                                trimestre: getQuarter(mes),
+                                mes: normalizeMonth(row[0]),
+                                trimestre: getQuarter(row[0]),
                                 regional: row[1] || 'N/A',
                                 distrital: row[2] || 'N/A',
                                 sucursal: row[3] || 'N/A',
@@ -336,390 +372,308 @@
                                 acuse: acuse,
                                 politica: politica,
                                 plan: plan,
-                                promedio: promedio
+                                promedio: (acuse + politica + plan) / 3
                             };
                         });
+
+                        // Regla 3: EXCLUIR filas futuras (donde todos los indicadores son 0%)
+                        rawData = tempRawData.filter(item => !(item.acuse === 0 && item.politica === 0 && item.plan === 0));
 
                         initializeFilters();
                         updateDashboard();
                         
-                        // Ocultar carga
                         const overlay = document.getElementById('loadingOverlay');
                         overlay.style.opacity = '0';
                         setTimeout(() => overlay.style.display = 'none', 500);
 
-                        // Fecha actualización
                         const now = new Date();
                         document.getElementById('lastUpdated').innerText = 
                             now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     },
                     error: function(err) {
-                        console.error('Error al procesar el CSV:', err);
-                        alert("Error al cargar los datos. Revisa la conexión o la URL.");
+                        console.error('Error al procesar CSV:', err);
+                        alert("Error al cargar los datos.");
                     }
                 });
             } catch (error) {
-                console.error("Error obteniendo los datos:", error);
+                console.error("Error obteniendo datos:", error);
             }
         }
 
-        function initializeFilters() {
-            const filters = {
-                mes: new Set(), trimestre: new Set(), cadena: new Set(),
-                regional: new Set(), distrital: new Set()
+        // === LÓGICA DE FILTROS EN CASCADA ===
+        function getSelectedFilters() {
+            return {
+                trimestre: document.getElementById('filterTrimestre').value,
+                mes: document.getElementById('filterMes').value,
+                cadena: document.getElementById('filterCadena').value,
+                regional: document.getElementById('filterRegional').value,
+                distrital: document.getElementById('filterDistrital').value
             };
-
-            rawData.forEach(item => {
-                if (item.mes && item.mes !== 'N/A') filters.mes.add(item.mes);
-                if (item.trimestre && item.trimestre !== 'Desconocido' && item.trimestre !== 'Sin Trimestre') filters.trimestre.add(item.trimestre);
-                if (item.cadena && item.cadena !== 'N/A') filters.cadena.add(item.cadena);
-                if (item.regional && item.regional !== 'N/A') filters.regional.add(item.regional);
-                if (item.distrital && item.distrital !== 'N/A') filters.distrital.add(item.distrital);
-            });
-
-            // Orden cronológico para los meses
-            const monthOrder = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-
-            const populateSelect = (id, set, isMonth = false) => {
-                const select = document.getElementById(id);
-                select.innerHTML = select.options[0].outerHTML; // Mantener la opción "Todos"
-                
-                let sortedValues = Array.from(set);
-                
-                if (isMonth) {
-                    sortedValues.sort((a, b) => {
-                        const indexA = monthOrder.indexOf(a.toLowerCase().trim());
-                        const indexB = monthOrder.indexOf(b.toLowerCase().trim());
-                        // Si no encuentra el mes (por error de tipeo en el excel), lo manda al final
-                        return (indexA !== -1 ? indexA : 99) - (indexB !== -1 ? indexB : 99);
-                    });
-                } else {
-                    sortedValues.sort();
-                }
-
-                sortedValues.forEach(value => {
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value;
-                    select.appendChild(option);
-                });
-            };
-
-            populateSelect('filterMes', filters.mes, true); // true para aplicar el orden de meses
-            populateSelect('filterTrimestre', filters.trimestre);
-            populateSelect('filterCadena', filters.cadena);
-            populateSelect('filterRegional', filters.regional);
-            populateSelect('filterDistrital', filters.distrital);
-
-            // Listeners
-            ['filterMes', 'filterTrimestre', 'filterCadena', 'filterRegional', 'filterDistrital'].forEach(id => {
-                const el = document.getElementById(id);
-                const clone = el.cloneNode(true);
-                el.parentNode.replaceChild(clone, el);
-                clone.addEventListener('change', updateDashboard);
-            });
         }
 
-        function updateDashboard() {
-            const sMes = document.getElementById('filterMes').value;
-            const sTrimestre = document.getElementById('filterTrimestre').value;
-            const sCadena = document.getElementById('filterCadena').value;
-            const sRegional = document.getElementById('filterRegional').value;
-            const sDistrital = document.getElementById('filterDistrital').value;
+        function populateSelect(id, set, currentValue, isMonth = false) {
+            const select = document.getElementById(id);
+            const defaultText = select.options[0].text;
+            select.innerHTML = `<option value="Todos">${defaultText}</option>`; 
+            
+            let sortedValues = Array.from(set);
+            if (isMonth) {
+                sortedValues.sort((a, b) => {
+                    const indexA = monthOrderFixed.indexOf(a);
+                    const indexB = monthOrderFixed.indexOf(b);
+                    return (indexA !== -1 ? indexA : 99) - (indexB !== -1 ? indexB : 99);
+                });
+            } else {
+                sortedValues.sort();
+            }
 
-            // 1. Filtrar las filas crudas según los combos seleccionados
-            const filteredRows = rawData.filter(item => {
-                return (sMes === 'Todos' || item.mes === sMes) &&
-                       (sTrimestre === 'Todos' || item.trimestre === sTrimestre) &&
-                       (sCadena === 'Todos' || item.cadena === sCadena) &&
-                       (sRegional === 'Todos' || item.regional === sRegional) &&
-                       (sDistrital === 'Todos' || item.distrital === sDistrital);
+            let valueExists = false;
+            sortedValues.forEach(value => {
+                if(value === 'N/A' || value === 'Desconocido') return; // Limpieza visual
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                if (value === currentValue) valueExists = true;
+                select.appendChild(option);
             });
 
-            // 2. AGRUPAR por Sucursal para promediar cuando hay varios meses (ej. vista anual o trimestral)
+            // Mantener valor si sigue siendo válido, si no, resetear a 'Todos'
+            select.value = valueExists ? currentValue : 'Todos';
+        }
+
+        function initializeFilters() {
+            // Setup inicial de todas las opciones posibles
+            const filters = { trim: new Set(), mes: new Set(), cad: new Set(), reg: new Set(), dist: new Set() };
+            rawData.forEach(i => {
+                filters.trim.add(i.trimestre); filters.mes.add(i.mes);
+                filters.cad.add(i.cadena); filters.reg.add(i.regional); filters.dist.add(i.distrital);
+            });
+            populateSelect('filterTrimestre', filters.trim, 'Todos');
+            populateSelect('filterMes', filters.mes, 'Todos', true);
+            populateSelect('filterCadena', filters.cad, 'Todos');
+            populateSelect('filterRegional', filters.reg, 'Todos');
+            populateSelect('filterDistrital', filters.dist, 'Todos');
+        }
+
+        function handleFilterChange() {
+            const current = getSelectedFilters();
+            const valid = { trim: new Set(), mes: new Set(), cad: new Set(), reg: new Set(), dist: new Set() };
+
+            rawData.forEach(i => {
+                const matchTrim = current.trimestre === 'Todos' || i.trimestre === current.trimestre;
+                const matchMes = current.mes === 'Todos' || i.mes === current.mes;
+                const matchCad = current.cadena === 'Todos' || i.cadena === current.cadena;
+                const matchReg = current.regional === 'Todos' || i.regional === current.regional;
+                const matchDist = current.distrital === 'Todos' || i.distrital === current.distrital;
+
+                if (matchMes && matchCad && matchReg && matchDist) valid.trim.add(i.trimestre);
+                if (matchTrim && matchCad && matchReg && matchDist) valid.mes.add(i.mes);
+                if (matchTrim && matchMes && matchReg && matchDist) valid.cad.add(i.cadena);
+                if (matchTrim && matchMes && matchCad && matchDist) valid.reg.add(i.regional);
+                if (matchTrim && matchMes && matchCad && matchReg) valid.dist.add(i.distrital);
+            });
+
+            populateSelect('filterTrimestre', valid.trim, current.trimestre);
+            populateSelect('filterMes', valid.mes, current.mes, true);
+            populateSelect('filterCadena', valid.cad, current.cadena);
+            populateSelect('filterRegional', valid.reg, current.regional);
+            populateSelect('filterDistrital', valid.dist, current.distrital);
+
+            updateDashboard();
+        }
+
+        // === ACTUALIZACIÓN PRINCIPAL DEL DASHBOARD ===
+        function updateDashboard() {
+            const sels = getSelectedFilters();
+
+            // Filtrado Maestro
+            const filteredRows = rawData.filter(item => {
+                return (sels.mes === 'Todos' || item.mes === sels.mes) &&
+                       (sels.trimestre === 'Todos' || item.trimestre === sels.trimestre) &&
+                       (sels.cadena === 'Todos' || item.cadena === sels.cadena) &&
+                       (sels.regional === 'Todos' || item.regional === sels.regional) &&
+                       (sels.distrital === 'Todos' || item.distrital === sels.distrital);
+            });
+
+            // Agrupación por Sucursal (para calcular promedios anuales/trimestrales reales sin duplicar)
             const groupedBranches = {};
-            
             filteredRows.forEach(item => {
-                // Llave única por si acaso existieran sucursales con mismo nombre en diferente cadena
                 const key = `${item.regional}|${item.distrital}|${item.cadena}|${item.sucursal}`;
-                
                 if(!groupedBranches[key]) {
-                    groupedBranches[key] = {
-                        regional: item.regional,
-                        distrital: item.distrital,
-                        cadena: item.cadena,
-                        sucursal: item.sucursal,
-                        sumAcuse: 0, sumPolitica: 0, sumPlan: 0, sumPromedio: 0,
-                        count: 0
-                    };
+                    groupedBranches[key] = { regional: item.regional, distrital: item.distrital, cadena: item.cadena, sucursal: item.sucursal, sumAcuse: 0, sumPolitica: 0, sumPlan: 0, count: 0 };
                 }
-                
                 groupedBranches[key].sumAcuse += item.acuse;
                 groupedBranches[key].sumPolitica += item.politica;
                 groupedBranches[key].sumPlan += item.plan;
-                groupedBranches[key].sumPromedio += item.promedio;
                 groupedBranches[key].count += 1;
             });
 
-            // 3. Crear el arreglo final de sucursales únicas con sus promedios
             const aggregatedData = Object.values(groupedBranches).map(g => {
-                const avgPromedio = g.sumPromedio / g.count;
+                const acuse = g.sumAcuse / g.count;
+                const politica = g.sumPolitica / g.count;
+                const plan = g.sumPlan / g.count;
                 return {
-                    regional: g.regional,
-                    distrital: g.distrital,
-                    cadena: g.cadena,
-                    sucursal: g.sucursal,
-                    acuse: g.sumAcuse / g.count,
-                    politica: g.sumPolitica / g.count,
-                    plan: g.sumPlan / g.count,
-                    promedio: avgPromedio,
-                    faltante: Math.max(0, 100 - avgPromedio)
+                    ...g,
+                    acuse: acuse,
+                    politica: politica,
+                    plan: plan,
+                    promedio: (acuse + politica + plan) / 3
                 };
             });
 
-            // 4. Calcular KPIs Globales basados en las sucursales únicas resultantes
+            // KPIs Globales Redondeados
             const totalSucursales = aggregatedData.length;
-            let sumGlobalAcuse = 0, sumGlobalPolitica = 0, sumGlobalPlan = 0, sumGlobalPromedio = 0;
+            let sumGlobalAcuse = 0, sumGlobalPolitica = 0, sumGlobalPlan = 0;
 
             aggregatedData.forEach(item => {
                 sumGlobalAcuse += item.acuse;
                 sumGlobalPolitica += item.politica;
                 sumGlobalPlan += item.plan;
-                sumGlobalPromedio += item.promedio;
             });
 
-            const avgAcuse = totalSucursales ? (sumGlobalAcuse / totalSucursales) : 0;
-            const avgPolitica = totalSucursales ? (sumGlobalPolitica / totalSucursales) : 0;
-            const avgPlan = totalSucursales ? (sumGlobalPlan / totalSucursales) : 0;
-            const avgGeneral = totalSucursales ? (sumGlobalPromedio / totalSucursales) : 0;
-            const faltanteGlobal = totalSucursales ? Math.max(0, 100 - avgGeneral) : 0;
+            const avgAcuse = totalSucursales ? Math.round(sumGlobalAcuse / totalSucursales) : 0;
+            const avgPolitica = totalSucursales ? Math.round(sumGlobalPolitica / totalSucursales) : 0;
+            const avgPlan = totalSucursales ? Math.round(sumGlobalPlan / totalSucursales) : 0;
 
-            // 5. Actualizar DOM KPIs
-            animateValue('kpiTotal', totalSucursales, false);
-            animateValue('kpiPromedio', avgGeneral, true);
-            animateValue('kpiBrecha', faltanteGlobal, true);
-            animateValue('kpiAcuse', avgAcuse, true);
-            animateValue('kpiPolitica', avgPolitica, true);
-            animateValue('kpiPlan', avgPlan, true);
-
+            document.getElementById('kpiTotal').innerText = totalSucursales;
+            document.getElementById('kpiAcuse').innerText = avgAcuse;
             document.getElementById('barAcuse').style.width = `${avgAcuse}%`;
+            document.getElementById('kpiPolitica').innerText = avgPolitica;
             document.getElementById('barPolitica').style.width = `${avgPolitica}%`;
+            document.getElementById('kpiPlan').innerText = avgPlan;
             document.getElementById('barPlan').style.width = `${avgPlan}%`;
-            
-            const badge = document.getElementById('badgePromedio');
-            if(avgGeneral >= 100) {
-                badge.innerText = "META ALCANZADA";
-                badge.className = "text-xs font-bold px-2 py-1 rounded-md bg-emerald-100 text-emerald-600";
+
+            // Control de Visibilidad Gráfica Mes
+            const chartMesContainer = document.getElementById('chartMesContainer');
+            if (sels.mes !== 'Todos') {
+                chartMesContainer.style.display = 'none';
             } else {
-                badge.innerText = "BAJO META";
-                badge.className = "text-xs font-bold px-2 py-1 rounded-md bg-rose-100 text-rose-600";
+                chartMesContainer.style.display = 'block';
             }
 
-            // 6. Actualizar Gráficos y Tabla con los datos Agrupados
-            updateCharts(aggregatedData);
+            // Actualizar Componentes
+            updateCharts(aggregatedData, filteredRows);
             updateTable(aggregatedData);
         }
 
-        function animateValue(id, endValue, isPercentage) {
-            const obj = document.getElementById(id);
-            const duration = 800;
-            const startTimestamp = performance.now();
-            const startValue = parseFloat(obj.innerText) || 0;
-            
-            const step = (currentTimestamp) => {
-                const progress = Math.min((currentTimestamp - startTimestamp) / duration, 1);
-                const currentVal = (progress * (endValue - startValue) + startValue);
-                
-                obj.innerText = isPercentage ? currentVal.toFixed(1) : Math.floor(currentVal);
-                
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    obj.innerText = isPercentage ? endValue.toFixed(1) : endValue;
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
+        // === GRÁFICAS (CHART.JS) ===
         function getMultiChartConfig(labels, dataAcuse, dataPolitica, dataPlan) {
             return {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'Acuse Encuesta',
-                            data: dataAcuse,
-                            backgroundColor: '#355C9D', // Azul Fuerte (de la imagen)
-                            borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.8
-                        },
-                        {
-                            label: 'Política',
-                            data: dataPolitica,
-                            backgroundColor: '#8DA4D0', // Azul Claro (de la imagen)
-                            borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.8
-                        },
-                        {
-                            label: 'Plan de Acción',
-                            data: dataPlan,
-                            backgroundColor: '#C4D3E8', // Azul Muy Claro (Escala paleta)
-                            borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.8
-                        }
+                        { label: 'Acuse Encuesta', data: dataAcuse, backgroundColor: '#2F5597', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.7 },
+                        { label: 'Política', data: dataPolitica, backgroundColor: '#8FAADC', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.7 },
+                        { label: 'Plan de Acción', data: dataPlan, backgroundColor: '#B4C6E7', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.7 }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } }, // Para que el datalabel 100% no choque
                     plugins: {
-                        legend: { 
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                boxWidth: 8,
-                                font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }
-                            }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` },
-                            backgroundColor: '#1e293b',
-                            padding: 10,
-                            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13 },
-                            bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 }
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Plus Jakarta Sans'" } } },
+                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` } },
+                        datalabels: {
+                            display: function(context) { return context.dataset.data[context.dataIndex] > 0; },
+                            formatter: (value) => value === 0 ? '' : Math.round(value) + '%',
+                            color: '#475569',
+                            anchor: 'end',
+                            align: 'end',
+                            offset: -2,
+                            font: { family: "'Plus Jakarta Sans', sans-serif", weight: 'bold', size: 9 }
                         }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            max: 100, 
-                            grid: { color: '#f1f5f9', drawBorder: false },
-                            ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" } }
-                        },
-                        x: { 
-                            grid: { display: false, drawBorder: false },
-                            ticks: { 
-                                color: '#94a3b8', 
-                                font: { family: "'Plus Jakarta Sans'" },
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        }
+                        y: { max: 115, beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" } } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" }, maxRotation: 45, minRotation: 45 } }
                     }
                 }
             };
         }
 
-        function updateCharts(aggregatedData) {
+        function updateCharts(aggregatedData, filteredRows) {
             Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
-            const mapRegion = {};
-            const mapCadena = {};
-            const mapDistrito = {};
-
-            // Agregamos las 3 métricas individuales por sucursal para promediarlas en la gráfica
-            aggregatedData.forEach(item => {
-                if(!mapRegion[item.regional]) mapRegion[item.regional] = { sumAcuse: 0, sumPolitica: 0, sumPlan: 0, count: 0 };
-                mapRegion[item.regional].sumAcuse += item.acuse;
-                mapRegion[item.regional].sumPolitica += item.politica;
-                mapRegion[item.regional].sumPlan += item.plan;
-                mapRegion[item.regional].count += 1;
-
-                if(!mapCadena[item.cadena]) mapCadena[item.cadena] = { sumAcuse: 0, sumPolitica: 0, sumPlan: 0, count: 0 };
-                mapCadena[item.cadena].sumAcuse += item.acuse;
-                mapCadena[item.cadena].sumPolitica += item.politica;
-                mapCadena[item.cadena].sumPlan += item.plan;
-                mapCadena[item.cadena].count += 1;
-
-                if(!mapDistrito[item.distrital]) mapDistrito[item.distrital] = { sumAcuse: 0, sumPolitica: 0, sumPlan: 0, count: 0 };
-                mapDistrito[item.distrital].sumAcuse += item.acuse;
-                mapDistrito[item.distrital].sumPolitica += item.politica;
-                mapDistrito[item.distrital].sumPlan += item.plan;
-                mapDistrito[item.distrital].count += 1;
+            // 1. Lógica Gráfico Mensual Fija (Siempre 12 meses, usando data cruda)
+            const mapMes = {};
+            monthOrderFixed.forEach(m => mapMes[m] = { acuse: 0, pol: 0, plan: 0, count: 0 });
+            
+            filteredRows.forEach(row => {
+                if (mapMes[row.mes]) {
+                    mapMes[row.mes].acuse += row.acuse; mapMes[row.mes].pol += row.politica; mapMes[row.mes].plan += row.plan;
+                    mapMes[row.mes].count += 1;
+                }
             });
 
-            // Preparar datos de Región
-            const labelsRegion = Object.keys(mapRegion).sort();
-            const dataRegionAcuse = labelsRegion.map(k => mapRegion[k].sumAcuse / mapRegion[k].count);
-            const dataRegionPolitica = labelsRegion.map(k => mapRegion[k].sumPolitica / mapRegion[k].count);
-            const dataRegionPlan = labelsRegion.map(k => mapRegion[k].sumPlan / mapRegion[k].count);
+            const dMesAcuse = monthOrderFixed.map(m => mapMes[m].count ? mapMes[m].acuse / mapMes[m].count : 0);
+            const dMesPol = monthOrderFixed.map(m => mapMes[m].count ? mapMes[m].pol / mapMes[m].count : 0);
+            const dMesPlan = monthOrderFixed.map(m => mapMes[m].count ? mapMes[m].plan / mapMes[m].count : 0);
 
-            // Preparar datos de Cadena
-            const labelsCadena = Object.keys(mapCadena).sort();
-            const dataCadenaAcuse = labelsCadena.map(k => mapCadena[k].sumAcuse / mapCadena[k].count);
-            const dataCadenaPolitica = labelsCadena.map(k => mapCadena[k].sumPolitica / mapCadena[k].count);
-            const dataCadenaPlan = labelsCadena.map(k => mapCadena[k].sumPlan / mapCadena[k].count);
+            // 2. Lógica Gráficos Agrupados (Cadena, Región, Distrito)
+            const mapCad = {}, mapReg = {}, mapDist = {};
+            aggregatedData.forEach(item => {
+                if(!mapCad[item.cadena]) mapCad[item.cadena] = { acuse: 0, pol: 0, plan: 0, count: 0 };
+                mapCad[item.cadena].acuse += item.acuse; mapCad[item.cadena].pol += item.politica; mapCad[item.cadena].plan += item.plan; mapCad[item.cadena].count += 1;
 
-            // Preparar datos de Distrito
-            const labelsDistrito = Object.keys(mapDistrito).sort();
-            const dataDistritoAcuse = labelsDistrito.map(k => mapDistrito[k].sumAcuse / mapDistrito[k].count);
-            const dataDistritoPolitica = labelsDistrito.map(k => mapDistrito[k].sumPolitica / mapDistrito[k].count);
-            const dataDistritoPlan = labelsDistrito.map(k => mapDistrito[k].sumPlan / mapDistrito[k].count);
+                if(!mapReg[item.regional]) mapReg[item.regional] = { acuse: 0, pol: 0, plan: 0, count: 0 };
+                mapReg[item.regional].acuse += item.acuse; mapReg[item.regional].pol += item.politica; mapReg[item.regional].plan += item.plan; mapReg[item.regional].count += 1;
 
-            if (charts.region) charts.region.destroy();
+                if(!mapDist[item.distrital]) mapDist[item.distrital] = { acuse: 0, pol: 0, plan: 0, count: 0 };
+                mapDist[item.distrital].acuse += item.acuse; mapDist[item.distrital].pol += item.politica; mapDist[item.distrital].plan += item.plan; mapDist[item.distrital].count += 1;
+            });
+
+            const extract = (map) => {
+                const labels = Object.keys(map).sort();
+                return {
+                    l: labels,
+                    a: labels.map(k => map[k].acuse / map[k].count),
+                    po: labels.map(k => map[k].pol / map[k].count),
+                    pl: labels.map(k => map[k].plan / map[k].count)
+                };
+            };
+
+            const dataCad = extract(mapCad), dataReg = extract(mapReg), dataDist = extract(mapDist);
+
+            // Renderizar Gráficos
+            if (charts.mes) charts.mes.destroy();
             if (charts.cadena) charts.cadena.destroy();
+            if (charts.region) charts.region.destroy();
             if (charts.distrito) charts.distrito.destroy();
 
-            const ctxRegion = document.getElementById('chartRegion').getContext('2d');
-            charts.region = new Chart(ctxRegion, getMultiChartConfig(labelsRegion, dataRegionAcuse, dataRegionPolitica, dataRegionPlan));
-
-            const ctxCadena = document.getElementById('chartCadena').getContext('2d');
-            charts.cadena = new Chart(ctxCadena, getMultiChartConfig(labelsCadena, dataCadenaAcuse, dataCadenaPolitica, dataCadenaPlan));
-
-            const ctxDistrito = document.getElementById('chartDistrito').getContext('2d');
-            charts.distrito = new Chart(ctxDistrito, getMultiChartConfig(labelsDistrito, dataDistritoAcuse, dataDistritoPolitica, dataDistritoPlan));
+            charts.mes = new Chart(document.getElementById('chartMes').getContext('2d'), getMultiChartConfig(monthOrderFixed, dMesAcuse, dMesPol, dMesPlan));
+            charts.cadena = new Chart(document.getElementById('chartCadena').getContext('2d'), getMultiChartConfig(dataCad.l, dataCad.a, dataCad.po, dataCad.pl));
+            charts.region = new Chart(document.getElementById('chartRegion').getContext('2d'), getMultiChartConfig(dataReg.l, dataReg.a, dataReg.po, dataReg.pl));
+            charts.distrito = new Chart(document.getElementById('chartDistrito').getContext('2d'), getMultiChartConfig(dataDist.l, dataDist.a, dataDist.po, dataDist.pl));
         }
 
+        // === TABLA ===
         function updateTable(aggregatedData) {
             const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = ''; 
-
             if (aggregatedData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-500 text-sm">No hay registros con los filtros seleccionados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500 font-medium">No hay registros con los filtros seleccionados.</td></tr>`;
                 return;
             }
 
-            // Ordenar por regional, luego distrito, cadena y sucursal
-            const sortedData = [...aggregatedData].sort((a, b) => {
-                return a.regional.localeCompare(b.regional) || 
-                       a.distrital.localeCompare(b.distrital) || 
-                       a.cadena.localeCompare(b.cadena) ||
-                       a.sucursal.localeCompare(b.sucursal);
-            });
+            const sorted = [...aggregatedData].sort((a, b) => a.regional.localeCompare(b.regional) || a.distrital.localeCompare(b.distrital) || a.cadena.localeCompare(b.cadena));
 
-            const rowsHtml = sortedData.map(item => {
-                const colorPromedio = item.promedio >= 100 ? 'text-emerald-600' : 'text-slate-800';
-                const colorFaltante = item.faltante > 0 ? 'text-rose-600' : 'text-slate-400';
-
-                return `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-5 py-3 text-sm font-medium text-slate-800">${item.regional}</td>
-                        <td class="px-5 py-3 text-sm text-slate-600">${item.distrital}</td>
-                        <td class="px-5 py-3 text-sm text-slate-600">${item.cadena}</td>
-                        <td class="px-5 py-3 text-sm text-slate-600">${item.sucursal}</td>
-                        <td class="px-5 py-3 text-sm text-right text-slate-600">${item.acuse.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right text-slate-600">${item.politica.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right text-slate-600">${item.plan.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right font-bold ${colorPromedio}">${item.promedio.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right font-bold ${colorFaltante}">${item.faltante.toFixed(1)}%</td>
-                    </tr>
-                `;
-            }).join('');
-
-            tbody.innerHTML = rowsHtml;
+            tbody.innerHTML = sorted.map(item => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-5 py-3 text-sm font-medium text-slate-800">${item.regional}</td>
+                    <td class="px-5 py-3 text-sm text-slate-600">${item.distrital}</td>
+                    <td class="px-5 py-3 text-sm text-slate-600">${item.cadena}</td>
+                    <td class="px-5 py-3 text-sm text-slate-600">${item.sucursal}</td>
+                    <td class="px-5 py-3 text-sm text-center text-slate-600 font-semibold">${Math.round(item.acuse)}%</td>
+                    <td class="px-5 py-3 text-sm text-center text-slate-600 font-semibold">${Math.round(item.politica)}%</td>
+                    <td class="px-5 py-3 text-sm text-center text-slate-600 font-semibold">${Math.round(item.plan)}%</td>
+                    <td class="px-5 py-3 text-sm text-center font-extrabold text-[#2F5597] bg-slate-50/50">${Math.round(item.promedio)}%</td>
+                </tr>
+            `).join('');
         }
 
-        // Iniciar carga
         window.addEventListener('DOMContentLoaded', loadData);
 
     </script>
 </body>
-
 </html>
