@@ -121,7 +121,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Conectados - Azul Fuerte -->
                 <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
-                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4 text-azul-fuerte">Colaboradores Conectados </p>
+                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4 text-azul-fuerte">Colaboradores Conectados</p>
                     <div class="flex items-end justify-between">
                         <h3 id="kpiAsistentes" class="text-5xl font-black text-slate-900 tracking-tighter">--</h3>
                         <div class="p-3 bg-azul-fuerte/10 rounded-2xl text-azul-fuerte">
@@ -154,25 +154,26 @@
                 </div>
             </div>
 
-            <!-- Gráfico Comparativo Mensual -->
-            <div class="mb-8">
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro p-8">
+            <!-- Gráficos Juntos (Grid de 2 Columnas) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Gráfico Comparativo Mensual -->
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro p-8 overflow-hidden flex flex-col">
                     <h3 class="font-bold text-xl mb-8 flex items-center gap-3 text-slate-800">
                         <i data-lucide="bar-chart-2" class="text-azul-fuerte"></i> % de Cumplimiento Mensual por Cadena
                     </h3>
-                    <div class="chart-container chart-container-tall overflow-x-auto custom-scrollbar">
-                        <canvas id="chartCumplimientoMensual" style="min-width: 800px;"></canvas>
+                    <div class="chart-container chart-container-tall overflow-x-auto custom-scrollbar w-full">
+                        <div style="min-width: 700px; height: 100%;">
+                            <canvas id="chartCumplimientoMensual"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Gráficos -->
-            <div class="mb-8">
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro p-8">
+                <!-- Gráfico Evolución Histórica -->
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-azul-muy-claro p-8 overflow-hidden flex flex-col">
                     <h3 class="font-bold text-xl mb-8 flex items-center gap-3 text-slate-800">
                         <i data-lucide="history" class="text-azul-claro"></i> Histórico de Conexiones
                     </h3>
-                    <div class="chart-container">
+                    <div class="chart-container chart-container-tall w-full">
                         <canvas id="chartEvolucion"></canvas>
                     </div>
                 </div>
