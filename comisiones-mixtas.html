@@ -6,12 +6,17 @@
     <title>Comisiones Mixtas - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- PapaParse para leer el CSV de Google Sheets correctamente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f4f7f9; }
+        
+        /* Forzar la tipografía en los filtros y opciones desplegables */
+        select, option, button, input { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+
         .chart-container { position: relative; height: 300px; width: 100%; }
         
         /* Custom Scrollbar */
@@ -69,42 +74,6 @@
 
         <!-- Filtros -->
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <!-- Regional -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
-                <div class="relative">
-                    <i data-lucide="map" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterRegional" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todas</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
-            
-            <!-- Distrital -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
-                <div class="relative">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterDistrital" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todos</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
-
-            <!-- Cadena -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
-                <div class="relative">
-                    <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterCadena" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todas las Cadenas</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
-
             <!-- Trimestre -->
             <div class="card-panel p-4">
                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Trimestre</label>
@@ -128,10 +97,46 @@
                     <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
                 </div>
             </div>
+
+            <!-- Cadena -->
+            <div class="card-panel p-4">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
+                <div class="relative">
+                    <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                    <select id="filterCadena" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
+                        <option value="Todos">GES</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Regional -->
+            <div class="card-panel p-4">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
+                <div class="relative">
+                    <i data-lucide="map" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                    <select id="filterRegional" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
+                        <option value="Todos">Todas las regiones</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                </div>
+            </div>
+            
+            <!-- Distrital -->
+            <div class="card-panel p-4">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
+                <div class="relative">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                    <select id="filterDistrital" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
+                        <option value="Todos">Todos los distritos</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                </div>
+            </div>
         </div>
 
         <!-- KPIs Principales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             
             <!-- KPI Sucursales -->
             <div class="card-panel p-5 relative overflow-hidden">
@@ -140,32 +145,6 @@
                     <span id="kpiTotal" class="text-4xl font-extrabold text-slate-800">0</span>
                     <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
                         <i data-lucide="store" class="w-4 h-4 text-indigo-500"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KPI Promedio General -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Promedio Comisiones</h3>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-baseline gap-1">
-                        <span id="kpiPromedio" class="text-4xl font-extrabold text-slate-800">0</span>
-                        <span class="text-xl font-bold text-slate-800">%</span>
-                    </div>
-                    <span id="badgePromedio" class="text-xs font-bold px-2 py-1 rounded-md bg-rose-100 text-rose-600">BAJO META (100%) </span>
-                </div>
-            </div>
-
-            <!-- KPI Faltante para Meta -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Faltante para Meta</h3>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-baseline gap-1">
-                        <span id="kpiBrecha" class="text-4xl font-extrabold text-rose-600">0</span>
-                        <span class="text-xl font-bold text-rose-600">%</span>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
-                        <i data-lucide="target" class="w-4 h-4 text-rose-500"></i>
                     </div>
                 </div>
             </div>
@@ -205,14 +184,14 @@
 
         <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Gráfico Cumplimiento por Región -->
-            <div class="card-panel p-5">
+            <!-- Gráfico Cumplimiento por Mes (Solo visible en Acumulado) -->
+            <div id="containerChartMes" class="card-panel p-5 lg:col-span-2" style="display: none;">
                 <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
+                    <i data-lucide="calendar" class="w-5 h-5 text-indigo-500"></i>
+                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Mes</h3>
                 </div>
                 <div class="chart-container">
-                    <canvas id="chartRegion"></canvas>
+                    <canvas id="chartMes"></canvas>
                 </div>
             </div>
 
@@ -224,6 +203,17 @@
                 </div>
                 <div class="chart-container">
                     <canvas id="chartCadena"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico Cumplimiento por Región -->
+            <div class="card-panel p-5">
+                <div class="flex items-center gap-2 mb-6">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
+                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartRegion"></canvas>
                 </div>
             </div>
 
@@ -259,8 +249,7 @@
                             <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sucursal</th>
                             <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Cap. y Adiestramiento</th>
                             <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Seg. e Higiene</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Promedio</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Faltante</th>
+                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% de Cumplimiento</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
@@ -276,10 +265,16 @@
         // Inicializar iconos
         lucide.createIcons();
 
+        // Registrar plugin de etiquetas de datos para Chart.js
+        Chart.register(ChartDataLabels);
+
         // Enlace actualizado que proporcionaste
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=1647388782&single=true&output=csv';
         let rawData = [];
         let charts = {};
+        
+        // Almacenamos los meses que tienen información > 0 para hacer cálculos de promedio correctos
+        let activeMonths = new Set(); 
 
         // Parseador de porcentajes robusto
         function parsePercentage(val) {
@@ -316,17 +311,15 @@
                         const rows = results.data.slice(1); // Ignoramos la cabecera real
                         
                         rawData = rows.map(row => {
-                            // Mapeo según tus indicaciones
                             const mes = row[0] || 'N/A';
                             const regional = row[1] || 'N/A';
                             const distrital = row[2] || 'N/A';
                             const sucursal = row[3] || 'N/A';
                             const cadena = row[4] || 'N/A';
                             
-                            // Columnas de comisiones
                             const cap = parsePercentage(row[5]);
                             const seg = parsePercentage(row[6]);
-                            const promedio = (cap + seg) / 2; // Promedio de ambas comisiones
+                            const promedio = (cap + seg) / 2;
 
                             return {
                                 mes: mes,
@@ -339,7 +332,17 @@
                                 seg: seg,
                                 promedio: promedio
                             };
+                        }); 
+                        // NOTA: Ya no filtramos rawData aquí para conservar TODOS los meses (incluso en 0%) 
+                        // para que se puedan dibujar en la gráfica mensual.
+
+                        // Calculamos qué meses SÍ tienen datos (activeMonths) para promedios de tarjetas
+                        const monthSums = {};
+                        rawData.forEach(item => {
+                            if (!monthSums[item.mes]) monthSums[item.mes] = 0;
+                            monthSums[item.mes] += (item.cap + item.seg);
                         });
+                        activeMonths = new Set(Object.keys(monthSums).filter(m => monthSums[m] > 0));
 
                         initializeFilters();
                         updateDashboard();
@@ -365,56 +368,7 @@
         }
 
         function initializeFilters() {
-            const filters = {
-                mes: new Set(), trimestre: new Set(), cadena: new Set(),
-                regional: new Set(), distrital: new Set()
-            };
-
-            rawData.forEach(item => {
-                if (item.mes && item.mes !== 'N/A') filters.mes.add(item.mes);
-                if (item.trimestre && item.trimestre !== 'Desconocido' && item.trimestre !== 'Sin Trimestre') filters.trimestre.add(item.trimestre);
-                if (item.cadena && item.cadena !== 'N/A') filters.cadena.add(item.cadena);
-                if (item.regional && item.regional !== 'N/A') filters.regional.add(item.regional);
-                if (item.distrital && item.distrital !== 'N/A') filters.distrital.add(item.distrital);
-            });
-
-            // Diccionario para ordenar cronológicamente los meses
-            const mesesOrden = {
-                'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
-                'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
-            };
-
-            const populateSelect = (id, set, isMonth = false) => {
-                const select = document.getElementById(id);
-                select.innerHTML = select.options[0].outerHTML; // Mantener la opción "Todos"
-                
-                let arr = Array.from(set);
-                
-                if (isMonth) {
-                    arr.sort((a, b) => {
-                        const numA = mesesOrden[a.toLowerCase().trim()] || 99;
-                        const numB = mesesOrden[b.toLowerCase().trim()] || 99;
-                        return numA - numB;
-                    });
-                } else {
-                    arr.sort();
-                }
-
-                arr.forEach(value => {
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value;
-                    select.appendChild(option);
-                });
-            };
-
-            populateSelect('filterMes', filters.mes, true);
-            populateSelect('filterTrimestre', filters.trimestre);
-            populateSelect('filterCadena', filters.cadena);
-            populateSelect('filterRegional', filters.regional);
-            populateSelect('filterDistrital', filters.distrital);
-
-            // Listeners
+            // Asignar listeners. Las opciones se llenarán dinámicamente en updateDashboard
             ['filterMes', 'filterTrimestre', 'filterCadena', 'filterRegional', 'filterDistrital'].forEach(id => {
                 const el = document.getElementById(id);
                 const clone = el.cloneNode(true);
@@ -424,13 +378,104 @@
         }
 
         function updateDashboard() {
-            const sMes = document.getElementById('filterMes').value;
-            const sTrimestre = document.getElementById('filterTrimestre').value;
-            const sCadena = document.getElementById('filterCadena').value;
-            const sRegional = document.getElementById('filterRegional').value;
-            const sDistrital = document.getElementById('filterDistrital').value;
+            const selects = {
+                mes: document.getElementById('filterMes'),
+                trimestre: document.getElementById('filterTrimestre'),
+                cadena: document.getElementById('filterCadena'),
+                regional: document.getElementById('filterRegional'),
+                distrital: document.getElementById('filterDistrital')
+            };
 
-            // 1. Filtrar las filas crudas según los combos seleccionados
+            const vals = {
+                mes: selects.mes.value,
+                trimestre: selects.trimestre.value,
+                cadena: selects.cadena.value,
+                regional: selects.regional.value,
+                distrital: selects.distrital.value
+            };
+
+            // 1. Estabilizar selecciones inválidas en cascada
+            let stable = false;
+            let loops = 0;
+            while(!stable && loops < 5) {
+                stable = true;
+                loops++;
+
+                const validCheck = (key, dataField) => {
+                    if (vals[key] === 'Todos') return;
+                    
+                    let isValid = rawData.some(item => 
+                        (key === 'mes' || vals.mes === 'Todos' || item.mes === vals.mes) &&
+                        (key === 'trimestre' || vals.trimestre === 'Todos' || item.trimestre === vals.trimestre) &&
+                        (key === 'cadena' || vals.cadena === 'Todos' || item.cadena === vals.cadena) &&
+                        (key === 'regional' || vals.regional === 'Todos' || item.regional === vals.regional) &&
+                        (key === 'distrital' || vals.distrital === 'Todos' || item.distrital === vals.distrital) &&
+                        (item[dataField] === vals[key])
+                    );
+                    
+                    if (!isValid) {
+                        vals[key] = 'Todos';
+                        stable = false;
+                    }
+                };
+
+                validCheck('mes', 'mes');
+                validCheck('trimestre', 'trimestre');
+                validCheck('cadena', 'cadena');
+                validCheck('regional', 'regional');
+                validCheck('distrital', 'distrital');
+            }
+
+            // 2. Reconstruir dinámicamente las opciones de cada filtro
+            const rebuildSelect = (key, dataField, isMonth = false) => {
+                const defaultOptionText = selects[key].options[0].text;
+
+                const validData = rawData.filter(item => 
+                    activeMonths.has(item.mes) && // Solo mostramos los meses con datos reales en los selectores
+                    (key === 'mes' || vals.mes === 'Todos' || item.mes === vals.mes) &&
+                    (key === 'trimestre' || vals.trimestre === 'Todos' || item.trimestre === vals.trimestre) &&
+                    (key === 'cadena' || vals.cadena === 'Todos' || item.cadena === vals.cadena) &&
+                    (key === 'regional' || vals.regional === 'Todos' || item.regional === vals.regional) &&
+                    (key === 'distrital' || vals.distrital === 'Todos' || item.distrital === vals.distrital)
+                );
+
+                const validOptions = new Set(validData.map(item => item[dataField]).filter(v => v && v !== 'N/A' && v !== 'Desconocido' && v !== 'Sin Trimestre'));
+                
+                let arr = Array.from(validOptions);
+                if (isMonth) {
+                    const mesesOrden = {
+                        'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+                        'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+                    };
+                    arr.sort((a, b) => (mesesOrden[a.toLowerCase().trim()] || 99) - (mesesOrden[b.toLowerCase().trim()] || 99));
+                } else {
+                    arr.sort();
+                }
+
+                selects[key].innerHTML = `<option value="Todos">${defaultOptionText}</option>`;
+                arr.forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    selects[key].appendChild(opt);
+                });
+
+                selects[key].value = vals[key];
+            };
+
+            rebuildSelect('mes', 'mes', true);
+            rebuildSelect('trimestre', 'trimestre');
+            rebuildSelect('cadena', 'cadena');
+            rebuildSelect('regional', 'regional');
+            rebuildSelect('distrital', 'distrital');
+
+            const sMes = vals.mes;
+            const sTrimestre = vals.trimestre;
+            const sCadena = vals.cadena;
+            const sRegional = vals.regional;
+            const sDistrital = vals.distrital;
+
+            // 3. Este filtro (filteredRows) incluye TODOS los meses, incluso los 0%. Lo usaremos SOLO para la Gráfica de Meses.
             const filteredRows = rawData.filter(item => {
                 return (sMes === 'Todos' || item.mes === sMes) &&
                        (sTrimestre === 'Todos' || item.trimestre === sTrimestre) &&
@@ -439,10 +484,19 @@
                        (sDistrital === 'Todos' || item.distrital === sDistrital);
             });
 
-            // 2. AGRUPAR por Sucursal para promediar cuando hay varios meses (ej. vista anual o trimestral)
+            // 3.5. Este filtro (activeRows) extrae SOLO los meses con datos reales. Se usa para las Tarjetas, Tabla y demás gráficas.
+            const activeRows = filteredRows.filter(item => activeMonths.has(item.mes));
+
+            // 4. AGRUPAR por Sucursal (Usando solo activeRows para promedios limpios)
             const groupedBranches = {};
+            let sumRawCap = 0;
+            let sumRawSeg = 0;
             
-            filteredRows.forEach(item => {
+            activeRows.forEach(item => {
+                // Acumulado global directo para KPIs principales (solo suma lo que sí existe)
+                sumRawCap += item.cap;
+                sumRawSeg += item.seg;
+
                 const key = `${item.regional}|${item.distrital}|${item.cadena}|${item.sucursal}`;
                 
                 if(!groupedBranches[key]) {
@@ -462,7 +516,7 @@
                 groupedBranches[key].count += 1;
             });
 
-            // 3. Crear el arreglo final de sucursales únicas con sus promedios
+            // 5. Crear el arreglo final de sucursales únicas con sus promedios
             const aggregatedData = Object.values(groupedBranches).map(g => {
                 const avgPromedio = g.sumPromedio / g.count;
                 return {
@@ -472,47 +526,25 @@
                     sucursal: g.sucursal,
                     cap: g.sumCap / g.count,
                     seg: g.sumSeg / g.count,
-                    promedio: avgPromedio,
-                    faltante: Math.max(0, 100 - avgPromedio)
+                    promedio: avgPromedio
                 };
             });
 
-            // 4. Calcular KPIs Globales basados en las sucursales únicas resultantes
+            // 6. Calcular KPIs Globales (Dividiendo solo entre la cantidad de registros reales activos)
             const totalSucursales = aggregatedData.length;
-            let sumGlobalCap = 0, sumGlobalSeg = 0, sumGlobalPromedio = 0;
+            const avgCap = activeRows.length ? (sumRawCap / activeRows.length) : 0;
+            const avgSeg = activeRows.length ? (sumRawSeg / activeRows.length) : 0;
 
-            aggregatedData.forEach(item => {
-                sumGlobalCap += item.cap;
-                sumGlobalSeg += item.seg;
-                sumGlobalPromedio += item.promedio;
-            });
-
-            const avgCap = totalSucursales ? (sumGlobalCap / totalSucursales) : 0;
-            const avgSeg = totalSucursales ? (sumGlobalSeg / totalSucursales) : 0;
-            const avgGeneral = totalSucursales ? (sumGlobalPromedio / totalSucursales) : 0;
-            const faltanteGlobal = totalSucursales ? Math.max(0, 100 - avgGeneral) : 0;
-
-            // 5. Actualizar DOM KPIs
+            // 7. Actualizar DOM KPIs
             animateValue('kpiTotal', totalSucursales, false);
-            animateValue('kpiPromedio', avgGeneral, true);
-            animateValue('kpiBrecha', faltanteGlobal, true);
             animateValue('kpiCap', avgCap, true);
             animateValue('kpiSeg', avgSeg, true);
 
             document.getElementById('barCap').style.width = `${avgCap}%`;
             document.getElementById('barSeg').style.width = `${avgSeg}%`;
-            
-            const badge = document.getElementById('badgePromedio');
-            if(avgGeneral >= 100) {
-                badge.innerText = "META ALCANZADA";
-                badge.className = "text-xs font-bold px-2 py-1 rounded-md bg-emerald-100 text-emerald-600";
-            } else {
-                badge.innerText = "BAJO META";
-                badge.className = "text-xs font-bold px-2 py-1 rounded-md bg-rose-100 text-rose-600";
-            }
 
-            // 6. Actualizar Gráficos y Tabla con los datos Agrupados
-            updateCharts(aggregatedData);
+            // 8. Actualizar Gráficos (le pasamos filteredRows que tiene los 12 meses)
+            updateCharts(aggregatedData, filteredRows, sMes);
             updateTable(aggregatedData);
         }
 
@@ -526,12 +558,13 @@
                 const progress = Math.min((currentTimestamp - startTimestamp) / duration, 1);
                 const currentVal = (progress * (endValue - startValue) + startValue);
                 
-                obj.innerText = isPercentage ? currentVal.toFixed(1) : Math.floor(currentVal);
+                // Quitamos el toFixed(1) y usamos Math.round para números enteros
+                obj.innerText = isPercentage ? Math.round(currentVal) : Math.floor(currentVal);
                 
                 if (progress < 1) {
                     window.requestAnimationFrame(step);
                 } else {
-                    obj.innerText = isPercentage ? endValue.toFixed(1) : endValue;
+                    obj.innerText = isPercentage ? Math.round(endValue) : Math.floor(endValue);
                 }
             };
             window.requestAnimationFrame(step);
@@ -548,23 +581,41 @@
                             data: dataCap,
                             backgroundColor: '#2F5597', // Azul oscuro
                             borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.8
+                            barPercentage: 0.6, // Barras más delgadas para evitar amontonamiento
+                            categoryPercentage: 0.7
                         },
                         {
                             label: 'Seguridad e Higiene',
                             data: dataSeg,
                             backgroundColor: '#8FAADC', // Azul claro
                             borderRadius: 4,
-                            barPercentage: 0.7,
-                            categoryPercentage: 0.8
+                            barPercentage: 0.6, // Barras más delgadas para evitar amontonamiento
+                            categoryPercentage: 0.7
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 10
+                        }
+                    },
                     plugins: {
+                        datalabels: {
+                            display: true,
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 4, // Más separación entre la barra y el número
+                            formatter: (value) => value > 0 ? Math.round(value) + '%' : '', // Ocultar los 0% para limpiar la gráfica
+                            font: {
+                                family: "'Plus Jakarta Sans', sans-serif",
+                                size: 9, // Letra un poco más pequeña
+                                weight: 'bold'
+                            },
+                            color: '#475569'
+                        },
                         legend: { 
                             display: true,
                             position: 'top',
@@ -577,25 +628,29 @@
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` },
+                            callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` },
                             backgroundColor: '#1e293b',
                             padding: 10,
-                            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13 },
-                            bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 }
+                            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+                            bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }
                         }
                     },
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            max: 100, 
+                            max: 115, // Límite en 115 para que los 100% no choquen arriba
                             grid: { color: '#f1f5f9', drawBorder: false },
-                            ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" } }
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { family: "'Plus Jakarta Sans'", size: 10 },
+                                stepSize: 20
+                            }
                         },
                         x: { 
                             grid: { display: false, drawBorder: false },
                             ticks: { 
                                 color: '#94a3b8', 
-                                font: { family: "'Plus Jakarta Sans'" },
+                                font: { family: "'Plus Jakarta Sans'", size: 9 }, // Letra del eje X un poco más pequeña
                                 maxRotation: 45,
                                 minRotation: 45
                             }
@@ -605,12 +660,28 @@
             };
         }
 
-        function updateCharts(aggregatedData) {
+        function updateCharts(aggregatedData, filteredRows, sMes) {
             Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
             const mapRegion = {};
             const mapCadena = {};
             const mapDistrito = {};
+            
+            // Creamos un mapa forzado con los 12 meses del año en orden estricto
+            const mesesEstandar = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const mapMes = {};
+            mesesEstandar.forEach(m => mapMes[m] = { sumCap: 0, sumSeg: 0, count: 0 });
+
+            // Agrupar datos por mes. (filteredRows incluye los 12 meses, tengan info o estén en 0%)
+            filteredRows.forEach(item => {
+                // Buscamos coincidencia ignorando mayúsculas y espacios
+                const mesNombre = mesesEstandar.find(m => m.toLowerCase() === item.mes.toLowerCase().trim());
+                if(mesNombre) {
+                    mapMes[mesNombre].sumCap += item.cap;
+                    mapMes[mesNombre].sumSeg += item.seg;
+                    mapMes[mesNombre].count += 1;
+                }
+            });
 
             aggregatedData.forEach(item => {
                 if(!mapRegion[item.regional]) mapRegion[item.regional] = { sumCap: 0, sumSeg: 0, count: 0 };
@@ -656,6 +727,23 @@
 
             const ctxDistrito = document.getElementById('chartDistrito').getContext('2d');
             charts.distrito = new Chart(ctxDistrito, getMultiChartConfig(labelsDistrito, dataDistritoCap, dataDistritoSeg));
+
+            // Lógica para mostrar/ocultar y renderizar Gráfico por Mes (con los 12 fijos)
+            const containerMes = document.getElementById('containerChartMes');
+            if (sMes === 'Todos') {
+                containerMes.style.display = 'block';
+                
+                const labelsMes = mesesEstandar;
+                // Si el count es 0 (no hay registro de ese mes, o es un mes futuro con todo en 0%), mostramos 0% en la gráfica
+                const dataMesCap = labelsMes.map(k => mapMes[k].count > 0 ? (mapMes[k].sumCap / mapMes[k].count) : 0);
+                const dataMesSeg = labelsMes.map(k => mapMes[k].count > 0 ? (mapMes[k].sumSeg / mapMes[k].count) : 0);
+
+                if (charts.mes) charts.mes.destroy();
+                const ctxMes = document.getElementById('chartMes').getContext('2d');
+                charts.mes = new Chart(ctxMes, getMultiChartConfig(labelsMes, dataMesCap, dataMesSeg));
+            } else {
+                containerMes.style.display = 'none';
+            }
         }
 
         function updateTable(aggregatedData) {
@@ -663,7 +751,7 @@
             tbody.innerHTML = ''; 
 
             if (aggregatedData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500 text-sm">No hay registros con los filtros seleccionados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500 text-sm">No hay registros con los filtros seleccionados.</td></tr>`;
                 return;
             }
 
@@ -676,8 +764,7 @@
             });
 
             const rowsHtml = sortedData.map(item => {
-                const colorPromedio = item.promedio >= 100 ? 'text-emerald-600' : 'text-slate-800';
-                const colorFaltante = item.faltante > 0 ? 'text-rose-600' : 'text-slate-400';
+                const colorCumplimiento = item.promedio >= 100 ? 'text-emerald-600' : 'text-slate-800';
 
                 return `
                     <tr class="hover:bg-slate-50 transition-colors">
@@ -685,10 +772,9 @@
                         <td class="px-5 py-3 text-sm text-slate-600">${item.distrital}</td>
                         <td class="px-5 py-3 text-sm text-slate-600">${item.cadena}</td>
                         <td class="px-5 py-3 text-sm text-slate-600">${item.sucursal}</td>
-                        <td class="px-5 py-3 text-sm text-right text-slate-600">${item.cap.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right text-slate-600">${item.seg.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right font-bold ${colorPromedio}">${item.promedio.toFixed(1)}%</td>
-                        <td class="px-5 py-3 text-sm text-right font-bold ${colorFaltante}">${item.faltante.toFixed(1)}%</td>
+                        <td class="px-5 py-3 text-sm text-right text-slate-600">${Math.round(item.cap)}%</td>
+                        <td class="px-5 py-3 text-sm text-right text-slate-600">${Math.round(item.seg)}%</td>
+                        <td class="px-5 py-3 text-sm text-right font-bold ${colorCumplimiento}">${Math.round(item.promedio)}%</td>
                     </tr>
                 `;
             }).join('');
@@ -701,5 +787,4 @@
 
     </script>
 </body>
-
 </html>
