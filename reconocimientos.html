@@ -404,7 +404,7 @@
             bar.className = `h-full transition-all duration-1000 bg-[#355C9D]`;
             
             const status = document.getElementById('metaStatus');
-            status.textContent = faltanteGlobal <= 0 ? "Meta Cumplida" : "En Proceso";
+            status.textContent = faltanteGlobal <= 0 ? "" : "";
             status.className = `text-lg font-black ${faltanteGlobal <= 0 ? 'text-[#355C9D]' : 'text-[#8DA4D0]'}`;
         }
 
@@ -529,3 +529,4 @@
 </body>
 
 </html>
+
