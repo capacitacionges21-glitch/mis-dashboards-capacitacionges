@@ -67,7 +67,7 @@
                         <div class="relative">
                             <i data-lucide="building-2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                             <select id="filterCadena" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none focus:ring-2 focus:ring-[#355C9D] appearance-none cursor-pointer">
-                                <option value="all">Todas las Cadenas</option>
+                                <option value="all">GES</option>
                             </select>
                         </div>
                     </div>
@@ -94,8 +94,8 @@
 
                     <div class="hidden xl:flex items-center gap-8 px-6 py-3 bg-[#C4D3E8]/30 rounded-2xl border border-[#C4D3E8] justify-center">
                         <div class="text-center">
-                            <p class="text-[9px] font-bold text-[#8DA4D0] uppercase"></p>
-                            <p id="metaStatus" class="text-lg font-black text-[#355C9D]"></p>
+                            <p class="text-[9px] font-bold text-[#8DA4D0] uppercase">Estado General</p>
+                            <p id="metaStatus" class="text-lg font-black text-[#355C9D]">Analizando...</p>
                         </div>
                     </div>
                 </div>
@@ -127,7 +127,7 @@
                 </div>
 
                 <div class="bg-white p-7 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-[#8DA4D0] transition-all">
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">% Cumplimiento Meta (7%)</p>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">% Cumplimiento (Meta 7%)</p>
                     <div class="flex items-center justify-between mb-2">
                         <h3 id="kpiCumplimiento" class="text-5xl font-black text-slate-900 tracking-tighter">--%</h3>
                         <div id="statusDot" class="w-4 h-4 rounded-full bg-slate-200 animate-pulse"></div>
@@ -149,7 +149,7 @@
             </div>
 
             <!-- Gráficos -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div id="chartsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
                     <h3 class="font-bold text-xl mb-8 flex items-center gap-3">
                         <i data-lucide="bar-chart-3" class="text-[#355C9D]"></i> % de Cumplimiento Mensual por Cadena
@@ -158,7 +158,7 @@
                         <canvas id="chartCadenas"></canvas>
                     </div>
                 </div>
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
+                <div id="containerEvolucion" class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
                     <h3 class="font-bold text-xl mb-8 flex items-center gap-3">
                         <i data-lucide="trending-up" class="text-[#355C9D]"></i> Evolución Global de Reconocimientos
                     </h3>
@@ -353,9 +353,14 @@
             let finalData = Object.values(agrupado).map(d => {
                 const divider = (isAcumulado && d.validMonths > 0) ? d.validMonths : 1;
 
-                const metaAvg = d.meta / divider;
+                let metaAvg = d.meta / divider;
                 const recAvg = d.reconocimientos / divider;
                 const planAvg = d.plantilla / divider;
+
+                // Regla: Si la meta es 0 en el filtro anual (Acumulado de todo el año), forzar a que sea por lo menos 1
+                if (fMes === 'all' && fTrimestre === 'all' && metaAvg < 1) {
+                    metaAvg = 1;
+                }
 
                 // Regla: % Cumplimiento = Reconocimientos / Meta
                 const pctCumplimiento = metaAvg > 0 ? (recAvg / metaAvg) * 100 : 0;
@@ -381,6 +386,20 @@
                 contribucion: totalMetaGlobal > 0 ? Math.round((d.reconocimientos / totalMetaGlobal) * 100) : 0
             }));
 
+            // Regla UI: Ocultar gráfico de Evolución si se selecciona un mes específico
+            const chartsGrid = document.getElementById('chartsGrid');
+            const containerEvolucion = document.getElementById('containerEvolucion');
+            
+            if (fMes !== 'all') {
+                containerEvolucion.classList.add('hidden');
+                chartsGrid.classList.remove('lg:grid-cols-2');
+                chartsGrid.classList.add('lg:grid-cols-1');
+            } else {
+                containerEvolucion.classList.remove('hidden');
+                chartsGrid.classList.add('lg:grid-cols-2');
+                chartsGrid.classList.remove('lg:grid-cols-1');
+            }
+
             renderKPIs(finalData, totalMetaGlobal);
             renderCharts(finalData, data, isAcumulado);
             renderTable(finalData);
@@ -404,7 +423,7 @@
             bar.className = `h-full transition-all duration-1000 bg-[#355C9D]`;
             
             const status = document.getElementById('metaStatus');
-            status.textContent = faltanteGlobal <= 0 ? "" : "";
+            status.textContent = faltanteGlobal <= 0 ? "Meta Cumplida" : "En Proceso";
             status.className = `text-lg font-black ${faltanteGlobal <= 0 ? 'text-[#355C9D]' : 'text-[#8DA4D0]'}`;
         }
 
@@ -429,13 +448,17 @@
                     label: mes,
                     data: cadenasLabels.map(cadena => {
                         const row = rawFiltered.find(d => d.cadena === cadena && d.mes === mes);
-                        if(row && row.meta > 0 && row.plantilla > 0 && row.reconocimientos > 0) {
-                            return Math.round((row.reconocimientos / row.meta) * 100);
+                        if(row) {
+                            let metaValue = row.meta;
+                            // Prevenir división por cero si la meta es 0
+                            if (metaValue <= 0) metaValue = 1; 
+                            return Math.round((row.reconocimientos / metaValue) * 100);
                         }
                         return 0;
                     }),
                     backgroundColor: barColors[index % barColors.length],
-                    borderRadius: 4
+                    borderRadius: 4,
+                    minBarLength: 4 // Fuerza a que los valores en 0% se vean como una pequeña barra visible
                 };
             });
 
@@ -444,8 +467,24 @@
                 data: { labels: cadenasLabels, datasets: datasetsBar },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: isAllMonths, position: 'bottom' } }, // Muestra leyenda si hay múltiples meses
-                    scales: { y: { beginAtZero: true, max: 110 } }
+                    plugins: { 
+                        legend: { display: isAllMonths, position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) { return value + '%' }
+                            }
+                        } 
+                    }
                 }
             });
 
@@ -527,6 +566,4 @@
         }
     </script>
 </body>
-
 </html>
-
