@@ -149,7 +149,7 @@
                     <div class="h-64"><canvas id="chartTendencia"></canvas></div>
                 </div>
                 
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                <div id="containerRegional" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
                     <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
                         <span class="w-2 h-2 bg-azul-claro rounded-full mr-2"></span>
                         DESEMPEÑO REGIONAL
@@ -157,12 +157,20 @@
                     <div class="h-64"><canvas id="chartRegional"></canvas></div>
                 </div>
 
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                <div id="containerDistrito" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
                     <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
                         <span class="w-2 h-2 bg-azul-muy-claro border border-azul-claro rounded-full mr-2"></span>
                         DESEMPEÑO DISTRITAL
                     </h3>
                     <div class="h-64"><canvas id="chartDistrito"></canvas></div>
+                </div>
+
+                <div id="containerSucursal" class="hidden bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
+                        <span class="w-2 h-2 bg-emerald-400 rounded-full mr-2"></span>
+                        DESEMPEÑO POR SUCURSAL
+                    </h3>
+                    <div class="h-64"><canvas id="chartSucursal"></canvas></div>
                 </div>
             </div>
 
@@ -368,15 +376,36 @@
 
             const chartsGrid = document.getElementById('chartsGrid');
             const containerTendencia = document.getElementById('containerTendencia');
+            const containerRegional = document.getElementById('containerRegional');
+            const containerDistrito = document.getElementById('containerDistrito');
+            const containerSucursal = document.getElementById('containerSucursal');
+            
+            let visibleCharts = 0;
+
             if (fMes !== 'all') {
                 containerTendencia.classList.add('hidden');
-                chartsGrid.classList.remove('lg:grid-cols-3');
-                chartsGrid.classList.add('lg:grid-cols-2');
             } else {
                 containerTendencia.classList.remove('hidden');
-                chartsGrid.classList.remove('lg:grid-cols-2');
-                chartsGrid.classList.add('lg:grid-cols-3');
+                visibleCharts++;
             }
+
+            if (fGer !== 'all') {
+                containerRegional.classList.add('hidden');
+                containerDistrito.classList.add('hidden');
+                containerSucursal.classList.remove('hidden');
+                visibleCharts++;
+            } else {
+                containerRegional.classList.remove('hidden');
+                containerDistrito.classList.remove('hidden');
+                containerSucursal.classList.add('hidden');
+                visibleCharts += 2;
+            }
+
+            // Ajustar las columnas dependiendo de cuántos gráficos queden visibles
+            chartsGrid.classList.remove('lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3');
+            if (visibleCharts === 3) chartsGrid.classList.add('lg:grid-cols-3');
+            else if (visibleCharts === 2) chartsGrid.classList.add('lg:grid-cols-2');
+            else chartsGrid.classList.add('lg:grid-cols-1');
 
             const status = document.getElementById('kpiPromedioStatus');
             status.className = `text-[10px] font-bold px-2 py-1 rounded-full uppercase ${avg >= 90 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`;
@@ -426,6 +455,13 @@
             const fMes = document.getElementById('filterMes').value;
             let tK = fMes === 'all' ? [1,2,3,4,5,6,7,8,9,10,11,12] : [parseInt(fMes)];
             updateChart('chartTendencia', 'line', tK.map(k => monthNames[k]), tK.map(k => tG[k] ? tG[k].s/tG[k].c : null), false, '#355C9D');
+
+            if (document.getElementById('filterGerente').value !== 'all') {
+                const sG = {};
+                filtered.forEach(d => { if(!sG[d.sucursal]) sG[d.sucursal] = {s:0, c:0}; sG[d.sucursal].s += d.calificacion; sG[d.sucursal].c++; });
+                const sL = Object.keys(sG).sort((a,b) => (sG[b].s/sG[b].c) - (sG[a].s/sG[a].c));
+                updateChart('chartSucursal', 'bar', sL, sL.map(l => sG[l].s/sG[l].c), true, '#10b981');
+            }
         }
 
         function updateChart(id, type, labels, values, horiz = false, primaryColor = '#355C9D') {
