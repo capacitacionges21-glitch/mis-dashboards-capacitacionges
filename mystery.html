@@ -134,12 +134,12 @@
                     </div>
                 </div>
 
-                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                <div id="kpiSucursalesEvalsCard" class="card bg-white shadow-sm border border-slate-100 p-6">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sucursales Evaluadas</p>
                     <h3 id="kpiSucursalesEvals" class="text-4xl font-black text-slate-800 mt-1">--</h3>
                 </div>
 
-                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                <div id="kpiTotalEvalsCard" class="card bg-white shadow-sm border border-slate-100 p-6">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Evaluaciones Totales</p>
                     <h3 id="kpiTotalEvals" class="text-4xl font-black text-azul-claro mt-1">--</h3>
                 </div>
@@ -360,6 +360,19 @@
             
             noData.classList.add('hidden');
             kpiCont.classList.remove('opacity-20');
+
+            // Lógica para ocultar/mostrar tarjeta de Sucursales Evaluadas y ajustar columnas de KPIs
+            const cardSucursales = document.getElementById('kpiSucursalesEvalsCard');
+            const containerKpis = document.getElementById('kpiContainer');
+            if (fMes !== 'all') {
+                cardSucursales.classList.add('hidden');
+                containerKpis.classList.remove('lg:grid-cols-4');
+                containerKpis.classList.add('lg:grid-cols-3');
+            } else {
+                cardSucursales.classList.remove('hidden');
+                containerKpis.classList.remove('lg:grid-cols-3');
+                containerKpis.classList.add('lg:grid-cols-4');
+            }
 
             const totalEvals = filtered.length;
             const avg = filtered.reduce((a, b) => a + b.calificacion, 0) / totalEvals;
