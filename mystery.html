@@ -115,7 +115,7 @@
         </div>
 
         <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-            <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 <div class="card bg-white shadow-sm border border-slate-100 p-6">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Promedio General</p>
                     <div class="flex justify-between items-center">
@@ -132,6 +132,11 @@
                     <div class="w-full bg-azul-muy-claro rounded-full h-1.5 mt-4">
                         <div id="kpiCumplimientoBar" class="bg-azul-fuerte h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
                     </div>
+                </div>
+
+                <div class="card bg-white shadow-sm border border-slate-100 p-6">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sucursales Evaluadas</p>
+                    <h3 id="kpiSucursalesEvals" class="text-4xl font-black text-slate-800 mt-1">--</h3>
                 </div>
 
                 <div class="card bg-white shadow-sm border border-slate-100 p-6">
@@ -372,6 +377,7 @@
             document.getElementById('kpiPromedio').textContent = Math.round(avg) + "%";
             document.getElementById('kpiCumplimiento').textContent = sucursalesAprobadas;
             document.getElementById('kpiCumplimientoBar').style.width = sucursalesAprobadasPct + "%";
+            document.getElementById('kpiSucursalesEvals').textContent = sucursalesTotalesDistintas;
             document.getElementById('kpiTotalEvals').textContent = totalEvals;
 
             const chartsGrid = document.getElementById('chartsGrid');
@@ -441,30 +447,30 @@
 
         function renderCharts(filtered, trendData) {
             const rG = {};
-            filtered.forEach(d => { if(!rG[d.regional]) rG[d.regional] = {s:0, c:0}; rG[d.regional].s += d.calificacion; rG[d.regional].c++; });
+            filtered.forEach(d => { if(!rG[d.regional]) rG[d.regional] = {s:0, c:0, sucs: new Set()}; rG[d.regional].s += d.calificacion; rG[d.regional].c++; rG[d.regional].sucs.add(d.sucursal); });
             const rL = Object.keys(rG).sort((a,b) => (rG[b].s/rG[b].c) - (rG[a].s/rG[a].c));
-            updateChart('chartRegional', 'bar', rL, rL.map(l => rG[l].s/rG[l].c), true, '#8DA4D0');
+            updateChart('chartRegional', 'bar', rL, rL.map(l => rG[l].s/rG[l].c), rL.map(l => rG[l].sucs.size), true, '#8DA4D0');
 
             const dG = {};
-            filtered.forEach(d => { if(!dG[d.gerente]) dG[d.gerente] = {s:0, c:0}; dG[d.gerente].s += d.calificacion; dG[d.gerente].c++; });
+            filtered.forEach(d => { if(!dG[d.gerente]) dG[d.gerente] = {s:0, c:0, sucs: new Set()}; dG[d.gerente].s += d.calificacion; dG[d.gerente].c++; dG[d.gerente].sucs.add(d.sucursal); });
             const dL = Object.keys(dG).sort((a,b) => (dG[b].s/dG[b].c) - (dG[a].s/dG[a].c)).slice(0, 10);
-            updateChart('chartDistrito', 'bar', dL, dL.map(l => dG[l].s/dG[l].c), true, '#355C9D');
+            updateChart('chartDistrito', 'bar', dL, dL.map(l => dG[l].s/dG[l].c), dL.map(l => dG[l].sucs.size), true, '#355C9D');
 
             const tG = {};
-            trendData.forEach(d => { if(!tG[d.mes]) tG[d.mes] = {s:0, c:0}; tG[d.mes].s += d.calificacion; tG[d.mes].c++; });
+            trendData.forEach(d => { if(!tG[d.mes]) tG[d.mes] = {s:0, c:0, sucs: new Set()}; tG[d.mes].s += d.calificacion; tG[d.mes].c++; tG[d.mes].sucs.add(d.sucursal); });
             const fMes = document.getElementById('filterMes').value;
             let tK = fMes === 'all' ? [1,2,3,4,5,6,7,8,9,10,11,12] : [parseInt(fMes)];
-            updateChart('chartTendencia', 'line', tK.map(k => monthNames[k]), tK.map(k => tG[k] ? tG[k].s/tG[k].c : null), false, '#355C9D');
+            updateChart('chartTendencia', 'line', tK.map(k => monthNames[k]), tK.map(k => tG[k] ? tG[k].s/tG[k].c : null), tK.map(k => tG[k] ? tG[k].sucs.size : null), false, '#355C9D');
 
             if (document.getElementById('filterGerente').value !== 'all') {
                 const sG = {};
                 filtered.forEach(d => { if(!sG[d.sucursal]) sG[d.sucursal] = {s:0, c:0}; sG[d.sucursal].s += d.calificacion; sG[d.sucursal].c++; });
                 const sL = Object.keys(sG).sort((a,b) => (sG[b].s/sG[b].c) - (sG[a].s/sG[a].c));
-                updateChart('chartSucursal', 'bar', sL, sL.map(l => sG[l].s/sG[l].c), true, '#10b981');
+                updateChart('chartSucursal', 'bar', sL, sL.map(l => sG[l].s/sG[l].c), sL.map(l => sG[l].c), true, '#10b981');
             }
         }
 
-        function updateChart(id, type, labels, values, horiz = false, primaryColor = '#355C9D') {
+        function updateChart(id, type, labels, values, counts, horiz = false, primaryColor = '#355C9D') {
             if(chartInstances[id]) chartInstances[id].destroy();
             chartInstances[id] = new Chart(document.getElementById(id), {
                 type: type,
@@ -481,7 +487,22 @@
                 options: {
                     indexAxis: horiz ? 'y' : 'x',
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Promedio: ${Math.round(c.raw)}%` } } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            callbacks: { 
+                                label: (c) => {
+                                    if (c.raw === null) return null;
+                                    let lines = [`Promedio: ${Math.round(c.raw)}%`];
+                                    if (counts && counts[c.dataIndex] !== null) {
+                                        let labelCount = id === 'chartSucursal' ? 'Evaluaciones' : 'Evaluadas';
+                                        lines.push(`${labelCount}: ${counts[c.dataIndex]}`);
+                                    }
+                                    return lines;
+                                }
+                            } 
+                        } 
+                    },
                     scales: { 
                         y: { 
                             min: horiz ? undefined : 0, max: horiz ? undefined : 100, 
