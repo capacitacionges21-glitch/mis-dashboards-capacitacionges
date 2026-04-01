@@ -40,226 +40,238 @@
     <div id="loadingOverlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <h2 class="text-xl font-bold text-slate-800">Sincronizando Datos...</h2>
-        <p class="text-slate-500 text-sm mt-2">Agrupando registros y calculando comisiones</p>
+        <p class="text-slate-500 text-sm mt-2">Agrupando registros y calculando comisiones reales</p>
     </div>
 
-    <div class="min-h-screen flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
+    <!-- Contenedor Flex Principal para acomodar el Sidebar lateral -->
+    <div class="flex min-h-screen w-full">
         
-        <!-- Header -->
-        <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-50">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
-                    <i data-lucide="users" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">Comisiones Mixtas <span class="text-indigo-500 font-semibold">Dashboard</span></h1>
-                    <div class="flex items-center gap-1.5 text-xs font-semibold mt-1">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span class="text-emerald-500 tracking-wide">SINCRONIZADO:</span>
-                        <span id="lastUpdated" class="text-slate-500 font-medium">--:--</span>
+        <!-- Sidebar lateral para imagen de Logos -->
+        <!-- Se oculta en móviles para no afectar el diseño y se fija a la izquierda en pantallas medianas o grandes -->
+        <aside class="hidden md:flex flex-col w-20 lg:w-24 bg-[#232323] h-screen sticky top-0 overflow-hidden shadow-2xl border-r border-slate-800 shrink-0 z-40">
+            <!-- REEMPLAZA EL CONTENIDO DE "src" POR LA RUTA DE TU IMAGEN -->
+            <img src="" alt="Logos Cadenas" class="w-full h-auto object-cover" onerror="this.src='https://placehold.co/100x800/232323/ffffff?text=LOGOS'">
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="flex-1 flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6 min-w-0">
+            
+            <!-- Header -->
+            <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-[#2F5597] rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">Comisiones Mixtas <span class="text-[#2F5597] font-semibold">Dashboard</span></h1>
+                        <div class="flex items-center gap-1.5 text-xs font-semibold mt-1">
+                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <span class="text-emerald-500 tracking-wide">SINCRONIZADO:</span>
+                            <span id="lastUpdated" class="text-slate-500 font-medium">--:--</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <button class="p-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors hidden sm:block">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                </button>
-                <button onclick="loadData()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    Actualizar Datos
-                </button>
-            </div>
-        </header>
-
-        <!-- Filtros -->
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <!-- Trimestre -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Trimestre</label>
-                <div class="relative">
-                    <i data-lucide="pie-chart" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterTrimestre" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todo el año</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <button class="p-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors hidden sm:block">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="loadData()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        Actualizar Datos
+                    </button>
                 </div>
-            </div>
+            </header>
 
-            <!-- Mes -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Mes</label>
-                <div class="relative">
-                    <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterMes" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Acumulado</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+            <!-- Filtros: Trimestre, Mes, Cadena, Regional, Gerente Distrito -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                <!-- Trimestre -->
+                <div class="card-panel p-4">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Trimestre</label>
+                    <div class="relative">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <select id="filterTrimestre" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                            <option value="Todos">Todo el año</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Cadena -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
-                <div class="relative">
-                    <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterCadena" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">GES</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                <!-- Mes -->
+                <div class="card-panel p-4">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Mes</label>
+                    <div class="relative">
+                        <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <select id="filterMes" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                            <option value="Todos">Acumulado</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Regional -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
-                <div class="relative">
-                    <i data-lucide="map" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterRegional" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todas las regiones</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                <!-- Cadena -->
+                <div class="card-panel p-4">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
+                    <div class="relative">
+                        <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <select id="filterCadena" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                            <option value="Todos">GES</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Distrital -->
-            <div class="card-panel p-4">
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
-                <div class="relative">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <select id="filterDistrital" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
-                        <option value="Todos">Todos los distritos</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
-                </div>
-            </div>
-        </div>
 
-        <!-- KPIs Principales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            
-            <!-- KPI Sucursales -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Total Sucursales</h3>
-                <div class="flex items-center justify-between">
-                    <span id="kpiTotal" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
-                        <i data-lucide="store" class="w-4 h-4 text-indigo-500"></i>
+                <!-- Regional -->
+                <div class="card-panel p-4">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
+                    <div class="relative">
+                        <i data-lucide="map" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <select id="filterRegional" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                            <option value="Todos">Todas</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
+                    </div>
+                </div>
+                
+                <!-- Distrital -->
+                <div class="card-panel p-4">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
+                    <div class="relative">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <select id="filterDistrital" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
+                            <option value="Todos">Todos</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- KPI Capacitación -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Capacitación y Adiestramiento</h3>
-                <div class="flex items-baseline gap-1 mb-2">
-                    <span id="kpiCap" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <span class="text-xl font-bold text-slate-800">%</span>
+            <!-- KPIs Principales -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                
+                <!-- KPI Sucursales -->
+                <div class="card-panel p-5 relative overflow-hidden">
+                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Total Sucursales</h3>
+                    <div class="flex items-center justify-between">
+                        <span id="kpiTotal" class="text-4xl font-extrabold text-slate-800">0</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
+                            <i data-lucide="store" class="w-4 h-4 text-[#2F5597]"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                    <div id="barCap" class="bg-[#2F5597] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+
+                <!-- KPI Capacitación -->
+                <div class="card-panel p-5 relative overflow-hidden">
+                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Capacitación y Adiestramiento</h3>
+                    <div class="flex items-baseline gap-1 mb-2">
+                        <span id="kpiCap" class="text-4xl font-extrabold text-slate-800">0</span>
+                        <span class="text-xl font-bold text-slate-800">%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                        <div id="barCap" class="bg-[#2F5597] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- KPI Seguridad e Higiene -->
+                <div class="card-panel p-5 relative overflow-hidden">
+                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Seguridad e Higiene</h3>
+                    <div class="flex items-baseline gap-1 mb-2">
+                        <span id="kpiSeg" class="text-4xl font-extrabold text-slate-800">0</span>
+                        <span class="text-xl font-bold text-slate-800">%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                        <div id="barSeg" class="bg-[#8FAADC] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Espacio decorativo para alinear grid -->
+                <div class="card-panel p-5 relative overflow-hidden flex items-center justify-center bg-slate-50/50 hidden lg:flex border-dashed">
+                     <div class="text-center">
+                         <i data-lucide="shield-check" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Meta 100%</p>
+                     </div>
                 </div>
             </div>
 
-            <!-- KPI Seguridad e Higiene -->
-            <div class="card-panel p-5 relative overflow-hidden">
-                <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Seguridad e Higiene</h3>
-                <div class="flex items-baseline gap-1 mb-2">
-                    <span id="kpiSeg" class="text-4xl font-extrabold text-slate-800">0</span>
-                    <span class="text-xl font-bold text-slate-800">%</span>
+            <!-- Gráficos -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Gráfico Cumplimiento por Mes (Solo visible en Acumulado) -->
+                <div id="containerChartMes" class="card-panel p-5 lg:col-span-2" style="display: none;">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="calendar" class="w-5 h-5 text-[#2F5597]"></i>
+                        <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Mes</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartMes"></canvas>
+                    </div>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                    <div id="barSeg" class="bg-[#8FAADC] h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Espacio decorativo para alinear grid -->
-            <div class="card-panel p-5 relative overflow-hidden flex items-center justify-center bg-slate-50/50 hidden lg:flex border-dashed">
-                 <div class="text-center">
-                     <i data-lucide="shield-check" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
-                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Meta 100%</p>
-                 </div>
-            </div>
-        </div>
 
-        <!-- Gráficos -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Gráfico Cumplimiento por Mes (Solo visible en Acumulado) -->
-            <div id="containerChartMes" class="card-panel p-5 lg:col-span-2" style="display: none;">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="calendar" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Mes</h3>
+                <!-- Gráfico Cumplimiento por Cadena -->
+                <div class="card-panel p-5">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#2F5597]"></i>
+                        <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartCadena"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartMes"></canvas>
-                </div>
-            </div>
 
-            <!-- Gráfico Cumplimiento por Cadena -->
-            <div class="card-panel p-5">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
+                <!-- Gráfico Cumplimiento por Región -->
+                <div class="card-panel p-5">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#2F5597]"></i>
+                        <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartRegion"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartCadena"></canvas>
-                </div>
-            </div>
 
-            <!-- Gráfico Cumplimiento por Región -->
-            <div class="card-panel p-5">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chartRegion"></canvas>
+                <!-- Gráfico Cumplimiento por Distrito -->
+                <div class="card-panel p-5 lg:col-span-2">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#2F5597]"></i>
+                        <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartDistrito"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Gráfico Cumplimiento por Distrito -->
-            <div class="card-panel p-5 lg:col-span-2">
-                <div class="flex items-center gap-2 mb-6">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
+            <!-- Tabla de Desglose Detallado -->
+            <div class="card-panel flex-1 flex flex-col min-h-[400px] overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="table" class="w-5 h-5 text-[#2F5597]"></i>
+                        <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento (Región / Distrito / Cadena / Sucursal)</h3>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Meta: 100%</span>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartDistrito"></canvas>
+                
+                <div class="overflow-x-auto flex-1 custom-scrollbar">
+                    <table class="w-full text-left border-collapse min-w-[1000px]">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-b border-slate-200">
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Región</th>
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Distrito</th>
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cadena</th>
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sucursal</th>
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Cap. y Adiestramiento</th>
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Seg. e Higiene</th>
+                                <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% de Cumplimiento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Las filas se llenan con JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Tabla de Desglose Detallado -->
-        <div class="card-panel flex-1 flex flex-col min-h-[400px] overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="table" class="w-5 h-5 text-indigo-500"></i>
-                    <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento (Región / Distrito / Cadena / Sucursal)</h3>
-                </div>
-                <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Meta: 100%</span>
-            </div>
-            
-            <div class="overflow-x-auto flex-1 custom-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[1000px]">
-                    <thead>
-                        <tr class="bg-slate-50/50 border-b border-slate-200">
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Región</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Distrito</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cadena</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sucursal</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Cap. y Adiestramiento</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% Seg. e Higiene</th>
-                            <th class="px-5 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">% de Cumplimiento</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
-                        <!-- Las filas se llenan con JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
+        </div> <!-- Cierre del Contenedor Principal (flex-1) -->
+    </div> <!-- Cierre del Contenedor Flex Principal -->
 
     <script>
         // Inicializar iconos
@@ -268,15 +280,15 @@
         // Registrar plugin de etiquetas de datos para Chart.js
         Chart.register(ChartDataLabels);
 
-        // Enlace actualizado que proporcionaste
+        // Enlace CSV original
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=1647388782&single=true&output=csv';
         let rawData = [];
         let charts = {};
         
-        // Almacenamos los meses que tienen información > 0 para hacer cálculos de promedio correctos
+        // Almacenamos los meses que tienen información > 0 para hacer cálculos de promedio reales
         let activeMonths = new Set(); 
 
-        // Parseador de porcentajes robusto
+        // Parseador de porcentajes
         function parsePercentage(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim().replace(',', '.');
@@ -308,7 +320,7 @@
                     header: false,
                     skipEmptyLines: true,
                     complete: function(results) {
-                        const rows = results.data.slice(1); // Ignoramos la cabecera real
+                        const rows = results.data.slice(1); // Ignoramos la cabecera
                         
                         rawData = rows.map(row => {
                             const mes = row[0] || 'N/A';
@@ -333,10 +345,8 @@
                                 promedio: promedio
                             };
                         }); 
-                        // NOTA: Ya no filtramos rawData aquí para conservar TODOS los meses (incluso en 0%) 
-                        // para que se puedan dibujar en la gráfica mensual.
 
-                        // Calculamos qué meses SÍ tienen datos (activeMonths) para promedios de tarjetas
+                        // Calculamos qué meses SÍ tienen datos reales (para ignorar meses futuros en 0)
                         const monthSums = {};
                         rawData.forEach(item => {
                             if (!monthSums[item.mes]) monthSums[item.mes] = 0;
@@ -368,7 +378,7 @@
         }
 
         function initializeFilters() {
-            // Asignar listeners. Las opciones se llenarán dinámicamente en updateDashboard
+            // Asignar listeners
             ['filterMes', 'filterTrimestre', 'filterCadena', 'filterRegional', 'filterDistrital'].forEach(id => {
                 const el = document.getElementById(id);
                 const clone = el.cloneNode(true);
@@ -426,12 +436,12 @@
                 validCheck('distrital', 'distrital');
             }
 
-            // 2. Reconstruir dinámicamente las opciones de cada filtro
+            // 2. Reconstruir dinámicamente las opciones de cada filtro en cascada
             const rebuildSelect = (key, dataField, isMonth = false) => {
                 const defaultOptionText = selects[key].options[0].text;
 
                 const validData = rawData.filter(item => 
-                    activeMonths.has(item.mes) && // Solo mostramos los meses con datos reales en los selectores
+                    activeMonths.has(item.mes) && // Ocultar meses futuros sin datos de los filtros
                     (key === 'mes' || vals.mes === 'Todos' || item.mes === vals.mes) &&
                     (key === 'trimestre' || vals.trimestre === 'Todos' || item.trimestre === vals.trimestre) &&
                     (key === 'cadena' || vals.cadena === 'Todos' || item.cadena === vals.cadena) &&
@@ -475,7 +485,7 @@
             const sRegional = vals.regional;
             const sDistrital = vals.distrital;
 
-            // 3. Este filtro (filteredRows) incluye TODOS los meses, incluso los 0%. Lo usaremos SOLO para la Gráfica de Meses.
+            // 3. Este filtro (filteredRows) incluye TODOS los meses, incluso los vacíos (0%). Usado SOLO para la Gráfica Mensual.
             const filteredRows = rawData.filter(item => {
                 return (sMes === 'Todos' || item.mes === sMes) &&
                        (sTrimestre === 'Todos' || item.trimestre === sTrimestre) &&
@@ -484,16 +494,15 @@
                        (sDistrital === 'Todos' || item.distrital === sDistrital);
             });
 
-            // 3.5. Este filtro (activeRows) extrae SOLO los meses con datos reales. Se usa para las Tarjetas, Tabla y demás gráficas.
+            // 3.5. Este filtro (activeRows) extrae SOLO los meses con datos reales. Usado para Tarjetas, Tabla y demás Gráficas.
             const activeRows = filteredRows.filter(item => activeMonths.has(item.mes));
 
-            // 4. AGRUPAR por Sucursal (Usando solo activeRows para promedios limpios)
+            // 4. AGRUPAR por Sucursal para KPIs (Usando activeRows)
             const groupedBranches = {};
             let sumRawCap = 0;
             let sumRawSeg = 0;
             
             activeRows.forEach(item => {
-                // Acumulado global directo para KPIs principales (solo suma lo que sí existe)
                 sumRawCap += item.cap;
                 sumRawSeg += item.seg;
 
@@ -530,7 +539,7 @@
                 };
             });
 
-            // 6. Calcular KPIs Globales (Dividiendo solo entre la cantidad de registros reales activos)
+            // 6. Calcular KPIs Globales (Sin decimales)
             const totalSucursales = aggregatedData.length;
             const avgCap = activeRows.length ? (sumRawCap / activeRows.length) : 0;
             const avgSeg = activeRows.length ? (sumRawSeg / activeRows.length) : 0;
@@ -543,11 +552,12 @@
             document.getElementById('barCap').style.width = `${avgCap}%`;
             document.getElementById('barSeg').style.width = `${avgSeg}%`;
 
-            // 8. Actualizar Gráficos (le pasamos filteredRows que tiene los 12 meses)
+            // 8. Actualizar Gráficos (se pasa filteredRows para que el de meses muestre todo el año)
             updateCharts(aggregatedData, filteredRows, sMes);
             updateTable(aggregatedData);
         }
 
+        // Animación de números sin decimales
         function animateValue(id, endValue, isPercentage) {
             const obj = document.getElementById(id);
             const duration = 800;
@@ -558,18 +568,18 @@
                 const progress = Math.min((currentTimestamp - startTimestamp) / duration, 1);
                 const currentVal = (progress * (endValue - startValue) + startValue);
                 
-                // Quitamos el toFixed(1) y usamos Math.round para números enteros
-                obj.innerText = isPercentage ? Math.round(currentVal) : Math.floor(currentVal);
+                obj.innerText = Math.round(currentVal);
                 
                 if (progress < 1) {
                     window.requestAnimationFrame(step);
                 } else {
-                    obj.innerText = isPercentage ? Math.round(endValue) : Math.floor(endValue);
+                    obj.innerText = Math.round(endValue);
                 }
             };
             window.requestAnimationFrame(step);
         }
 
+        // Configuración maestra para Chart.js
         function getMultiChartConfig(labels, dataCap, dataSeg) {
             return {
                 type: 'bar',
@@ -581,7 +591,7 @@
                             data: dataCap,
                             backgroundColor: '#2F5597', // Azul oscuro
                             borderRadius: 4,
-                            barPercentage: 0.6, // Barras más delgadas para evitar amontonamiento
+                            barPercentage: 0.6,
                             categoryPercentage: 0.7
                         },
                         {
@@ -589,7 +599,7 @@
                             data: dataSeg,
                             backgroundColor: '#8FAADC', // Azul claro
                             borderRadius: 4,
-                            barPercentage: 0.6, // Barras más delgadas para evitar amontonamiento
+                            barPercentage: 0.6,
                             categoryPercentage: 0.7
                         }
                     ]
@@ -599,7 +609,7 @@
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 10
+                            top: 15 // Espacio superior
                         }
                     },
                     plugins: {
@@ -607,11 +617,11 @@
                             display: true,
                             anchor: 'end',
                             align: 'top',
-                            offset: 4, // Más separación entre la barra y el número
-                            formatter: (value) => value > 0 ? Math.round(value) + '%' : '', // Ocultar los 0% para limpiar la gráfica
+                            offset: 4,
+                            formatter: (value) => value > 0 ? Math.round(value) + '%' : '', // Sin decimales y ocultar 0%
                             font: {
                                 family: "'Plus Jakarta Sans', sans-serif",
-                                size: 9, // Letra un poco más pequeña
+                                size: 9,
                                 weight: 'bold'
                             },
                             color: '#475569'
@@ -638,7 +648,7 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            max: 115, // Límite en 115 para que los 100% no choquen arriba
+                            max: 115, // Límite para que no choquen los 100%
                             grid: { color: '#f1f5f9', drawBorder: false },
                             ticks: { 
                                 color: '#94a3b8', 
@@ -650,7 +660,7 @@
                             grid: { display: false, drawBorder: false },
                             ticks: { 
                                 color: '#94a3b8', 
-                                font: { family: "'Plus Jakarta Sans'", size: 9 }, // Letra del eje X un poco más pequeña
+                                font: { family: "'Plus Jakarta Sans'", size: 9 },
                                 maxRotation: 45,
                                 minRotation: 45
                             }
@@ -667,14 +677,13 @@
             const mapCadena = {};
             const mapDistrito = {};
             
-            // Creamos un mapa forzado con los 12 meses del año en orden estricto
+            // Mapa para garantizar que siempre salgan los 12 meses
             const mesesEstandar = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const mapMes = {};
             mesesEstandar.forEach(m => mapMes[m] = { sumCap: 0, sumSeg: 0, count: 0 });
 
-            // Agrupar datos por mes. (filteredRows incluye los 12 meses, tengan info o estén en 0%)
+            // Agrupar Meses (usamos filteredRows que tiene los 12 meses)
             filteredRows.forEach(item => {
-                // Buscamos coincidencia ignorando mayúsculas y espacios
                 const mesNombre = mesesEstandar.find(m => m.toLowerCase() === item.mes.toLowerCase().trim());
                 if(mesNombre) {
                     mapMes[mesNombre].sumCap += item.cap;
@@ -683,6 +692,7 @@
                 }
             });
 
+            // Agrupar Región, Cadena y Distrito (usamos aggregatedData que es limpia de ceros)
             aggregatedData.forEach(item => {
                 if(!mapRegion[item.regional]) mapRegion[item.regional] = { sumCap: 0, sumSeg: 0, count: 0 };
                 mapRegion[item.regional].sumCap += item.cap;
@@ -700,18 +710,28 @@
                 mapDistrito[item.distrital].count += 1;
             });
 
-            // Preparar datos de Región
-            const labelsRegion = Object.keys(mapRegion).sort();
+            // Preparar datos - Ordenados de mayor a menor según el promedio general
+            const labelsRegion = Object.keys(mapRegion).sort((a, b) => {
+                const avgA = (mapRegion[a].sumCap + mapRegion[a].sumSeg) / (2 * mapRegion[a].count);
+                const avgB = (mapRegion[b].sumCap + mapRegion[b].sumSeg) / (2 * mapRegion[b].count);
+                return avgB - avgA;
+            });
             const dataRegionCap = labelsRegion.map(k => mapRegion[k].sumCap / mapRegion[k].count);
             const dataRegionSeg = labelsRegion.map(k => mapRegion[k].sumSeg / mapRegion[k].count);
 
-            // Preparar datos de Cadena
-            const labelsCadena = Object.keys(mapCadena).sort();
+            const labelsCadena = Object.keys(mapCadena).sort((a, b) => {
+                const avgA = (mapCadena[a].sumCap + mapCadena[a].sumSeg) / (2 * mapCadena[a].count);
+                const avgB = (mapCadena[b].sumCap + mapCadena[b].sumSeg) / (2 * mapCadena[b].count);
+                return avgB - avgA;
+            });
             const dataCadenaCap = labelsCadena.map(k => mapCadena[k].sumCap / mapCadena[k].count);
             const dataCadenaSeg = labelsCadena.map(k => mapCadena[k].sumSeg / mapCadena[k].count);
 
-            // Preparar datos de Distrito
-            const labelsDistrito = Object.keys(mapDistrito).sort();
+            const labelsDistrito = Object.keys(mapDistrito).sort((a, b) => {
+                const avgA = (mapDistrito[a].sumCap + mapDistrito[a].sumSeg) / (2 * mapDistrito[a].count);
+                const avgB = (mapDistrito[b].sumCap + mapDistrito[b].sumSeg) / (2 * mapDistrito[b].count);
+                return avgB - avgA;
+            });
             const dataDistritoCap = labelsDistrito.map(k => mapDistrito[k].sumCap / mapDistrito[k].count);
             const dataDistritoSeg = labelsDistrito.map(k => mapDistrito[k].sumSeg / mapDistrito[k].count);
 
@@ -728,13 +748,12 @@
             const ctxDistrito = document.getElementById('chartDistrito').getContext('2d');
             charts.distrito = new Chart(ctxDistrito, getMultiChartConfig(labelsDistrito, dataDistritoCap, dataDistritoSeg));
 
-            // Lógica para mostrar/ocultar y renderizar Gráfico por Mes (con los 12 fijos)
+            // Lógica gráfica mensual (Mostrar siempre 12 meses)
             const containerMes = document.getElementById('containerChartMes');
             if (sMes === 'Todos') {
                 containerMes.style.display = 'block';
                 
                 const labelsMes = mesesEstandar;
-                // Si el count es 0 (no hay registro de ese mes, o es un mes futuro con todo en 0%), mostramos 0% en la gráfica
                 const dataMesCap = labelsMes.map(k => mapMes[k].count > 0 ? (mapMes[k].sumCap / mapMes[k].count) : 0);
                 const dataMesSeg = labelsMes.map(k => mapMes[k].count > 0 ? (mapMes[k].sumSeg / mapMes[k].count) : 0);
 
@@ -746,6 +765,7 @@
             }
         }
 
+        // Renderizado de tabla sin decimales
         function updateTable(aggregatedData) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = ''; 
@@ -755,8 +775,11 @@
                 return;
             }
 
-            // Ordenar por regional, luego distrito, cadena y sucursal
+            // Ordenar por promedio (mayor a menor), y como respaldo alfabéticamente
             const sortedData = [...aggregatedData].sort((a, b) => {
+                if (b.promedio !== a.promedio) {
+                    return b.promedio - a.promedio;
+                }
                 return a.regional.localeCompare(b.regional) || 
                        a.distrital.localeCompare(b.distrital) || 
                        a.cadena.localeCompare(b.cadena) ||
