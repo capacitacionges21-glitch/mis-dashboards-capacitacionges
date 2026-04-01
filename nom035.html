@@ -199,11 +199,11 @@
 
                 </div>
 
-                <!-- Gráficos -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Gráficos: Configurados a 1 Sola Columna para que no estén juntos -->
+                <div class="grid grid-cols-1 gap-8 mb-6">
                     
-                    <!-- 1. Gráfico por Mes (Ancho Completo, condicional) -->
-                    <div id="chartMesContainer" class="card-panel p-5 lg:col-span-2">
+                    <!-- 1. Gráfico por Mes -->
+                    <div id="chartMesContainer" class="card-panel p-6">
                         <div class="flex items-center gap-2 mb-6">
                             <i data-lucide="calendar" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">Cumplimiento por Mes</h3>
@@ -214,7 +214,7 @@
                     </div>
 
                     <!-- 2. Gráfico Cumplimiento por Cadena -->
-                    <div class="card-panel p-5">
+                    <div class="card-panel p-6">
                         <div class="flex items-center gap-2 mb-6">
                             <i data-lucide="building-2" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
@@ -225,7 +225,7 @@
                     </div>
 
                     <!-- 3. Gráfico Cumplimiento por Región -->
-                    <div class="card-panel p-5">
+                    <div class="card-panel p-6">
                         <div class="flex items-center gap-2 mb-6">
                             <i data-lucide="map" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
@@ -235,8 +235,8 @@
                         </div>
                     </div>
 
-                    <!-- 4. Gráfico Cumplimiento por Distrito (Ocupa todo el ancho) -->
-                    <div class="card-panel p-5 lg:col-span-2">
+                    <!-- 4. Gráfico Cumplimiento por Distrito -->
+                    <div class="card-panel p-6">
                         <div class="flex items-center gap-2 mb-6">
                             <i data-lucide="map-pin" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
@@ -557,37 +557,81 @@
         }
 
         // === GRÁFICAS (CHART.JS) ===
+        
+        // Configuración para la gráfica de Líneas (Meses)
+        function getLineChartConfig(labels, dataAcuse, dataPolitica, dataPlan) {
+            return {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Acuse Encuesta', data: dataAcuse, borderColor: '#2F5597', backgroundColor: '#2F5597', tension: 0.4, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2, fill: false },
+                        { label: 'Política', data: dataPolitica, borderColor: '#8FAADC', backgroundColor: '#8FAADC', tension: 0.4, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2, fill: false },
+                        { label: 'Plan de Acción', data: dataPlan, borderColor: '#B4C6E7', backgroundColor: '#B4C6E7', tension: 0.4, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Plus Jakarta Sans'" } } },
+                        tooltip: { mode: 'index', intersect: false, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` } },
+                        datalabels: { display: false } // Ocultamos los labels en la gráfica de líneas para no saturar
+                    },
+                    scales: {
+                        y: { 
+                            max: 100, 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9' }, 
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { family: "'Plus Jakarta Sans'" },
+                                callback: function(value) { return value + '%'; }
+                            } 
+                        },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" }, maxRotation: 0, minRotation: 0 } }
+                    }
+                }
+            };
+        }
+
+        // Configuración para las gráficas de Barras Agrupadas
         function getMultiChartConfig(labels, dataAcuse, dataPolitica, dataPlan) {
             return {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Acuse Encuesta', data: dataAcuse, backgroundColor: '#2F5597', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.7 },
-                        { label: 'Política', data: dataPolitica, backgroundColor: '#8FAADC', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.7 },
-                        { label: 'Plan de Acción', data: dataPlan, backgroundColor: '#B4C6E7', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.7 }
+                        { label: 'Acuse Encuesta', data: dataAcuse, backgroundColor: '#2F5597', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 },
+                        { label: 'Política', data: dataPolitica, backgroundColor: '#8FAADC', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 },
+                        { label: 'Plan de Acción', data: dataPlan, backgroundColor: '#B4C6E7', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { top: 20 } }, // Para que el datalabel 100% no choque
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
                     plugins: {
                         legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Plus Jakarta Sans'" } } },
-                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` } },
+                        tooltip: { mode: 'index', intersect: false, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` } },
                         datalabels: {
                             display: function(context) { return context.dataset.data[context.dataIndex] > 0; },
                             formatter: (value) => value === 0 ? '' : Math.round(value) + '%',
-                            color: '#475569',
-                            anchor: 'end',
-                            align: 'end',
-                            offset: -2,
+                            color: '#475569', anchor: 'end', align: 'end', offset: -2,
                             font: { family: "'Plus Jakarta Sans', sans-serif", weight: 'bold', size: 9 }
                         }
                     },
                     scales: {
-                        y: { max: 115, beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" } } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" }, maxRotation: 45, minRotation: 45 } }
+                        y: { 
+                            max: 100, 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9' }, 
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { family: "'Plus Jakarta Sans'" },
+                                callback: function(value) { return value + '%'; }
+                            } 
+                        },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" }, maxRotation: 0, minRotation: 0 } }
                     }
                 }
             };
