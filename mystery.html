@@ -42,7 +42,7 @@
                 <i class="fas fa-lock"></i>
             </div>
             <h2 class="text-2xl font-black text-slate-800 mb-2">Acceso Restringido</h2>
-            <p class="text-slate-500 text-sm mb-8 italic">Dirección Operativa - Mystery Shopper</p>
+            <p class="text-slate-500 text-sm mb-8 italic">Dirección Operativa - Protocolo Mystery Shopper</p>
             
             <div class="space-y-4">
                 <div class="relative">
@@ -145,8 +145,8 @@
                 </div>
             </div>
 
-            <div id="chartsGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div id="containerTendencia" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+            <div id="chartsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div id="containerTendencia" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 lg:col-span-2">
                     <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
                         <span class="w-2 h-2 bg-azul-fuerte rounded-full mr-2"></span>
                         COMPARATIVO MENSUAL
@@ -170,7 +170,7 @@
                     <div class="h-64"><canvas id="chartDistrito"></canvas></div>
                 </div>
 
-                <div id="containerSucursal" class="hidden bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                <div id="containerSucursal" class="hidden bg-white rounded-3xl shadow-sm border border-slate-100 p-6 lg:col-span-2">
                     <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center">
                         <span class="w-2 h-2 bg-emerald-400 rounded-full mr-2"></span>
                         DESEMPEÑO POR SUCURSAL
@@ -183,15 +183,16 @@
                 <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div>
                         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-award mr-3 text-azul-fuerte"></i>Sucursales Abajo de Meta (Menor a Mayor %)</h3>
-                        <p class="text-sm text-slate-400 mt-1">Listado de estaciones que requieren atención inmediata.</p>
+                        <p class="text-sm text-slate-400 mt-1">Listado de estaciones que requieren atención.</p>
                     </div>
                 </div>
                 <div id="listBottom" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
             </div>
             
             <div id="noDataContainer" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 mt-8">
-                <i class="fas fa-exclamation-circle text-4xl text-slate-300 mb-4"></i>
-                <p class="text-slate-500 font-medium">No se encontraron datos para mostrar.</p>
+                <i id="noDataIcon" class="fas fa-exclamation-circle text-4xl text-slate-300 mb-4"></i>
+                <p id="noDataText" class="text-slate-500 font-medium text-center px-4">No se encontraron datos para mostrar.</p>
+                <p id="noDataSubText" class="text-xs text-slate-400 mt-3 text-center px-4 max-w-lg hidden"></p>
             </div>
         </main>
     </div>
@@ -229,14 +230,36 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
             
-            const ok = await fetchData();
-            if(ok) { 
-                populateFilters(); 
-                updateDashboard(); 
-            }
+            const result = await fetchData();
             
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
+
+            if(result.success) { 
+                populateFilters(); 
+                updateDashboard(); 
+            } else {
+                showSyncError(result.error);
+            }
+        }
+
+        function showSyncError(errorMessage) {
+            const kpiCont = document.getElementById('kpiContainer');
+            const noData = document.getElementById('noDataContainer');
+            const noDataIcon = document.getElementById('noDataIcon');
+            const noDataText = document.getElementById('noDataText');
+            const noDataSubText = document.getElementById('noDataSubText');
+
+            kpiCont.classList.add('opacity-20');
+            noData.classList.remove('hidden');
+            noDataIcon.className = 'fas fa-exclamation-triangle text-4xl text-rose-500 mb-4';
+            noDataText.textContent = 'Error al sincronizar los datos.';
+            noDataSubText.textContent = errorMessage || 'Revisa que el Google Sheet esté Publicado en la Web (formato CSV) y que la estructura de columnas no haya cambiado.';
+            noDataSubText.classList.remove('hidden');
+            
+            // Ocultar gráficos y listas
+            document.getElementById('chartsGrid').classList.add('hidden');
+            document.getElementById('listBottom').innerHTML = '';
         }
 
         function parseCSV(text) {
@@ -259,11 +282,22 @@
         async function fetchData() {
             try {
                 const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
+                if (!response.ok) return { success: false, error: `Error de red de Google: ${response.status}. Intenta recargar la página.` };
+                
                 const text = await response.text();
+                
+                if (text.trim().startsWith("<!DOCTYPE html>") || text.trim().startsWith("<html")) {
+                    return { success: false, error: "El enlace devuelve una página web, no un CSV. Entra a tu Google Sheet, ve a Archivo > Compartir > Publicar en la web, y asegúrate de elegir 'Valores separados por comas (.csv)'." };
+                }
+
                 const rows = parseCSV(text);
+                if (rows.length < 2) return { success: false, error: "El archivo parece estar vacío o no tiene la fila de encabezados." };
+
                 const normalized = [];
 
                 rows.slice(1).forEach(row => {
+                    if (row.length < 4) return; // Saltar filas vacías o mal formateadas
+                    
                     const regional = row[0] || "S/R";
                     const gerente = row[1] || "S/G";
                     const sucursal = row[2] || "S/N";
@@ -274,7 +308,7 @@
                         let cleanVal = valStr.replace('%', '').replace(',', '.').trim();
                         let val = parseFloat(cleanVal);
                         if (!isNaN(val)) {
-                            if (val <= 1.2) val = val * 100;
+                            if (val <= 1.2 && val > 0) val = val * 100;
                             let mesNum = i - 2;
                             normalized.push({
                                 regional, gerente, sucursal, calificacion: val, mes: mesNum,
@@ -283,9 +317,16 @@
                         }
                     }
                 });
+                
+                if (normalized.length === 0) {
+                    return { success: false, error: "Se cargó el archivo pero no se detectaron calificaciones numéricas. Revisa que las primeras 3 columnas sean Regional/Gerente/Sucursal y las siguientes sean los porcentajes mensuales." };
+                }
+
                 rawData = normalized;
-                return true;
-            } catch (e) { return false; }
+                return { success: true };
+            } catch (e) { 
+                return { success: false, error: "Error interno: " + e.message }; 
+            }
         }
 
         function populateFilters() {
@@ -336,6 +377,10 @@
             const fTri = document.getElementById('filterTrimestre').value;
             const fMes = document.getElementById('filterMes').value;
 
+            document.getElementById('chartsGrid').classList.remove('hidden');
+            const kpiCont = document.getElementById('kpiContainer');
+            const noData = document.getElementById('noDataContainer');
+
             const filtered = rawData.filter(d => {
                 return (fReg === 'all' || d.regional === fReg) &&
                        (fGer === 'all' || d.gerente === fGer) &&
@@ -349,12 +394,14 @@
                        (fTri === 'all' || d.trimestre === fTri);
             });
 
-            const kpiCont = document.getElementById('kpiContainer');
-            const noData = document.getElementById('noDataContainer');
-
             if (filtered.length === 0) {
                 noData.classList.remove('hidden');
                 kpiCont.classList.add('opacity-20');
+                document.getElementById('noDataIcon').className = 'fas fa-filter text-4xl text-slate-300 mb-4';
+                document.getElementById('noDataText').textContent = 'No hay datos para esta selección.';
+                document.getElementById('noDataSubText').classList.add('hidden');
+                document.getElementById('chartsGrid').classList.add('hidden');
+                document.getElementById('listBottom').innerHTML = '';
                 return;
             }
             
@@ -398,33 +445,22 @@
             const containerRegional = document.getElementById('containerRegional');
             const containerDistrito = document.getElementById('containerDistrito');
             const containerSucursal = document.getElementById('containerSucursal');
-            
-            let visibleCharts = 0;
 
             if (fMes !== 'all') {
                 containerTendencia.classList.add('hidden');
             } else {
                 containerTendencia.classList.remove('hidden');
-                visibleCharts++;
             }
 
             if (fGer !== 'all') {
                 containerRegional.classList.add('hidden');
                 containerDistrito.classList.add('hidden');
                 containerSucursal.classList.remove('hidden');
-                visibleCharts++;
             } else {
                 containerRegional.classList.remove('hidden');
                 containerDistrito.classList.remove('hidden');
                 containerSucursal.classList.add('hidden');
-                visibleCharts += 2;
             }
-
-            // Ajustar las columnas dependiendo de cuántos gráficos queden visibles
-            chartsGrid.classList.remove('lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3');
-            if (visibleCharts === 3) chartsGrid.classList.add('lg:grid-cols-3');
-            else if (visibleCharts === 2) chartsGrid.classList.add('lg:grid-cols-2');
-            else chartsGrid.classList.add('lg:grid-cols-1');
 
             const status = document.getElementById('kpiPromedioStatus');
             status.className = `text-[10px] font-bold px-2 py-1 rounded-full uppercase ${avg >= 90 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`;
@@ -533,9 +569,20 @@
         async function refreshData() {
             const btn = document.getElementById('btnRefresh');
             btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            const ok = await fetchData();
-            if(ok) { populateFilters(); updateDashboard(); }
-            btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Actualizar';
+            const result = await fetchData();
+            if(result.success) { 
+                populateFilters(); 
+                updateDashboard(); 
+                
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check mr-2 text-emerald-500"></i> Actualizado';
+                setTimeout(() => {
+                    btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Actualizar';
+                }, 2000);
+            } else {
+                showSyncError(result.error);
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Actualizar';
+            }
         }
 
         window.onload = async () => {
