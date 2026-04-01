@@ -206,7 +206,7 @@
                     <div id="chartMesContainer" class="card-panel p-5 lg:col-span-2">
                         <div class="flex items-center gap-2 mb-6">
                             <i data-lucide="calendar" class="w-5 h-5 text-[#2F5597]"></i>
-                            <h3 class="text-sm font-bold text-slate-800">Evolución por Mes</h3>
+                            <h3 class="text-sm font-bold text-slate-800">Cumplimiento por Mes</h3>
                         </div>
                         <div class="chart-container">
                             <canvas id="chartMes"></canvas>
@@ -252,7 +252,7 @@
                     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <i data-lucide="table" class="w-5 h-5 text-[#2F5597]"></i>
-                            <h3 class="text-sm font-bold text-slate-800">Desglose General (Promedios Redondeados)</h3>
+                            <h3 class="text-sm font-bold text-slate-800">Desglose General </h3>
                         </div>
                     </div>
                     
@@ -625,12 +625,22 @@
             });
 
             const extract = (map) => {
-                const labels = Object.keys(map).sort();
+                const arr = Object.keys(map).map(k => {
+                    const acuse = map[k].acuse / map[k].count;
+                    const pol = map[k].pol / map[k].count;
+                    const plan = map[k].plan / map[k].count;
+                    const avg = (acuse + pol + plan) / 3;
+                    return { label: k, acuse, pol, plan, avg };
+                });
+
+                // Ordenar de Mayor a Menor por el promedio de cumplimiento
+                arr.sort((a, b) => b.avg - a.avg);
+
                 return {
-                    l: labels,
-                    a: labels.map(k => map[k].acuse / map[k].count),
-                    po: labels.map(k => map[k].pol / map[k].count),
-                    pl: labels.map(k => map[k].plan / map[k].count)
+                    l: arr.map(i => i.label),
+                    a: arr.map(i => i.acuse),
+                    po: arr.map(i => i.pol),
+                    pl: arr.map(i => i.plan)
                 };
             };
 
@@ -656,7 +666,13 @@
                 return;
             }
 
-            const sorted = [...aggregatedData].sort((a, b) => a.regional.localeCompare(b.regional) || a.distrital.localeCompare(b.distrital) || a.cadena.localeCompare(b.cadena));
+            // Ordenar de mayor a menor por % Cumplimiento (promedio). Si hay empate, ordena alfabéticamente.
+            const sorted = [...aggregatedData].sort((a, b) => {
+                if (b.promedio !== a.promedio) {
+                    return b.promedio - a.promedio;
+                }
+                return a.regional.localeCompare(b.regional) || a.distrital.localeCompare(b.distrital) || a.cadena.localeCompare(b.cadena);
+            });
 
             tbody.innerHTML = sorted.map(item => `
                 <tr class="hover:bg-slate-50 transition-colors">
