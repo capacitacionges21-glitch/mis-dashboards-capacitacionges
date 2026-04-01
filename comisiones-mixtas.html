@@ -43,22 +43,11 @@
         <p class="text-slate-500 text-sm mt-2">Agrupando registros y calculando comisiones reales</p>
     </div>
 
-    <!-- Contenedor Flex Principal para acomodar el Sidebar lateral -->
-    <div class="flex min-h-screen w-full">
+    <div class="min-h-screen flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
         
-        <!-- Sidebar lateral para imagen de Logos -->
-        <!-- Se oculta en móviles para no afectar el diseño y se fija a la izquierda en pantallas medianas o grandes -->
-        <aside class="hidden md:flex flex-col w-20 lg:w-24 bg-[#232323] h-screen sticky top-0 overflow-hidden shadow-2xl border-r border-slate-800 shrink-0 z-40">
-            <!-- REEMPLAZA EL CONTENIDO DE "src" POR LA RUTA DE TU IMAGEN -->
-            <img src="" alt="Logos Cadenas" class="w-full h-auto object-cover" onerror="this.src='https://placehold.co/100x800/232323/ffffff?text=LOGOS'">
-        </aside>
-
-        <!-- Contenido Principal -->
-        <div class="flex-1 flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6 min-w-0">
-            
-            <!-- Header -->
-            <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-50">
-                <div class="flex items-center gap-4">
+        <!-- Header -->
+        <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-50">
+            <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-[#2F5597] rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
                         <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
@@ -185,7 +174,7 @@
                 </div>
                 
                 <!-- Espacio decorativo para alinear grid -->
-                <div class="card-panel p-5 relative overflow-hidden flex items-center justify-center bg-slate-50/50 hidden lg:flex border-dashed">
+                <div class="card-panel p-5 relative overflow-hidden flex items-center justify-center bg-slate-50/50 border-dashed">
                      <div class="text-center">
                          <i data-lucide="shield-check" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
                          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Meta 100%</p>
@@ -199,7 +188,7 @@
                 <div id="containerChartMes" class="card-panel p-5 lg:col-span-2" style="display: none;">
                     <div class="flex items-center gap-2 mb-6">
                         <i data-lucide="calendar" class="w-5 h-5 text-[#2F5597]"></i>
-                        <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Mes</h3>
+                        <h3 class="text-sm font-bold text-slate-800">Cumplimiento por Mes</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="chartMes"></canvas>
@@ -245,7 +234,7 @@
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i data-lucide="table" class="w-5 h-5 text-[#2F5597]"></i>
-                        <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento (Región / Distrito / Cadena / Sucursal)</h3>
+                        <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento </h3>
                     </div>
                     <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Meta: 100%</span>
                 </div>
@@ -270,8 +259,7 @@
                 </div>
             </div>
 
-        </div> <!-- Cierre del Contenedor Principal (flex-1) -->
-    </div> <!-- Cierre del Contenedor Flex Principal -->
+    </div>
 
     <script>
         // Inicializar iconos
