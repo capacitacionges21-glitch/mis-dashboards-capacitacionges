@@ -104,7 +104,7 @@
                     <div class="relative">
                         <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
                         <select id="filterCadena" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
-                            <option value="Todos">GES</option>
+                            <option value="Todos">Todas las Cadenas</option>
                         </select>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
                     </div>
@@ -234,7 +234,7 @@
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i data-lucide="table" class="w-5 h-5 text-[#2F5597]"></i>
-                        <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento</h3>
+                        <h3 class="text-sm font-bold text-slate-800">Desglose de Cumplimiento (Región / Distrito / Cadena / Sucursal)</h3>
                     </div>
                     <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Meta: 100%</span>
                 </div>
@@ -311,11 +311,13 @@
                         const rows = results.data.slice(1); // Ignoramos la cabecera
                         
                         rawData = rows.map(row => {
-                            const mes = row[0] || 'N/A';
-                            const regional = row[1] || 'N/A';
-                            const distrital = row[2] || 'N/A';
-                            const sucursal = row[3] || 'N/A';
-                            const cadena = row[4] || 'N/A';
+                            // LIMPIEZA CLAVE: Se aplica .trim() a todos los campos para evitar 
+                            // que espacios en blanco accidentales dupliquen sucursales.
+                            const mes = String(row[0] || 'N/A').trim();
+                            const regional = String(row[1] || 'N/A').trim();
+                            const distrital = String(row[2] || 'N/A').trim();
+                            const sucursal = String(row[3] || 'N/A').trim();
+                            const cadena = String(row[4] || 'N/A').trim();
                             
                             const cap = parsePercentage(row[5]);
                             const seg = parsePercentage(row[6]);
@@ -494,12 +496,14 @@
                 sumRawCap += item.cap;
                 sumRawSeg += item.seg;
 
-                const key = `${item.regional}|${item.distrital}|${item.cadena}|${item.sucursal}`;
+                // CLAVE PARA EVITAR DUPLICADOS: Solo agrupamos por Cadena y Sucursal.
+                // Esto previene que un cambio de Región o de Gerente Distrital se cuente como si fuera otra sucursal.
+                const key = `${item.cadena.toUpperCase()}|${item.sucursal.toUpperCase()}`;
                 
                 if(!groupedBranches[key]) {
                     groupedBranches[key] = {
-                        regional: item.regional,
-                        distrital: item.distrital,
+                        regional: item.regional, // Guardamos la primera región registrada
+                        distrital: item.distrital, // Guardamos el primer gerente registrado
                         cadena: item.cadena,
                         sucursal: item.sucursal,
                         sumCap: 0, sumSeg: 0, sumPromedio: 0,
