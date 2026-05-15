@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Corporativo - Gestión Multi-Cadena</title>
+    
+    <!-- Librerías Externas -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
+    <style>
+        /* Variables CSS Dinámicas */
+        :root {
+            --bg-main: #f4f7f9;
+            --color-m1: #2F5597;
+            --color-m2: #8FAADC;
+            --color-m3: #B4C6E7;
+            --color-m1-light: rgba(47, 85, 151, 0.1);
+            --color-m2-light: rgba(143, 170, 220, 0.1);
+            --color-m3-light: rgba(180, 198, 231, 0.1);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: #1e293b;
+        }
+
+        input, select, button, textarea, option {
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+
+        .kpi-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            min-height: 450px;
+            width: 100%;
+        }
+
+        /* Contenedor específico para gráfica con scroll */
+        .scrollable-chart-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .scrollable-chart-container::-webkit-scrollbar { height: 8px; }
+        .scrollable-chart-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+        .loader {
+            border-top-color: #475569;
+            animation: spinner 1s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .table-container {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .table-container::-webkit-scrollbar { height: 6px; }
+        .table-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-100 h-16 w-16 mb-6"></div>
+        <h2 class="text-xl font-bold text-slate-800">Cargando Indicadores Consolidados...</h2>
+        <p class="text-slate-500 mt-2">Sincronizando con bases de datos externas</p>
+    </div>
+
+    <div id="dashboard-content" class="max-w-[1600px] mx-auto space-y-8 pb-8">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-5">
+                <div id="header-icon-container" class="bg-slate-700 p-3 rounded-2xl shadow-lg shadow-slate-200 transition-colors duration-500">
+                    <i data-lucide="bar-chart-3" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control Estratégico</h1>
+                    <p id="dynamic-subtitle" class="text-slate-500 font-medium transition-colors">Visualización de métricas multi-cadena</p>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex flex-1 justify-center px-4">
+                <img src="Logos dashboard.png" alt="Logos de las Marcas" class="h-16 md:h-20 lg:h-24 w-auto object-contain transition-transform duration-500 hover:scale-105" onerror="this.style.display='none'">
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2" data-html2canvas-ignore="true">
+                    <button id="btn-download-pdf" onclick="downloadPDF()" class="bg-[var(--color-m1)] hover:opacity-90 text-white px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm shadow-slate-200">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> PDF
+                    </button>
+                    <button id="btn-download-pptx" onclick="downloadPPTX()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm shadow-slate-200">
+                        <i data-lucide="presentation" class="w-4 h-4"></i> PPTX
+                    </button>
+                </div>
+                <div class="flex items-center gap-4 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100 hidden lg:flex">
+                    <div class="text-right">
+                        <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Estado de Datos</p>
+                        <p id="current-date" class="text-sm font-bold text-slate-700"></p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="filter" class="w-5 h-5 text-slate-400"></i>
+                    <h2 class="font-bold text-lg text-slate-700">Filtros Inteligentes en Cascada</h2>
+                </div>
+                <button onclick="resetFilters()" data-html2canvas-ignore="true" class="text-xs font-extrabold text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> REINICIAR SEGMENTACIÓN
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                
+                <div class="space-y-1.5 relative custom-dropdown" data-level="trimestre">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Trimestre</label>
+                    <div class="relative">
+                        <input type="text" id="display-trimestre" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-trimestre" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; left: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-trimestre" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-trimestre" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 relative custom-dropdown" data-level="mes">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Mes</label>
+                    <div class="relative">
+                        <input type="text" id="display-mes" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-mes" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; left: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-mes" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-mes" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 relative custom-dropdown" data-level="cadena">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Cadena</label>
+                    <div class="relative">
+                        <input type="text" id="display-cadena" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-cadena" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; left: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-cadena" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-cadena" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Indicador</label>
+                    <select id="filter-indicador" onchange="updateIndicadorFilter()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer">
+                        <option value="Todos">Todos</option>
+                        <option value="srv">ServSafe</option>
+                        <option id="opt-m2" value="m2">BKU / PTE</option>
+                        <option id="opt-m3" value="m3">REV / OER</option>
+                        <option value="cert">Cert. Gerencial</option>
+                        <option value="ocup">Ocup. Plantilla</option>
+                        <option value="rotacion">Rotación</option>
+                        <option value="rec">REC (Critical Visit)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1.5 relative custom-dropdown" data-level="region">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Región</label>
+                    <div class="relative">
+                        <input type="text" id="display-region" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-region" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; left: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-region" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-region" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 relative custom-dropdown" data-level="distrito">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Distrito</label>
+                    <div class="relative">
+                        <input type="text" id="display-distrito" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-distrito" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; left: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-distrito" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-distrito" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 relative custom-dropdown" data-level="gerente_sucursal">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Gerente / Sucursal</label>
+                    <div class="relative">
+                        <input type="text" id="display-gerente_sucursal" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-gerente_sucursal" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; right: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-gerente_sucursal" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-gerente_sucursal" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjetas KPI Principales -->
+        <div id="export-kpis" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden relative">
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Sucursales</p>
+                        <h3 id="kpi-sucursales" class="text-4xl font-black text-slate-800 mt-2">0</h3>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl">
+                        <i data-lucide="store" class="w-6 h-6 text-slate-400"></i>
+                    </div>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-4 font-bold">Unidades operativas activas</p>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m1)]">ServSafe</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                    </div>
+                    <h3 id="kpi-srv" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-srv" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        0 Gtes. con ServSafe / 0 Plantilla ocupada<br>
+                        0 Sub. con ServSafe / 0 Plantilla ocupada
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-srv" class="h-full transition-all duration-1000 bg-[var(--color-m1)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p id="label-m2" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m2)]">BKU / PTE</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 90%</span>
+                    </div>
+                    <h3 id="kpi-m2" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-bku" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        0 Colaboradores certificados / 0 Plantilla ocupada<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-m2" class="h-full transition-all duration-1000 bg-[var(--color-m2)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p id="label-altas" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-indigo-500">BKU / PTE ALTAS</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
+                    </div>
+                    <h3 id="kpi-altas" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-altas" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        0 colaboradores de alta / 0 Plantilla ocupada<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-altas" class="h-full transition-all duration-1000 bg-indigo-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p id="label-m3" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m3)]">REV / OER</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 90%</span>
+                    </div>
+                    <h3 id="kpi-m3" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-rev" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        Sin auditorías registradas<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-m3" class="h-full transition-all duration-1000 bg-[var(--color-m3)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="card-rec" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m1)]">REC (Critical Visit)</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                    </div>
+                    <h3 id="kpi-rec" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-rec" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        Visitas Críticas generadas: 0<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-rec" class="h-full transition-all duration-1000 bg-[var(--color-m1)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest text-[#1F3864]">Cert. Gerencial</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                    </div>
+                    <h3 id="kpi-cert" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-cert" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        0 Gtes. Certificados / 0 Plantilla ocupada<br>
+                        0 Sub. Certificados / 0 Plantilla ocupada
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-cert" class="h-full transition-all duration-1000 bg-[#1F3864]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest text-[#4472C4]">Ocup. Plantillas</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 96%</span>
+                    </div>
+                    <h3 id="kpi-ocup" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        Nivel de cobertura de plantilla ideal<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-ocup" class="h-full transition-all duration-1000 bg-[#4472C4]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card bg-amber-50 p-6 rounded-3xl shadow-sm border border-amber-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest text-amber-600">Rotación</p>
+                        <span class="bg-amber-100 text-amber-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
+                    </div>
+                    <h3 id="kpi-rotacion" class="text-4xl font-black text-amber-700 mt-1">0%</h3>
+                    <div id="detail-rotacion" class="text-[9.5px] text-amber-600 font-bold mt-2 leading-tight">
+                        0 bajas de 0 en plantilla ocupada<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-amber-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-rotacion" class="h-full transition-all duration-1000 bg-amber-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden relative">
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Sucesión</p>
+                        <h3 id="kpi-sucesion" class="text-4xl font-black text-slate-800 mt-2">0</h3>
+                        <div id="detail-sucesion" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">Colaboradores en proceso de sucesión<br>&nbsp;</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl">
+                        <i data-lucide="users" class="w-6 h-6 text-slate-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card bg-red-50 p-6 rounded-3xl shadow-sm border border-red-200 flex flex-col justify-between overflow-hidden relative">
+                <div class="flex justify-between items-start z-10">
+                    <div class="w-full pr-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <p class="text-xs font-black text-red-500 uppercase tracking-widest">Zero Protocol</p>
+                            <span class="bg-red-200 text-red-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">MÁX 1.45</span>
+                        </div>
+                        <h3 id="kpi-zp" class="text-4xl font-black text-red-700 mt-2">0</h3>
+                        <p id="detail-zp" class="text-[9.5px] text-red-400 font-bold mt-2 leading-tight">0% de sucursales afectadas<br>&nbsp;</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-2xl flex-shrink-0 mt-1">
+                        <i data-lucide="shield-alert" class="w-6 h-6 text-red-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-200 flex flex-col justify-between overflow-hidden relative">
+                <div class="flex justify-between items-start z-10">
+                    <div class="w-full pr-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <p class="text-xs font-black text-orange-500 uppercase tracking-widest">Sin Gerente</p>
+                            <span class="bg-orange-200 text-orange-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">ALERTA</span>
+                        </div>
+                        <h3 id="kpi-singerente" class="text-4xl font-black text-orange-700 mt-1">0</h3>
+                        <p id="detail-singerente" class="text-[9.5px] text-orange-400 font-bold mt-2 leading-tight">0% de la red sin gerente<br>&nbsp;</p>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-2xl flex-shrink-0 mt-1">
+                        <i data-lucide="user-minus" class="w-6 h-6 text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white/50 p-6 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors duration-500 bg-[var(--color-m1-light)] text-[var(--color-m1)]">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">DESEMPEÑO GLOBAL</p>
+                <h3 class="text-2xl font-black mt-1 transition-colors duration-500 text-[var(--color-m1)]">90%</h3>
+                <p class="text-[8.5px] font-bold text-slate-400 mt-2 leading-tight px-2">Aplica para: ServSafe, BKU/PTE, REV/OER, Cert. Gerencial</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 mt-8">
+            
+            <div id="compare-charts-wrapper" class="grid grid-cols-1 gap-8">
+                <div id="container-rev-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <h3 id="title-rev-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral REV</h3>
+                                    <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 90%</span>
+                                </div>
+                                <p id="subtitle-rev" class="text-xs text-slate-500 font-medium mt-1">Unidades Moteburger y Centura</p>
+                            </div>
+                        </div>
+                        <select id="select-rev-type" onchange="updateRevChartType()" class="bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl p-2.5 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer shadow-sm">
+                            <option value="std">Standard</option>
+                            <option value="re">Re-Audit</option>
+                            <option value="extra">Extra REV</option>
+                            <option value="re2">2nd Re-Audit</option>
+                            <option value="ccv">CCV</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-rev-compare"></canvas>
+                    </div>
+                </div>
+
+                <div id="container-rec-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h3 id="title-rec-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral REC</h3>
+                                <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 100%</span>
+                            </div>
+                            <p id="subtitle-rec" class="text-xs text-slate-500 font-medium mt-1">Unidades Moteburger y Centura</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-rec-compare"></canvas>
+                    </div>
+                </div>
+
+                <div id="container-oer-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h3 id="title-oer-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral OER / RAV</h3>
+                                <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 90%</span>
+                            </div>
+                            <p id="subtitle-oer" class="text-xs text-slate-500 font-medium mt-1">Unidades Church's</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-oer-compare"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="export-chart-zp" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-red-500"></div>
+                    <div class="flex items-center gap-3">
+                        <h3 id="title-chart-zp" class="text-xl font-bold text-slate-800 tracking-tight">Incidencia Zero Protocol</h3>
+                        <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Máx 1.45</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-zp"></canvas>
+                </div>
+            </div>
+
+            <div id="export-chart-gerente" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                    <div class="flex items-center gap-3">
+                        <h3 id="title-chart-gerente" class="text-xl font-bold text-slate-800 tracking-tight">Resultados por Gerente de Negocio</h3>
+                        <span id="meta-badge-gerente" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-gerente"></canvas>
+                </div>
+            </div>
+
+            <div id="export-chart-cadena" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
+                    <div class="flex items-center gap-3">
+                        <h3 id="title-chart-cadena" class="text-xl font-bold text-slate-800 tracking-tight">Comparativa por Franquicia</h3>
+                        <span id="meta-badge-cadena" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-cadena"></canvas>
+                </div>
+            </div>
+            
+            <div id="export-chart-distrito" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m3)]"></div>
+                    <div class="flex items-center gap-3">
+                        <h3 id="title-chart-distrito" class="text-xl font-bold text-slate-800 tracking-tight">Ranking de Desempeño por Distrito</h3>
+                        <span id="meta-badge-distrito" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
+                    </div>
+                </div>
+                <div class="scrollable-chart-container">
+                    <div id="chart-distrito-wrapper" style="min-width: 1000px; height: 450px;">
+                        <canvas id="chart-distrito"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sin-gerente-wrapper"></div>
+        <div id="zero-protocol-wrapper"></div>
+        <div id="sucesion-wrapper"></div>
+
+        <div id="export-rankings" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                        <i data-lucide="award" class="text-green-500 w-6 h-6"></i>
+                        Excelencia Operativa (Top 5)
+                    </h3>
+                </div>
+                <div id="top-rank-container" class="space-y-4"></div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                        <i data-lucide="alert-triangle" class="text-red-500 w-6 h-6"></i>
+                        Foco de Atención (Top 5)
+                    </h3>
+                </div>
+                <div id="bottom-rank-container" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <div id="export-table" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mt-8">
+            <div class="p-8 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3">
+                        <i data-lucide="database" class="w-6 h-6 text-[var(--color-m1)] transition-colors duration-500"></i>
+                        Registro Detallado por Sucursal
+                    </h3>
+                    <p class="text-slate-400 text-sm font-medium mt-1">Análisis de plantilla, RRHH y cumplimiento porcentual</p>
+                </div>
+                <div class="px-4 py-2 rounded-xl border flex items-center gap-3 transition-colors duration-500 bg-[var(--color-m1-light)] border-[var(--color-m1)]">
+                    <span id="badge-count" class="text-xs font-black uppercase transition-colors duration-500 text-[var(--color-m1)]">0 SUCURSALES</span>
+                </div>
+            </div>
+            <div class="table-container overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-max">
+                    <thead>
+                        <tr class="bg-slate-50/50">
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Región</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Distrito</th>
+                            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Cadena</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Sucursal</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Gerente</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center whitespace-nowrap">Gerentes de Negocio Ocupada</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center whitespace-nowrap">Subgerentes Ocupada</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center whitespace-nowrap">Colaboradores Ocupada</th>
+                            
+                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 border-l border-slate-200 text-center whitespace-nowrap">Cert. Ger</th>
+                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 text-center whitespace-nowrap">Ocup. Plan</th>
+                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 border-r border-slate-200 text-center whitespace-nowrap">Sucesión</th>
+                            <th class="p-4 text-[10px] font-black text-amber-500 bg-amber-50 uppercase tracking-wider border-b border-slate-100 border-r border-slate-200 text-center whitespace-nowrap">Rotación</th>
+                            
+                            <th class="p-4 text-[10px] font-black uppercase tracking-wider border-b border-slate-100 text-center transition-colors duration-500 text-[var(--color-m1)] bg-[var(--color-m1-light)]">S.Safe</th>
+                            <th id="th-m2" class="p-4 text-[10px] font-black uppercase tracking-wider border-b border-slate-100 text-center transition-colors duration-500 text-[var(--color-m2)] bg-[var(--color-m2-light)]">M2</th>
+                            <th id="th-m3" class="p-4 text-[10px] font-black uppercase tracking-wider border-b border-slate-100 text-center transition-colors duration-500 text-[var(--color-m3)] bg-[var(--color-m3-light)]">M3</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-slate-50">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SOURCES = {
+            'Centura': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=250274755&single=true&output=csv',
+            'Moteburger': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=98366889&single=true&output=csv',
+            'Churchs': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=624506431&single=true&output=csv'
+        };
+
+        const MESES_NOM = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        
+        const PALETTES = {
+            'churchs': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
+            'moteburger': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
+            'centura': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
+            'default': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' }
+        };
+
+        let RawData = [];
+        let FilteredData = [];
+        let ChartsObj = {};
+        let activePalette = PALETTES['default'];
+        let currentRevType = 'std'; 
+        
+        const selections = {
+            trimestre: 'Todos', mes: 'Todos', cadena: 'Todos', indicador: 'Todos', region: 'Todos', distrito: 'Todos', gerente_sucursal: 'Todos'
+        };
+
+        window.onload = async function() {
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            initCustomDropdowns(); 
+            await fetchAllData();
+            lucide.createIcons();
+        };
+
+        function safeAvg(arr, valFn) {
+            const validItems = arr.filter(function(d) { return valFn(d) !== null && valFn(d) !== undefined && !isNaN(valFn(d)); });
+            if (validItems.length === 0) return null;
+            const sum = validItems.reduce(function(acc, d) { return acc + valFn(d); }, 0);
+            const avg = sum / validItems.length;
+            if (avg < 0 && avg > -0.5) return -0.00001; 
+            return Math.round(avg);
+        }
+
+        function parsePct(val) {
+            if (val === undefined || val === null || val.toString().trim() === '') return null;
+            const strVal = val.toString().trim().toLowerCase();
+            if (strVal.includes('zero protocol')) return -0.00001;
+            const n = parseFloat(strVal.replace('%', '').replace(',', '.'));
+            return isNaN(n) ? null : n;
+        }
+
+        function parseRec(val) {
+            if (val === undefined || val === null || val.toString().trim() === '') return null;
+            const strVal = val.toString().trim().toLowerCase();
+            if (strVal.includes('pass')) return 100;
+            if (strVal.includes('fail')) return 0;
+            const n = parseFloat(strVal.replace('%', '').replace(',', '.'));
+            return isNaN(n) ? null : n;
+        }
+
+        function parseCount(val) {
+            if (val === undefined || val === null || val.toString().trim() === '') return null;
+            const n = parseInt(val.toString().replace(/,/g, ''), 10);
+            return isNaN(n) ? null : n;
+        }
+
+        async function fetchAllData() {
+            try {
+                const promises = Object.keys(SOURCES).map(function(key) {
+                    return fetchData(key, SOURCES[key]);
+                });
+                const results = await Promise.all(promises);
+                RawData = [];
+                results.forEach(function(res) {
+                    RawData = RawData.concat(res);
+                });
+                
+                RawData.sort(function(a, b) { return MESES_NOM.indexOf(a.mes) - MESES_NOM.indexOf(b.mes); });
+                
+                FilteredData = [].concat(RawData);
+                
+                populateFilters();
+                updateDashboard();
+                hideLoader();
+            } catch (err) {
+                console.error("Error cargando datos:", err);
+            }
+        }
+
+        function fetchData(sourceName, url) {
+            return new Promise(function(resolve, reject) {
+                Papa.parse(url, {
+                    download: true, header: false, skipEmptyLines: true,
+                    complete: function(results) {
+                        const cleanRows = [];
+                        
+                        const rowsToProcess = results.data.slice(1).filter(function(row) {
+                            return row.length >= 20;
+                        });
+
+                        rowsToProcess.forEach(function(row) {
+                            const isChurchs = sourceName.toLowerCase().includes('church');
+                            
+                            let srv = null, m2 = null, m3 = null;
+                            let rev26r1 = { std: null, re: null, extra: null, re2: null, ccv: null };
+                            let rev26r2 = { std: null, re: null, extra: null, re2: null, ccv: null };
+                            let rec26r1 = null, rec26r2 = null;
+                            let rrhh = { certGerencial: null, ocPlantilla: null, colSucesion: 0 };
+                            let bajas = 0;
+
+                            let isZeroProtocol = false;
+                            for(let i=0; i<row.length; i++) {
+                                if (typeof row[i] === 'string' && row[i].toLowerCase().includes('zero protocol')) {
+                                    isZeroProtocol = true;
+                                    break;
+                                }
+                            }
+
+                            let zpIncidences = [];
+                            function checkZP(val, label) {
+                                if (typeof val === 'string' && val.toLowerCase().includes('zero protocol')) {
+                                    zpIncidences.push(label);
+                                }
+                            }
+
+                            let colAut = parseCount(row[8]) || 0; 
+                            let gerP = parseCount(row[9]);
+                            let subP = parseCount(row[10]);
+                            let colP = parseCount(row[11]);
+                            let gerSrv = parseCount(row[12]);
+                            let subSrv = parseCount(row[13]);
+                            let bkuCol = parseCount(row[15]);
+                            let altasCount = parseCount(row[16]); 
+                            let certGerNum = null, certSubNum = null;
+                            let gerenteStr = row[3] ? row[3].toString().trim() : 'S/G';
+
+                            let totalPlantillaOcupada = (gerP || 0) + (subP || 0) + (colP || 0);
+
+                            if (isChurchs) {
+                                srv = parsePct(row[14]); 
+                                m2 = parsePct(row[17]); 
+                                
+                                m3 = parsePct(row[18]); 
+                                if (m3 === null) m3 = parsePct(row[19]); 
+
+                                checkZP(row[18], 'OER 2026');
+                                checkZP(row[19], 'RAV 2026');
+
+                                rev26r1.std = parsePct(row[18]); 
+                                rev26r2.std = parsePct(row[19]); 
+                                
+                                certGerNum = parseCount(row[20]);
+                                certSubNum = parseCount(row[21]);
+                                
+                                rrhh.ocPlantilla = parsePct(row[22]); 
+                                rrhh.sucesionGer = parseCount(row[23]) || 0;
+                                rrhh.sucesionSub = parseCount(row[24]) || 0;
+                                rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0); 
+                                
+                                bajas = parseCount(row[25]) || 0;
+                            } else {
+                                srv = parsePct(row[14]); 
+                                m2 = parsePct(row[17]); 
+                                
+                                m3 = parsePct(row[18]); 
+                                if (m3 === null) m3 = parsePct(row[24]); 
+                                
+                                checkZP(row[18], 'Std 26 R1');
+                                checkZP(row[19], 'Re-Audit 26 R1');
+                                checkZP(row[20], 'Extra 26 R1');
+                                checkZP(row[21], '2nd Re 26 R1');
+                                checkZP(row[22], 'CCV 26 R1');
+                                checkZP(row[23], 'REC 26 R1');
+                                
+                                checkZP(row[24], 'Std 26 R2');
+                                checkZP(row[25], 'Re-Audit 26 R2');
+                                checkZP(row[26], 'Extra 26 R2');
+                                checkZP(row[27], '2nd Re 26 R2');
+                                checkZP(row[28], 'CCV 26 R2');
+                                checkZP(row[29], 'REC 26 R2');
+
+                                rev26r1 = { std: parsePct(row[18]), re: parsePct(row[19]), extra: parsePct(row[20]), re2: parsePct(row[21]), ccv: parsePct(row[22]) };
+                                rec26r1 = parseRec(row[23]);
+                                rev26r2 = { std: parsePct(row[24]), re: parsePct(row[25]), extra: parsePct(row[26]), re2: parsePct(row[27]), ccv: parsePct(row[28]) };
+                                rec26r2 = parseRec(row[29]);
+                                
+                                certGerNum = parseCount(row[30]);
+                                certSubNum = parseCount(row[31]);
+                                
+                                rrhh.ocPlantilla = parsePct(row[32]);
+                                rrhh.sucesionGer = parseCount(row[33]) || 0;
+                                rrhh.sucesionSub = parseCount(row[34]) || 0;
+                                rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
+                                
+                                bajas = parseCount(row[35]) || 0;
+                            }
+
+                            if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
+                                 rrhh.certGerencial = (((certGerNum || 0) + (certSubNum || 0)) / totalPlantillaOcupada) * 100;
+                            } else {
+                                 rrhh.certGerencial = null;
+                            }
+
+                            let pctAltas = null;
+                            if(totalPlantillaOcupada > 0 && altasCount !== null && !isNaN(altasCount)) {
+                                pctAltas = (altasCount / totalPlantillaOcupada) * 100;
+                            }
+                            
+                            let rotacionPct = null;
+                            if(totalPlantillaOcupada > 0) {
+                                rotacionPct = (bajas / totalPlantillaOcupada) * 100;
+                            }
+
+                            const activeMetrics = [];
+                            if (srv !== null) activeMetrics.push({v: srv});
+                            if (m2 !== null) activeMetrics.push({v: m2});
+                            if (m3 !== null) activeMetrics.push({v: m3});
+                            if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
+
+                            const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, function(x){return x.v;}) : null;
+
+                            if (srv === null && m2 === null && m3 === null && rrhh.certGerencial === null && !isZeroProtocol && gerenteStr.toUpperCase() !== 'SIN GERENTE') {
+                                return; 
+                            }
+
+                            const mesStr = row[0] ? row[0].toString().trim() : ''; 
+                            const tri = getTrimestre(mesStr);
+
+                            if (isZeroProtocol && zpIncidences.length === 0) {
+                                zpIncidences.push('General');
+                            }
+
+                            cleanRows.push({
+                                mes: mesStr, trimestre: tri, region: row[1] ? row[1].toString().trim() : 'S/R',
+                                distrito: row[2] ? row[2].toString().trim() : 'S/D', gerente: gerenteStr,
+                                cadena: row[4] ? row[4].toString().trim() : sourceName, sucursal: row[5] ? row[5].toString().trim() : 'S/S',
+                                gerente_sucursal: (row[5] ? row[5].toString().trim() : 'S/S') + ' - ' + gerenteStr,
+                                colAut: colAut, altasCount: altasCount, pctAltas: pctAltas,
+                                gerP: gerP, subP: subP, colP: colP, totalPlantillaOcupada: totalPlantillaOcupada,
+                                gerSrv: gerSrv, subSrv: subSrv, bkuCol: bkuCol,
+                                certGerNum: certGerNum, certSubNum: certSubNum,
+                                srv: srv, m2: m2, m3: m3, promedio: promedio,
+                                rev26r1: rev26r1, rev26r2: rev26r2,
+                                rec26r1: rec26r1, rec26r2: rec26r2,
+                                bajas: bajas, rotacion: rotacionPct,
+                                rrhh: rrhh, hasZeroProtocol: isZeroProtocol, zpIncidences: zpIncidences
+                            });
+                        });
+                        resolve(cleanRows);
+                    }, error: reject
+                });
+            });
+        }
+
+        function getTrimestre(mes) {
+            if (['Enero', 'Febrero', 'Marzo'].includes(mes)) return 'T1';
+            if (['Abril', 'Mayo', 'Junio'].includes(mes)) return 'T2';
+            if (['Julio', 'Agosto', 'Septiembre'].includes(mes)) return 'T3';
+            if (['Octubre', 'Noviembre', 'Diciembre'].includes(mes)) return 'T4';
+            return 'S/T';
+        }
+
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+        }
+
+        function initCustomDropdowns() {
+            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'gerente_sucursal'];
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.custom-dropdown')) closeAllDropdowns();
+            });
+
+            levels.forEach(function(level) {
+                const displayInput = document.getElementById('display-' + level);
+                const menu = document.getElementById('menu-' + level);
+                const searchInput = document.getElementById('search-' + level);
+                
+                if(!displayInput || !menu || !searchInput) return;
+
+                displayInput.addEventListener('click', function(e) {
+                    const isHidden = menu.classList.contains('hidden');
+                    closeAllDropdowns();
+                    if (isHidden) {
+                        menu.classList.remove('hidden');
+                        void menu.offsetWidth; 
+                        menu.classList.remove('opacity-0', 'scale-95');
+                        searchInput.focus();
+                    }
+                });
+
+                searchInput.addEventListener('input', function(e) {
+                    const term = e.target.value.toLowerCase();
+                    const items = menu.querySelectorAll('li');
+                    items.forEach(function(item) {
+                        const text = item.innerText.toLowerCase();
+                        if (text.includes(term)) item.style.display = 'block';
+                        else item.style.display = 'none';
+                    });
+                });
+            });
+        }
+
+        function closeAllDropdowns() {
+            const menus = document.querySelectorAll('.custom-dropdown .absolute.z-50');
+            menus.forEach(function(menu) {
+                menu.classList.add('opacity-0', 'scale-95');
+                setTimeout(function() {
+                    if(menu.classList.contains('opacity-0')) menu.classList.add('hidden');
+                }, 150); 
+            });
+        }
+
+        function selectOption(level, value) {
+            selections[level] = value;
+            closeAllDropdowns();
+            applyFilters();
+        }
+
+        function populateFilters() {
+            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'gerente_sucursal'];
+            let currentSubset = [].concat(RawData);
+
+            levels.forEach(function(level) {
+                const listEl = document.getElementById('list-' + level);
+                const displayInput = document.getElementById('display-' + level);
+                const searchInput = document.getElementById('search-' + level);
+                
+                if (!listEl) return;
+                
+                if(searchInput) searchInput.value = '';
+
+                const uniqueVals = new Set();
+                currentSubset.forEach(function(d){ if(d[level]) uniqueVals.add(d[level]); });
+                const options = Array.from(uniqueVals).filter(Boolean);
+                
+                if (level === 'mes') {
+                    options.sort(function(a, b){ return MESES_NOM.indexOf(a) - MESES_NOM.indexOf(b); });
+                } else {
+                    options.sort();
+                }
+
+                const prevValue = selections[level];
+                let labelText = level.charAt(0).toUpperCase() + level.slice(1);
+                if (level === 'gerente_sucursal') labelText = 'Gerente / Sucursal';
+                
+                listEl.innerHTML = ''; 
+
+                function addItem(val, text) {
+                    const li = document.createElement('li');
+                    li.className = "px-3 py-2 text-sm text-slate-600 hover:bg-[var(--color-m1-light)] hover:text-[var(--color-m1)] rounded-lg cursor-pointer transition-colors";
+                    li.innerText = text;
+                    if (val === prevValue) {
+                        li.style.backgroundColor = 'var(--color-m1)';
+                        li.style.color = '#ffffff';
+                        li.style.fontWeight = 'bold';
+                    }
+                    li.onclick = function(e) {
+                        e.stopPropagation(); 
+                        selectOption(level, val);
+                    };
+                    listEl.appendChild(li);
+                }
+
+                addItem('Todos', "Seleccionar " + labelText);
+                options.forEach(function(opt){ addItem(opt, opt); });
+
+                if (displayInput) {
+                    displayInput.value = prevValue === 'Todos' ? "Todos" : prevValue;
+                }
+
+                if (selections[level] !== 'Todos') {
+                    currentSubset = currentSubset.filter(function(d){ return d[level] === selections[level]; });
+                }
+            });
+        }
+
+        function updateIndicadorFilter() {
+            selections.indicador = document.getElementById('filter-indicador').value;
+            updateDashboard();
+        }
+
+        function applyFilters() {
+            const selectedTri = selections.trimestre;
+            const selectedMes = selections.mes;
+
+            FilteredData = RawData.filter(function(d) {
+                let matches = true;
+                const strictKeys = ['cadena', 'region', 'distrito', 'gerente_sucursal'];
+                
+                for (let i = 0; i < strictKeys.length; i++) {
+                    let key = strictKeys[i];
+                    if (selections[key] !== 'Todos' && d[key] !== selections[key]) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (!matches) return false;
+
+                if (selectedTri !== 'Todos' || selectedMes !== 'Todos') {
+                    const rowTriIndex = ['T1', 'T2', 'T3', 'T4'].indexOf(d.trimestre);
+                    const rowMesIndex = MESES_NOM.indexOf(d.mes);
+                    
+                    if (selectedMes !== 'Todos') {
+                        const selMesIndex = MESES_NOM.indexOf(selectedMes);
+                        if (rowMesIndex > selMesIndex) return false;
+                    } else if (selectedTri !== 'Todos') {
+                        const selTriIndex = ['T1', 'T2', 'T3', 'T4'].indexOf(selectedTri);
+                        if (rowTriIndex > selTriIndex) return false;
+                    }
+                }
+                return true;
+            });
+            
+            populateFilters();
+            updateDashboard();
+        }
+
+        function resetFilters() {
+            for (let k in selections) selections[k] = 'Todos';
+            document.getElementById('filter-indicador').value = 'Todos';
+            
+            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'gerente_sucursal'];
+            levels.forEach(function(level) {
+                const displayInput = document.getElementById('display-' + level);
+                if (displayInput) displayInput.value = 'Todos';
+            });
+
+            applyFilters();
+        }
+
+        function updateDashboard() {
+            updateThemeAndLabels();
+            updateKPIs();
+            updateMetaBadges(); 
+            renderCharts();
+            renderSinGerente();
+            renderZeroProtocol();
+            renderSucesion();
+            renderTable();
+            renderRankings();
+            lucide.createIcons();
+        }
+
+        function updateThemeAndLabels() {
+            const uniqueCadenas = new Set();
+            FilteredData.forEach(function(d){ uniqueCadenas.add(d.cadena.toLowerCase()); });
+            const cadenas = Array.from(uniqueCadenas);
+            
+            let isChurchs = true;
+            let isMoteburger = true;
+            let isCentura = true;
+
+            if (cadenas.length === 0) {
+                isChurchs = false;
+                isMoteburger = false;
+                isCentura = false;
+            } else {
+                cadenas.forEach(function(c) {
+                    if (!c.includes('church') && !c.includes('pte')) isChurchs = false;
+                    if (!c.includes('mote')) isMoteburger = false;
+                    if (!c.includes('centura')) isCentura = false;
+                });
+            }
+
+            let labelM2 = "BKU / PTE", labelM3 = "REV / OER", labelAltas = "BKU / PTE ALTAS";
+            let subtitleRevRec = "Unidades Moteburger y Centura";
+            
+            if (isChurchs && cadenas.length > 0) {
+                activePalette = PALETTES['churchs'];
+                labelM2 = "PTE"; labelM3 = "OER / RAV"; labelAltas = "PTE ALTAS";
+            } else if (isMoteburger && cadenas.length > 0) {
+                activePalette = PALETTES['moteburger'];
+                labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS";
+                subtitleRevRec = "Unidades Moteburger";
+            } else if (isCentura && cadenas.length > 0) {
+                activePalette = PALETTES['centura'];
+                labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS";
+                subtitleRevRec = "Unidades Centura";
+            } else if ((isMoteburger || isCentura) && !isChurchs) {
+                activePalette = PALETTES['default'];
+                labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS";
+            } else {
+                activePalette = PALETTES['default']; 
+                labelM2 = "BKU / PTE"; labelM3 = "REV Std / OER"; labelAltas = "BKU / PTE ALTAS";
+            }
+
+            const root = document.documentElement;
+            root.style.setProperty('--color-m1', activePalette.m1);
+            root.style.setProperty('--color-m2', activePalette.m2);
+            root.style.setProperty('--color-m3', activePalette.m3);
+            root.style.setProperty('--color-m1-light', hexToRgba(activePalette.m1, 0.15));
+            root.style.setProperty('--color-m2-light', hexToRgba(activePalette.m2, 0.15));
+            root.style.setProperty('--color-m3-light', hexToRgba(activePalette.m3, 0.15));
+
+            document.getElementById('header-icon-container').style.backgroundColor = activePalette.m1;
+
+            document.getElementById('label-m2').innerText = labelM2;
+            document.getElementById('label-m3').innerText = labelM3;
+            document.getElementById('opt-m2').innerText = labelM2;
+            document.getElementById('opt-m3').innerText = labelM3;
+            document.getElementById('th-m2').innerText = labelM2;
+            document.getElementById('th-m3').innerText = labelM3;
+            
+            const lblAltas = document.getElementById('label-altas');
+            if(lblAltas) lblAltas.innerText = labelAltas;
+
+            document.getElementById('dynamic-subtitle').innerText = selections.cadena !== 'Todos' ? "Métricas consolidadas de " + selections.cadena : "Consolidado General Multi-Marca";
+            document.getElementById('dynamic-subtitle').style.color = activePalette.m1;
+
+            const subRev = document.getElementById('subtitle-rev');
+            if (subRev) subRev.innerText = subtitleRevRec;
+            const subRec = document.getElementById('subtitle-rec');
+            if (subRec) subRec.innerText = subtitleRevRec;
+
+            const revContainer = document.getElementById('container-rev-compare');
+            const recContainer = document.getElementById('container-rec-compare');
+            const oerContainer = document.getElementById('container-oer-compare');
+            const compareWrapper = document.getElementById('compare-charts-wrapper');
+            
+            let hasChurchsCheck = false;
+            let hasMoteCenturaCheck = false;
+            FilteredData.forEach(function(d){
+                const cad = d.cadena.toLowerCase();
+                if (cad.includes('church') || cad.includes('pte')) hasChurchsCheck = true;
+                else hasMoteCenturaCheck = true;
+            });
+            
+            const ind = selections.indicador;
+            const showOer = hasChurchsCheck && (ind === 'Todos' || ind === 'm3');
+            const showRev = hasMoteCenturaCheck && (ind === 'Todos' || ind === 'm3');
+            const showRec = hasMoteCenturaCheck && (ind === 'Todos' || ind === 'rec');
+
+            if (showOer) oerContainer.classList.remove('hidden');
+            else oerContainer.classList.add('hidden');
+
+            if (showRev) revContainer.classList.remove('hidden');
+            else revContainer.classList.add('hidden');
+
+            if (showRec) recContainer.classList.remove('hidden');
+            else recContainer.classList.add('hidden');
+            
+            compareWrapper.classList.remove('lg:grid-cols-2');
+
+            const uniqueSucursales = new Set();
+            FilteredData.forEach(function(d){ uniqueSucursales.add(d.sucursal); });
+            const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1;
+
+            const distritoWrapper = document.getElementById('export-chart-distrito');
+            const rankingsWrapper = document.getElementById('export-rankings');
+
+            if (isSingleSucursal) {
+                if (distritoWrapper) distritoWrapper.classList.add('hidden');
+                if (rankingsWrapper) rankingsWrapper.classList.add('hidden');
+            } else {
+                if (distritoWrapper) distritoWrapper.classList.remove('hidden');
+                if (rankingsWrapper) rankingsWrapper.classList.remove('hidden');
+            }
+
+            const cardRec = document.getElementById('card-rec');
+            if (cardRec) {
+                if (hasChurchsCheck && !hasMoteCenturaCheck) {
+                    cardRec.classList.add('hidden');
+                } else {
+                    cardRec.classList.remove('hidden');
+                }
+            }
+        }
+
+        function updateMetaBadges() {
+            const ind = selections.indicador;
+            let metaText = "Meta Promedio 90%";
+            let metaClass = "bg-slate-100 text-slate-600"; 
+            
+            if (ind === 'srv' || ind === 'cert' || ind === 'rec') {
+                metaText = "Meta 100%";
+                metaClass = "bg-green-100 text-green-700";
+            } else if (ind === 'rotacion') {
+                metaText = "Métrica";
+                metaClass = "bg-amber-100 text-amber-700";
+            } else if (ind === 'Todos') {
+                metaText = "Meta Promedio 90%";
+                metaClass = "bg-slate-100 text-slate-600";
+            } else {
+                metaText = "Meta 90%";
+            }
+
+            const badges = ['meta-badge-gerente', 'meta-badge-cadena', 'meta-badge-distrito'];
+            badges.forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerText = metaText;
+                    el.className = "text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest " + metaClass;
+                }
+            });
+        }
+
+        function updateKPIs() {
+            const uniqueSucursales = new Set();
+            FilteredData.forEach(function(d){ uniqueSucursales.add(d.sucursal); });
+            const count = uniqueSucursales.size;
+            
+            let sumGerP = 0, sumSubP = 0, sumColP = 0;
+            let sumGerSrv = 0, sumSubSrv = 0, sumBkuCol = 0, sumAltasCount = 0;
+            let sumCertGer = 0, sumCertSub = 0;
+            let sumTotalPlantillaOcupada = 0;
+            let sumSucGer = 0, sumSucSub = 0;
+            let sumOcup = 0, countOcup = 0;
+            let sumBajas = 0;
+
+            const sucursales = Array.from(uniqueSucursales);
+            let totalSuc = 0;
+            
+            sucursales.forEach(function(suc) {
+                const sub = FilteredData.filter(function(d){ return d.sucursal === suc; });
+                
+                function getLatest(key) {
+                    const valid = sub.filter(function(d){ return d[key] !== null && d[key] !== undefined && !isNaN(d[key]); });
+                    return valid.length ? valid[valid.length - 1][key] : 0;
+                }
+
+                let branchMaxGer = 0;
+                let branchMaxSub = 0;
+                sub.forEach(function(d) {
+                    if(d.rrhh && d.rrhh.sucesionGer > branchMaxGer) branchMaxGer = d.rrhh.sucesionGer;
+                    if(d.rrhh && d.rrhh.sucesionSub > branchMaxSub) branchMaxSub = d.rrhh.sucesionSub;
+                });
+                
+                sumGerP += getLatest('gerP');
+                sumSubP += getLatest('subP');
+                sumColP += getLatest('colP');
+                sumGerSrv += getLatest('gerSrv');
+                sumSubSrv += getLatest('subSrv');
+                sumBkuCol += getLatest('bkuCol');
+                sumAltasCount += getLatest('altasCount');
+                sumCertGer += getLatest('certGerNum');
+                sumCertSub += getLatest('certSubNum');
+                sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
+                sumBajas += getLatest('bajas');
+
+                const latestOcupObj = sub.filter(function(d){ return d.rrhh && d.rrhh.ocPlantilla !== null; });
+                if (latestOcupObj.length > 0) {
+                    sumOcup += latestOcupObj[latestOcupObj.length - 1].rrhh.ocPlantilla;
+                    countOcup++;
+                }
+
+                sumSucGer += branchMaxGer;
+                sumSucSub += branchMaxSub;
+                totalSuc += (branchMaxGer + branchMaxSub);
+            });
+
+            const c_std = FilteredData.filter(function(d){ return !d.cadena.toLowerCase().includes('church') && d.rev26r1 && d.rev26r1.std !== null; }).length + 
+                          FilteredData.filter(function(d){ return !d.cadena.toLowerCase().includes('church') && d.rev26r2 && d.rev26r2.std !== null; }).length;
+                          
+            const c_rec = FilteredData.filter(function(d){ return d.rec26r1 !== null; }).length + 
+                          FilteredData.filter(function(d){ return d.rec26r2 !== null; }).length;
+
+            let hasChurchs = false;
+            let hasMoteCentura = false;
+            FilteredData.forEach(function(d){
+                const c = d.cadena.toLowerCase();
+                if(c.includes('church')) hasChurchs = true;
+                else hasMoteCentura = true;
+            });
+
+            let revText = [];
+            if (hasMoteCentura) {
+                if(c_std > 0) revText.push("Standard: " + c_std);
+            }
+            if (hasChurchs) {
+                const c_oer = FilteredData.filter(function(d){ return d.cadena.toLowerCase().includes('church') && d.rev26r1 && d.rev26r1.std !== null; }).length;
+                const c_rav = FilteredData.filter(function(d){ return d.cadena.toLowerCase().includes('church') && d.rev26r2 && d.rev26r2.std !== null; }).length;
+                if(c_oer > 0) revText.push("OER: " + c_oer);
+                if(c_rav > 0) revText.push("RAV: " + c_rav);
+            }
+
+            document.getElementById('kpi-sucursales').innerText = count;
+            
+            const srv = (sumGerP + sumSubP) > 0 ? ((sumGerSrv + sumSubSrv) / (sumGerP + sumSubP)) * 100 : null;
+            const m2 = sumTotalPlantillaOcupada > 0 ? (sumBkuCol / sumTotalPlantillaOcupada) * 100 : null;
+            const m3 = safeAvg(FilteredData, function(d){ return d.m3; });
+
+            let pctAltasTotal = null;
+            if(sumTotalPlantillaOcupada > 0 && !isNaN(sumAltasCount)){
+                 pctAltasTotal = (sumAltasCount / sumTotalPlantillaOcupada) * 100;
+            }
+
+            let rotacionGral = null;
+            if (sumTotalPlantillaOcupada > 0) {
+                rotacionGral = (sumBajas / sumTotalPlantillaOcupada) * 100;
+            }
+            
+            function displayKPI(val) {
+                return val !== null ? (val <= 0 ? '0%' : Math.round(val) + '%') : '-';
+            }
+            function widthKPI(val) {
+                return val !== null ? (val <= 0 ? '0%' : Math.round(val) + '%') : '0%';
+            }
+
+            document.getElementById('kpi-srv').innerText = displayKPI(srv);
+            document.getElementById('bar-srv').style.width = widthKPI(srv);
+            document.getElementById('kpi-m2').innerText = displayKPI(m2);
+            document.getElementById('bar-m2').style.width = widthKPI(m2);
+            
+            const kpiAltas = document.getElementById('kpi-altas');
+            if(kpiAltas) kpiAltas.innerText = displayKPI(pctAltasTotal);
+            const barAltas = document.getElementById('bar-altas');
+            if(barAltas) barAltas.style.width = widthKPI(pctAltasTotal);
+
+            document.getElementById('kpi-m3').innerText = displayKPI(m3);
+            document.getElementById('bar-m3').style.width = widthKPI(m3);
+
+            const cert = (sumGerP + sumSubP) > 0 ? ((sumCertGer + sumCertSub) / (sumGerP + sumSubP)) * 100 : null;
+            const ocup = countOcup > 0 ? sumOcup / countOcup : null;
+
+            document.getElementById('kpi-cert').innerText = displayKPI(cert);
+            document.getElementById('bar-cert').style.width = widthKPI(cert);
+            document.getElementById('kpi-ocup').innerText = displayKPI(ocup);
+            document.getElementById('bar-ocup').style.width = widthKPI(ocup);
+            document.getElementById('kpi-sucesion').innerText = totalSuc;
+
+            const rotKpi = document.getElementById('kpi-rotacion');
+            if(rotKpi) rotKpi.innerText = displayKPI(rotacionGral);
+            const rotBar = document.getElementById('bar-rotacion');
+            if(rotBar) rotBar.style.width = widthKPI(rotacionGral);
+            const rotDetail = document.getElementById('detail-rotacion');
+            if(rotDetail) {
+                rotDetail.innerHTML = sumBajas + " bajas de " + sumTotalPlantillaOcupada + " en plantilla ocupada<br>&nbsp;";
+            }
+            
+            const srvDetail = document.getElementById('detail-srv');
+            if (srvDetail) {
+                srvDetail.innerHTML = sumGerSrv + " Gtes. con ServSafe / " + sumGerP + " Plantilla ocupada<br>" + sumSubSrv + " Sub. con ServSafe / " + sumSubP + " Plantilla ocupada";
+            }
+
+            const bkuDetail = document.getElementById('detail-bku');
+            if (bkuDetail) {
+                bkuDetail.innerHTML = sumBkuCol + " Colaboradores certificados / " + sumTotalPlantillaOcupada + " Plantilla ocupada<br>&nbsp;";
+            }
+
+            const altasDetail = document.getElementById('detail-altas');
+            if (altasDetail) {
+                altasDetail.innerHTML = sumAltasCount + " colaboradores de alta / " + sumTotalPlantillaOcupada + " Plantilla ocupada<br>&nbsp;";
+            }
+
+            const certDetail = document.getElementById('detail-cert');
+            if (certDetail) {
+                certDetail.innerHTML = sumCertGer + " Gtes. Certificados / " + sumGerP + " Plantilla ocupada<br>" + sumCertSub + " Sub. Certificados / " + sumSubP + " Plantilla ocupada";
+            }
+
+            const revDetail = document.getElementById('detail-rev');
+            if (revDetail) {
+                revDetail.innerHTML = revText.length > 0 ? revText.join(' &bull; ') : 'Sin auditorías operativas registradas<br>&nbsp;';
+            }
+
+            const recDetail = document.getElementById('detail-rec');
+            if (recDetail) {
+                recDetail.innerHTML = "Visitas Críticas generadas: " + c_rec + "<br>&nbsp;";
+            }
+
+            const sucesionDetail = document.getElementById('detail-sucesion');
+            if (sucesionDetail) {
+                sucesionDetail.innerHTML = sumSucGer + " Gtes. en sucesión<br>" + sumSucSub + " Sub. en sucesión";
+            }
+
+            const allRecs = [];
+            FilteredData.forEach(function(d) {
+                if (d.rec26r1 !== null && d.rec26r1 !== undefined) allRecs.push(d.rec26r1);
+                if (d.rec26r2 !== null && d.rec26r2 !== undefined) allRecs.push(d.rec26r2);
+            });
+            const recAvg = allRecs.length ? Math.round(allRecs.reduce(function(a,b){ return a+b; }, 0) / allRecs.length) : null;
+            
+            const kpiRec = document.getElementById('kpi-rec');
+            if (kpiRec) kpiRec.innerText = displayKPI(recAvg);
+            const barRec = document.getElementById('bar-rec');
+            if (barRec) barRec.style.width = widthKPI(recAvg);
+
+            const uniqueZp = new Set();
+            FilteredData.forEach(function(d){ if(d.hasZeroProtocol) uniqueZp.add(d.sucursal); });
+            const zpCount = uniqueZp.size;
+            const kpiZp = document.getElementById('kpi-zp');
+            if(kpiZp) kpiZp.innerText = zpCount;
+
+            const detailZp = document.getElementById('detail-zp');
+            if(detailZp) {
+                const pctZp = count > 0 ? ((zpCount / count) * 100).toFixed(1) : 0;
+                detailZp.innerHTML = pctZp + "% de las sucursales evaluadas<br>&nbsp;";
+            }
+
+            let sinGerenteCount = 0;
+            const sucsForSg = [];
+            FilteredData.forEach(function(d){ if(!sucsForSg.includes(d.sucursal)) sucsForSg.push(d.sucursal); });
+            
+            sucsForSg.forEach(function(suc) {
+                const sub = FilteredData.filter(function(d){ return d.sucursal === suc; });
+                if (sub.length > 0) {
+                    const latest = sub[sub.length - 1];
+                    if (latest.gerente.toUpperCase().includes('SIN GERENTE') || latest.gerente === 'S/G') {
+                        sinGerenteCount++;
+                    }
+                }
+            });
+
+            const kpiSg = document.getElementById('kpi-singerente');
+            if(kpiSg) kpiSg.innerText = sinGerenteCount;
+            const detailSg = document.getElementById('detail-singerente');
+            if(detailSg) {
+                const pctSg = count > 0 ? ((sinGerenteCount / count) * 100).toFixed(1) : 0;
+                detailSg.innerHTML = pctSg + "% de la red sin gerente<br>&nbsp;";
+            }
+        }
+
+        const tooltipZpConfig = {
+            callbacks: { 
+                label: function(context) { 
+                    let label = context.dataset.label || ''; 
+                    if (label) label += ': '; 
+                    if (context.parsed.y <= 0) label += '0%';
+                    else label += Math.round(context.parsed.y) + '%'; 
+                    return label; 
+                } 
+            }
+        };
+
+        const datalabelsZpConfig = { 
+            anchor: 'end', align: 'top', 
+            formatter: function(v) {
+                if (v === null || v === undefined) return '';
+                if (v <= 0) return '0%';
+                if (v > 0) return Math.round(v) + '%';
+                return ''; 
+            }, 
+            font: { weight: 'black', size: 10 }, color: '#475569' 
+        };
+
+        const genericTooltipWithRaw = {
+            callbacks: {
+                label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) label += ': ';
+                    
+                    let val = context.chart.options.indexAxis === 'y' ? context.parsed.x : context.parsed.y;
+                    label += val + '%';
+                    
+                    const rawDetail = context.dataset.rawData ? context.dataset.rawData[context.dataIndex] : null;
+                    if (rawDetail) {
+                        if (Array.isArray(rawDetail)) {
+                            return [label].concat(rawDetail); 
+                        }
+                        return [label, rawDetail]; 
+                    }
+                    return label;
+                }
+            }
+        };
+
+        function renderCharts() {
+            Chart.register(ChartDataLabels);
+            
+            renderRevCompareChart();
+            renderRecCompareChart();
+            renderOerCompareChart();
+            
+            renderZpChart();
+            renderGerenteChart(); 
+            
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const titleCadenaEl = document.getElementById('title-chart-cadena');
+            
+            if (isHierarchyFiltered) {
+                if (titleCadenaEl) titleCadenaEl.innerText = "Comparativa por Unidades de Negocio";
+                renderBarChart('chart-cadena', 'sucursal');
+            } else {
+                if (titleCadenaEl) titleCadenaEl.innerText = "Comparativa por Franquicia";
+                renderBarChart('chart-cadena', 'cadena');
+            }
+            
+            renderDistritoChart();
+        }
+
+        function updateRevChartType() {
+            currentRevType = document.getElementById('select-rev-type').value;
+            renderRevCompareChart();
+        }
+
+        function renderRevCompareChart() {
+            if (ChartsObj['rev-compare']) ChartsObj['rev-compare'].destroy();
+            
+            const targetData = FilteredData.filter(function(d){ return !d.cadena.toLowerCase().includes('church') && !d.cadena.toLowerCase().includes('pte'); });
+            if (targetData.length === 0 || (selections.indicador !== 'Todos' && selections.indicador !== 'm3')) return;
+
+            const uniqueSucs = new Set();
+            targetData.forEach(function(d){ uniqueSucs.add(d.sucursal); });
+            const sucursales = Array.from(uniqueSucs);
+            
+            const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || sucursales.length === 1;
+            const isMidFilter = selections.distrito !== 'Todos' && !isSingleSucursal;
+
+            const selectEl = document.getElementById('select-rev-type');
+            
+            let labels = [];
+            let data26r1 = [], data26r2 = [];
+            let raw26r1 = [], raw26r2 = [];
+
+            if (isSingleSucursal) {
+                selectEl.classList.add('hidden');
+                document.getElementById('title-rev-compare').innerText = "Auditorías REV: " + sucursales[0];
+                
+                labels = ['Standard', 'Re-Audit', 'Extra REV', '2nd Re-Audit', 'CCV'];
+                
+                function countTarget(roundKey, metric) { return targetData.filter(function(d){ return d[roundKey] && d[roundKey][metric] !== null && d[roundKey][metric] !== undefined && !isNaN(d[roundKey][metric]); }).length; }
+
+                data26r1 = [ safeAvg(targetData, function(d){ return d.rev26r1.std; }), safeAvg(targetData, function(d){ return d.rev26r1.re; }), safeAvg(targetData, function(d){ return d.rev26r1.extra; }), safeAvg(targetData, function(d){ return d.rev26r1.re2; }), safeAvg(targetData, function(d){ return d.rev26r1.ccv; }) ];
+                data26r2 = [ safeAvg(targetData, function(d){ return d.rev26r2.std; }), safeAvg(targetData, function(d){ return d.rev26r2.re; }), safeAvg(targetData, function(d){ return d.rev26r2.extra; }), safeAvg(targetData, function(d){ return d.rev26r2.re2; }), safeAvg(targetData, function(d){ return d.rev26r2.ccv; }) ];
+
+                raw26r1 = [ ["Promedio de " + countTarget('rev26r1', 'std') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r1', 're') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r1', 'extra') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r1', 're2') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r1', 'ccv') + " auditorías evaluadas"] ];
+                raw26r2 = [ ["Promedio de " + countTarget('rev26r2', 'std') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 're') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 'extra') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 're2') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 'ccv') + " auditorías evaluadas"] ];
+
+            } else if (isMidFilter) {
+                selectEl.classList.remove('hidden');
+                document.getElementById('title-rev-compare').innerText = "REV por Sucursal";
+                
+                const sucStats = sucursales.map(function(suc) {
+                    const sub = targetData.filter(function(d){ return d.sucursal === suc; });
+                    const avgR26_1 = safeAvg(sub, function(d){ return d.rev26r1[currentRevType]; });
+                    const avgR26_2 = safeAvg(sub, function(d){ return d.rev26r2[currentRevType]; });
+                    
+                    return { 
+                        suc: suc, r26_1: avgR26_1, r26_2: avgR26_2,
+                        c26_1: sub.filter(function(d){ return d.rev26r1 && d.rev26r1[currentRevType] !== null && d.rev26r1[currentRevType] !== undefined && !isNaN(d.rev26r1[currentRevType]); }).length,
+                        c26_2: sub.filter(function(d){ return d.rev26r2 && d.rev26r2[currentRevType] !== null && d.rev26r2[currentRevType] !== undefined && !isNaN(d.rev26r2[currentRevType]); }).length,
+                        total: (avgR26_1||0) + (avgR26_2||0)
+                    };
+                }).sort(function(a,b){ return b.total - a.total; });
+
+                labels = sucStats.map(function(s){ return s.suc; });
+                data26r1 = sucStats.map(function(s){ return s.r26_1; }); 
+                data26r2 = sucStats.map(function(s){ return s.r26_2; });
+                raw26r1 = sucStats.map(function(s){ return ["Promedio de " + s.c26_1 + " auditorías evaluadas"]; }); 
+                raw26r2 = sucStats.map(function(s){ return ["Promedio de " + s.c26_2 + " auditorías evaluadas"]; });
+                
+            } else {
+                selectEl.classList.remove('hidden');
+                document.getElementById('title-rev-compare').innerText = "Evolución Trimestral REV";
+                labels = ['T1', 'T2', 'T3', 'T4'];
+                
+                labels.forEach(function(tri) {
+                    const sub = targetData.filter(function(d){ return d.trimestre === tri; });
+                    data26r1.push(safeAvg(sub, function(d){ return d.rev26r1[currentRevType]; }));
+                    data26r2.push(safeAvg(sub, function(d){ return d.rev26r2[currentRevType]; }));
+                    
+                    raw26r1.push(["Promedio de " + sub.filter(function(d){ return d.rev26r1 && d.rev26r1[currentRevType] !== null && d.rev26r1[currentRevType] !== undefined && !isNaN(d.rev26r1[currentRevType]); }).length + " auditorías evaluadas"]);
+                    raw26r2.push(["Promedio de " + sub.filter(function(d){ return d.rev26r2 && d.rev26r2[currentRevType] !== null && d.rev26r2[currentRevType] !== undefined && !isNaN(d.rev26r2[currentRevType]); }).length + " auditorías evaluadas"]);
+                });
+            }
+
+            const ctx = document.getElementById('chart-rev-compare').getContext('2d');
+            ChartsObj['rev-compare'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '2026 R1', data: data26r1, rawData: raw26r1, backgroundColor: '#cbd5e1', borderRadius: 6 },
+                        { label: '2026 R2', data: data26r2, rawData: raw26r2, backgroundColor: activePalette.m1, borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
+                        datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                    },
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderRecCompareChart() {
+            if (ChartsObj['rec-compare']) ChartsObj['rec-compare'].destroy();
+            
+            const targetData = FilteredData.filter(function(d){ return !d.cadena.toLowerCase().includes('church') && !d.cadena.toLowerCase().includes('pte'); });
+            if (targetData.length === 0 || (selections.indicador !== 'Todos' && selections.indicador !== 'm3' && selections.indicador !== 'rec')) return;
+
+            const uniqueSucs = new Set();
+            targetData.forEach(function(d){ uniqueSucs.add(d.sucursal); });
+            const sucursales = Array.from(uniqueSucs);
+            
+            const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || sucursales.length === 1;
+            const isMidFilter = selections.distrito !== 'Todos' && !isSingleSucursal;
+
+            let labels = [];
+            let data26r1 = [], data26r2 = [];
+            let raw26r1 = [], raw26r2 = [];
+
+            function getAvgRec(key, subset) {
+                const valid = subset.filter(function(d){ return d[key] !== null && d[key] !== undefined && !isNaN(d[key]); });
+                return valid.length ? Math.round(valid.reduce(function(a,b){ return a + b[key]; }, 0) / valid.length) : null;
+            }
+
+            function getCountRec(key, subset) {
+                return subset.filter(function(d){ return d[key] !== null && d[key] !== undefined && !isNaN(d[key]); }).length;
+            }
+
+            function getRecRawStr(avg, count) {
+                if (count === 0 || avg === null) return ['Sin visitas registradas'];
+                const passed = Math.round((avg / 100) * count);
+                return [passed + " visitas aprobadas de " + count + " totales"];
+            }
+
+            if (isSingleSucursal) {
+                document.getElementById('title-rec-compare').innerText = "Auditorías REC: " + sucursales[0];
+                labels = ['REC (Critical Visit)'];
+                
+                data26r1 = [ getAvgRec('rec26r1', targetData) ]; 
+                data26r2 = [ getAvgRec('rec26r2', targetData) ];
+                
+                raw26r1 = [ getRecRawStr(data26r1[0], getCountRec('rec26r1', targetData)) ]; 
+                raw26r2 = [ getRecRawStr(data26r2[0], getCountRec('rec26r2', targetData)) ];
+
+            } else if (isMidFilter) {
+                document.getElementById('title-rec-compare').innerText = "REC por Sucursal";
+                const sucStats = sucursales.map(function(suc) {
+                    const subs = targetData.filter(function(d){ return d.sucursal === suc; });
+                    return { 
+                        suc: suc, 
+                        r26_1: getAvgRec('rec26r1', subs), r26_2: getAvgRec('rec26r2', subs),
+                        c26_1: getCountRec('rec26r1', subs), c26_2: getCountRec('rec26r2', subs),
+                        total: getCountRec('rec26r1', subs) + getCountRec('rec26r2', subs)
+                    };
+                }).sort(function(a,b){ return b.total - a.total; });
+
+                labels = sucStats.map(function(s){ return s.suc; });
+                data26r1 = sucStats.map(function(s){ return s.r26_1; }); data26r2 = sucStats.map(function(s){ return s.r26_2; });
+                
+                raw26r1 = sucStats.map(function(s){ return getRecRawStr(s.r26_1, s.c26_1); }); 
+                raw26r2 = sucStats.map(function(s){ return getRecRawStr(s.r26_2, s.c26_2); });
+                
+            } else {
+                document.getElementById('title-rec-compare').innerText = "Evolución Trimestral REC";
+                labels = ['T1', 'T2', 'T3', 'T4'];
+                
+                labels.forEach(function(tri) {
+                    const sub = targetData.filter(function(d){ return d.trimestre === tri; });
+                    
+                    const a26r1 = getAvgRec('rec26r1', sub); const a26r2 = getAvgRec('rec26r2', sub);
+                    
+                    data26r1.push(a26r1); data26r2.push(a26r2);
+                    
+                    raw26r1.push(getRecRawStr(a26r1, getCountRec('rec26r1', sub))); 
+                    raw26r2.push(getRecRawStr(a26r2, getCountRec('rec26r2', sub)));
+                });
+            }
+
+            const ctx = document.getElementById('chart-rec-compare').getContext('2d');
+            ChartsObj['rec-compare'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '2026 R1', data: data26r1, rawData: raw26r1, backgroundColor: '#cbd5e1', borderRadius: 6 },
+                        { label: '2026 R2', data: data26r2, rawData: raw26r2, backgroundColor: activePalette.m1, borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
+                        datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                    },
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderOerCompareChart() {
+            if (ChartsObj['oer-compare']) ChartsObj['oer-compare'].destroy();
+            
+            const targetData = FilteredData.filter(function(d){ return d.cadena.toLowerCase().includes('church') || d.cadena.toLowerCase().includes('pte'); });
+            if (targetData.length === 0 || (selections.indicador !== 'Todos' && selections.indicador !== 'm3')) return;
+
+            const uniqueSucs = new Set();
+            targetData.forEach(function(d){ uniqueSucs.add(d.sucursal); });
+            const sucursales = Array.from(uniqueSucs);
+            
+            const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || sucursales.length === 1;
+            const isMidFilter = selections.distrito !== 'Todos' && !isSingleSucursal;
+
+            let labels = [];
+            let data26r1 = [], data26r2 = [];
+            let raw26r1 = [], raw26r2 = [];
+
+            if (isSingleSucursal) {
+                document.getElementById('title-oer-compare').innerText = "Auditorías OER / RAV: " + sucursales[0];
+                labels = ['OER 2026 vs RAV 2026'];
+                data26r1 = [ safeAvg(targetData, function(d){ return d.rev26r1.std; }) ]; 
+                data26r2 = [ safeAvg(targetData, function(d){ return d.rev26r2.std; }) ];
+                raw26r1 = [ ["Promedio de " + targetData.filter(function(d){ return d.rev26r1 && d.rev26r1.std !== null; }).length + " Auditorías OER"] ];
+                raw26r2 = [ ["Promedio de " + targetData.filter(function(d){ return d.rev26r2 && d.rev26r2.std !== null; }).length + " Auditorías RAV"] ];
+            } else if (isMidFilter) {
+                document.getElementById('title-oer-compare').innerText = "Comparativo OER / RAV por Sucursal";
+                const sucStats = sucursales.map(function(suc) {
+                    const sub = targetData.filter(function(d){ return d.sucursal === suc; });
+                    const r26r1Val = safeAvg(sub, function(d){ return d.rev26r1.std; });
+                    const r26r2Val = safeAvg(sub, function(d){ return d.rev26r2.std; });
+                    const cOer = sub.filter(function(d){ return d.rev26r1 && d.rev26r1.std !== null; }).length;
+                    const cRav = sub.filter(function(d){ return d.rev26r2 && d.rev26r2.std !== null; }).length;
+                    return { suc: suc, r26r1: r26r1Val, r26r2: r26r2Val, cOer: cOer, cRav: cRav, total: (r26r1Val||0) + (r26r2Val||0) };
+                }).sort(function(a,b){ return b.total - a.total; });
+
+                labels = sucStats.map(function(s){ return s.suc; });
+                data26r1 = sucStats.map(function(s){ return s.r26r1; }); data26r2 = sucStats.map(function(s){ return s.r26r2; });
+                raw26r1 = sucStats.map(function(s){ return ["Promedio de " + s.cOer + " Auditorías OER"]; }); raw26r2 = sucStats.map(function(s){ return ["Promedio de " + s.cRav + " Auditorías RAV"]; });
+            } else {
+                document.getElementById('title-oer-compare').innerText = "Evolución Trimestral OER / RAV";
+                labels = ['T1', 'T2', 'T3', 'T4'];
+                
+                labels.forEach(function(tri) {
+                    const sub = targetData.filter(function(d){ return d.trimestre === tri; });
+                    data26r1.push(safeAvg(sub, function(d){ return d.rev26r1.std; }));
+                    data26r2.push(safeAvg(sub, function(d){ return d.rev26r2.std; }));
+                    raw26r1.push(["Promedio de " + sub.filter(function(d){ return d.rev26r1 && d.rev26r1.std !== null; }).length + " Auditorías OER"]);
+                    raw26r2.push(["Promedio de " + sub.filter(function(d){ return d.rev26r2 && d.rev26r2.std !== null; }).length + " Auditorías RAV"]);
+                });
+            }
+
+            const ctx = document.getElementById('chart-oer-compare').getContext('2d');
+            ChartsObj['oer-compare'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'OER 2026', data: data26r1, rawData: raw26r1, backgroundColor: '#cbd5e1', borderRadius: 6 },
+                        { label: 'RAV 2026', data: data26r2, rawData: raw26r2, backgroundColor: activePalette.m1, borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
+                        datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                    },
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderZpChart() {
+            if (ChartsObj['chart-zp']) ChartsObj['chart-zp'].destroy();
+            
+            if (FilteredData.length === 0) return;
+
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
+            
+            const titleEl = document.getElementById('title-chart-zp');
+            if (titleEl) {
+                titleEl.innerText = isHierarchyFiltered ? "Incidencia Zero Protocol por Sucursal" : "Incidencia Zero Protocol por Franquicia";
+            }
+
+            const uniqueGroups = new Set();
+            FilteredData.forEach(function(d){ uniqueGroups.add(d[field]); });
+            const groups = Array.from(uniqueGroups);
+            
+            const stats = groups.map(function(g) {
+                const sub = FilteredData.filter(function(d){ return d[field] === g; });
+                const zps = new Set();
+                const tots = new Set();
+                const affectedMap = new Map();
+
+                sub.forEach(function(d){
+                    if(d.hasZeroProtocol) {
+                        zps.add(d.sucursal);
+                        affectedMap.set(d.sucursal, d.distrito);
+                    }
+                    tots.add(d.sucursal);
+                });
+                const branchesZP = zps.size;
+                const branchesTotal = tots.size;
+                const pct = branchesTotal > 0 ? ((branchesZP / branchesTotal) * 100) : 0;
+
+                const affectedList = Array.from(affectedMap.entries()).map(function(arr) { return '• ' + arr[0] + ' (Distrito: ' + arr[1] + ')'; });
+
+                return { label: g, pct: pct, branchesZP: branchesZP, branchesTotal: branchesTotal, affectedList: affectedList };
+            }).filter(function(item){ return item.pct > 0 || field === 'cadena'; }).sort(function(a,b){ return b.pct - a.pct; }).slice(0, 15);
+
+            const ctx = document.getElementById('chart-zp').getContext('2d');
+            ChartsObj['chart-zp'] = new Chart(ctx, {
+                type: 'bar',
+                data: { 
+                    labels: stats.map(function(d){ return d.label; }), 
+                    datasets: [{
+                        label: '% Incidencia ZP',
+                        data: stats.map(function(d){ return parseFloat(d.pct.toFixed(1)); }),
+                        backgroundColor: '#ef4444',
+                        borderRadius: 6
+                    }] 
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const stat = stats[idx];
+                                    const affected = stat.branchesZP;
+                                    const total = stat.branchesTotal;
+                                    
+                                    let lines = [
+                                        "Incidencia: " + context.parsed.y + "%", 
+                                        "Detalle: " + affected + " Suc. Afectadas / " + total + " Totales"
+                                    ];
+
+                                    if (stat.affectedList && stat.affectedList.length > 0) {
+                                        lines.push("----------------------------------------");
+                                        lines.push("Sucursales Afectadas:");
+                                        lines = lines.concat(stat.affectedList);
+                                    }
+
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; } }, border: { dash: [4,4] } },
+                        x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45, font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+        function renderGerenteChart() {
+            if (ChartsObj['chart-gerente']) ChartsObj['chart-gerente'].destroy();
+            
+            if (FilteredData.length === 0) return;
+
+            const managersMap = {};
+            FilteredData.forEach(function(d) {
+                if (d.gerente.toUpperCase().includes('SIN GERENTE') || d.gerente === 'S/G') return;
+                if (!managersMap[d.gerente]) managersMap[d.gerente] = [];
+                managersMap[d.gerente].push(d);
+            });
+
+            const managerStats = Object.keys(managersMap).map(function(gerente) {
+                const rows = managersMap[gerente];
+
+                let gerSrv = 0, subSrv = 0, gerP = 0, subP = 0, bkuCol = 0, colP = 0, certGerNum = 0, certSubNum = 0, totalPlantillaOcupada = 0;
+                let sumOcup = 0, countOcup = 0;
+                let recSum = 0, recCount = 0;
+                let sumBajas = 0;
+                
+                const uSucs = new Set();
+                rows.forEach(function(d){ uSucs.add(d.sucursal); });
+                const sucursales = Array.from(uSucs);
+                
+                const sucursalStr = sucursales.join(', ');
+
+                sucursales.forEach(function(suc) {
+                    const branchSub = rows.filter(function(d){ return d.sucursal === suc; });
+                    
+                    function getL(extractor) {
+                        const valid = branchSub.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
+                        return valid.length ? valid[valid.length - 1] : null;
+                    }
+
+                    gerSrv += getL(function(d){ return d.gerSrv; }) || 0;
+                    subSrv += getL(function(d){ return d.subSrv; }) || 0;
+                    gerP += getL(function(d){ return d.gerP; }) || 0;
+                    subP += getL(function(d){ return d.subP; }) || 0;
+                    bkuCol += getL(function(d){ return d.bkuCol; }) || 0;
+                    colP += getL(function(d){ return d.colP; }) || 0;
+                    certGerNum += getL(function(d){ return d.certGerNum; }) || 0;
+                    certSubNum += getL(function(d){ return d.certSubNum; }) || 0;
+                    totalPlantillaOcupada += getL(function(d){ return d.totalPlantillaOcupada; }) || 0;
+                    sumBajas += getL(function(d){ return d.bajas; }) || 0;
+
+                    const ocP = getL(function(d){ return d.rrhh ? d.rrhh.ocPlantilla : null; });
+                    if (ocP !== null) { 
+                        sumOcup += ocP; 
+                        countOcup++; 
+                    }
+                });
+
+                rows.forEach(function(d) {
+                    if (d.rec26r1 !== null && d.rec26r1 !== undefined) { recSum += d.rec26r1; recCount++; }
+                    if (d.rec26r2 !== null && d.rec26r2 !== undefined) { recSum += d.rec26r2; recCount++; }
+                });
+                
+                const validRev = rows.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
+                const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
+
+                const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
+                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
+                const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
+                const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
+                const rotacion = totalPlantillaOcupada > 0 ? (sumBajas / totalPlantillaOcupada) * 100 : null;
+
+                const active = [];
+                if (srv !== null) active.push({v:srv});
+                if (m2 !== null) active.push({v:m2});
+                if (m3 !== null) active.push({v:m3});
+                if (cert !== null) active.push({v:cert});
+
+                const pro = active.length > 0 ? Math.round(active.reduce(function(a, b){ return a + b.v; }, 0) / active.length) : null;
+
+                return {
+                    gerente: gerente,
+                    sucursal: sucursalStr,
+                    cadena: rows[0].cadena,
+                    pro: pro, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rec: rec, rotacion: rotacion !== null ? Math.round(rotacion) : null,
+                    raw: { gerSrv: gerSrv, subSrv: subSrv, gerP: gerP, subP: subP, bkuCol: bkuCol, colP: colP, certGerNum: certGerNum, certSubNum: certSubNum, validRev: validRev.length, totalPlantillaOcupada: totalPlantillaOcupada, recCount: recCount, bajas: sumBajas }
+                };
+            }).filter(function(item){ return item.pro !== null; });
+
+            managerStats.sort(function(a, b) {
+                if (a.cadena < b.cadena) return -1;
+                if (a.cadena > b.cadena) return 1;
+                return b.pro - a.pro; 
+            });
+
+            const ctx = document.getElementById('chart-gerente').getContext('2d');
+            const titleEl = document.getElementById('title-chart-gerente');
+
+            const uniqueSucursales = new Set();
+            FilteredData.forEach(function(d){ uniqueSucursales.add(d.sucursal); });
+            const isSingleManager = (selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1) && managerStats.length === 1;
+
+            if (isSingleManager) {
+                const m = managerStats[0];
+                if (titleEl) titleEl.innerText = "Desglose de Indicadores: " + m.gerente;
+
+                const isChurchs = m.cadena.toLowerCase().includes('church');
+                const lblM2 = isChurchs ? 'PTE' : 'BKU';
+                const lblM3 = isChurchs ? 'OER / RAV' : 'REV Standard';
+
+                const labels = ['ServSafe', lblM2, lblM3, 'Cert. Gerencial', 'Ocup. Plantilla', 'REC', 'Rotación'];
+                const dataVals = [m.srv, m.m2, m.m3, m.cert, m.ocup, m.rec, m.rotacion];
+                const rawDataVals = [
+                    ["Gerentes: " + m.raw.gerSrv + " con ServSafe de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.subSrv + " con ServSafe de " + m.raw.subP + " en plantilla ocupada"],
+                    ["Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"],
+                    ["Basado en el promedio de " + m.raw.validRev + " auditorías evaluadas"],
+                    ["Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"],
+                    ["Promedio de ocupación en el periodo seleccionado"],
+                    ["Basado en " + m.raw.recCount + " visitas registradas"],
+                    [m.raw.bajas + " bajas de " + m.raw.totalPlantillaOcupada + " en plantilla"]
+                ];
+
+                const bgColors = [activePalette.m1, activePalette.m2, activePalette.m3, '#1F3864', '#4472C4', '#64748b', '#eab308'];
+
+                ChartsObj['chart-gerente'] = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Cumplimiento',
+                            data: dataVals,
+                            rawData: rawDataVals,
+                            backgroundColor: bgColors,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: datalabelsZpConfig,
+                            tooltip: genericTooltipWithRaw
+                        },
+                        scales: {
+                            y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; } }, border: { dash: [4,4] } },
+                            x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                        }
+                    }
+                });
+
+            } else {
+                if (titleEl) titleEl.innerText = "Resultados por Gerente de Negocio";
+
+                const labels = managerStats.map(function(m){ return m.gerente; });
+                const uCads = new Set();
+                managerStats.forEach(function(m){ uCads.add(m.cadena); });
+                const cadenas = Array.from(uCads);
+
+                const ind = selections.indicador;
+                let metricKey = 'pro';
+                let rawFormatter;
+
+                if (ind === 'Todos') {
+                    metricKey = 'pro';
+                    rawFormatter = function(m) {
+                        const isChurchs = m.cadena.toLowerCase().includes('church');
+                        const lblM2 = isChurchs ? 'PTE' : 'BKU';
+                        const lblM3 = isChurchs ? 'OER/RAV' : 'REV Standard';
+                        return [
+                            "Sucursal: " + m.sucursal,
+                            "Gerente: " + m.gerente,
+                            "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
+                            lblM2 + ": " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
+                            lblM3 + ": " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
+                            "Cert. Gerencial: " + (m.cert !== null ? m.cert + '%' : 'S/D'),
+                            "Rotación: " + (m.rotacion !== null ? m.rotacion + '%' : 'S/D')
+                        ];
+                    };
+                } else if (ind === 'srv') {
+                    metricKey = 'srv';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        "Gerentes: " + m.raw.gerSrv + " con ServSafe de " + m.raw.gerP + " en plantilla ocupada",
+                        "Subgerentes: " + m.raw.subSrv + " con ServSafe de " + m.raw.subP + " en plantilla ocupada"
+                    ];};
+                } else if (ind === 'm2') {
+                    metricKey = 'm2';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        "Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
+                    ];};
+                } else if (ind === 'm3') {
+                    metricKey = 'm3';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        "Basado en el promedio de " + m.raw.validRev + " auditorías evaluadas"
+                    ];};
+                } else if (ind === 'cert') {
+                    metricKey = 'cert';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        "Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada",
+                        "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"
+                    ];};
+                } else if (ind === 'ocup') {
+                    metricKey = 'ocup';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        "Promedio de ocupación en el periodo seleccionado"
+                    ];};
+                } else if (ind === 'rec') {
+                    metricKey = 'rec';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        "Basado en " + m.raw.recCount + " visitas registradas"
+                    ];};
+                } else if (ind === 'rotacion') {
+                    metricKey = 'rotacion';
+                    rawFormatter = function(m) { return [
+                        "Sucursal: " + m.sucursal,
+                        m.raw.bajas + " bajas de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
+                    ];};
+                }
+
+                const ds = cadenas.map(function(cadena, index) {
+                    const colors = ['#2F5597', '#8FAADC', '#B4C6E7', '#1F3864'];
+                    const color = ind === 'rotacion' ? '#eab308' : colors[index % colors.length];
+
+                    return {
+                        label: cadena,
+                        data: managerStats.map(function(m){ return m.cadena === cadena ? m[metricKey] : null; }),
+                        rawData: managerStats.map(function(m){ return m.cadena === cadena ? rawFormatter(m) : null; }),
+                        backgroundColor: color,
+                        borderRadius: 6
+                    };
+                });
+
+                ChartsObj['chart-gerente'] = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: ds },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { padding: 25, font: { weight: 'bold' } },
+                                onClick: function(e, legendItem, legend) {
+                                    const chart = legend.chart;
+                                    const index = legendItem.datasetIndex;
+
+                                    if (chart.isDatasetVisible(index)) chart.hide(index);
+                                    else chart.show(index);
+
+                                    const visibleCadenas = chart.data.datasets.filter(function(d, i){ return chart.isDatasetVisible(i); }).map(function(d){ return d.label; });
+                                    const activeManagers = managerStats.filter(function(m){ return visibleCadenas.includes(m.cadena); });
+                                    const newLabels = activeManagers.map(function(m){ return m.gerente; });
+
+                                    chart.data.labels = newLabels;
+                                    chart.data.datasets.forEach(function(dataset) {
+                                        dataset.data = newLabels.map(function(label) {
+                                            let manager = null;
+                                            for(let i=0; i<activeManagers.length; i++){ if(activeManagers[i].gerente === label) manager = activeManagers[i]; }
+                                            return manager && manager.cadena === dataset.label ? manager[metricKey] : null;
+                                        });
+                                        dataset.rawData = newLabels.map(function(label) {
+                                            let manager = null;
+                                            for(let i=0; i<activeManagers.length; i++){ if(activeManagers[i].gerente === label) manager = activeManagers[i]; }
+                                            return manager && manager.cadena === dataset.label ? rawFormatter(manager) : null;
+                                        });
+                                    });
+
+                                    chart.update();
+                                }
+                            },
+                            datalabels: { display: false },
+                            tooltip: genericTooltipWithRaw
+                        },
+                        scales: {
+                            y: { stacked: true, min: 0, max: 100, ticks: { callback: function(v){ return v + '%' ;} }, border: { dash: [4,4] } },
+                            x: { stacked: true, grid: { display: false }, ticks: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderBarChart(id, field) {
+            if (ChartsObj[id]) ChartsObj[id].destroy();
+            const uniqueGroups = new Set();
+            FilteredData.forEach(function(d){ uniqueGroups.add(d[field]); });
+            const groups = Array.from(uniqueGroups);
+            
+            const stats = groups.map(function(g) {
+                const sub = FilteredData.filter(function(d){ return d[field] === g; });
+                const srv = safeAvg(sub, function(d){ return d.srv; });
+                const m2 = safeAvg(sub, function(d){ return d.m2; });
+                const m3 = safeAvg(sub, function(d){ return d.m3; });
+                const cert = safeAvg(sub, function(d){ return d.rrhh.certGerencial; });
+                const ocup = safeAvg(sub, function(d){ return d.rrhh.ocPlantilla; });
+
+                let sumBajas = 0;
+                let sumPlantilla = 0;
+                const uSucs = new Set();
+                sub.forEach(function(d){ uSucs.add(d.sucursal); });
+                Array.from(uSucs).forEach(function(suc) {
+                    const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
+                    const latest = branchSub[branchSub.length - 1];
+                    if (latest) {
+                        sumPlantilla += latest.totalPlantillaOcupada || 0;
+                        sumBajas += latest.bajas || 0;
+                    }
+                });
+                
+                let rot = null;
+                if (sumPlantilla > 0) {
+                    rot = Math.round((sumBajas / sumPlantilla) * 100);
+                }
+
+                const active = [];
+                if (srv !== null) active.push({v:srv});
+                if (m2 !== null) active.push({v:m2});
+                if (m3 !== null) active.push({v:m3});
+
+                const pro = active.length > 0 ? safeAvg(active, function(x){ return x.v; }) : null;
+                
+                return { label: g, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rotacion: rot, pro: pro, bajas: sumBajas, plantilla: sumPlantilla };
+            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; }).slice(0, 15);
+
+            const ind = selections.indicador;
+            const ds = [];
+            
+            if (ind === 'Todos' || ind === 'srv') {
+                ds.push({ label: 'ServSafe', data: stats.map(function(d){ return d.srv; }), backgroundColor: activePalette.m1, borderRadius: 6 });
+            }
+            if (ind === 'Todos' || ind === 'm2') {
+                ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(function(d){ return d.m2; }), backgroundColor: activePalette.m2, borderRadius: 6 });
+            }
+            if (ind === 'Todos' || ind === 'm3') {
+                ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(function(d){ return d.m3; }), backgroundColor: activePalette.m3, borderRadius: 6 });
+            }
+            if (ind === 'Todos' || ind === 'cert') {
+                ds.push({ label: 'Cert. Gerencial', data: stats.map(function(d){ return d.cert; }), backgroundColor: '#1F3864', borderRadius: 6 });
+            }
+            if (ind === 'Todos' || ind === 'ocup') {
+                ds.push({ label: 'Ocup. Plantilla', data: stats.map(function(d){ return d.ocup; }), backgroundColor: '#4472C4', borderRadius: 6 });
+            }
+            if (ind === 'Todos' || ind === 'rotacion') {
+                ds.push({ 
+                    label: 'Rotación', 
+                    data: stats.map(function(d){ return d.rotacion; }), 
+                    rawData: stats.map(function(d){ return [d.bajas + " bajas de " + d.plantilla + " en plantilla"]; }),
+                    backgroundColor: '#eab308', borderRadius: 6 
+                });
+            }
+
+            const ctx = document.getElementById(id).getContext('2d');
+            ChartsObj[id] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: stats.map(function(d){ return d.label; }), datasets: ds },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
+                        datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                    },
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderDistritoChart() {
+            if (ChartsObj['chart-distrito']) ChartsObj['chart-distrito'].destroy();
+            
+            if (FilteredData.length === 0) return;
+
+            const uniqueDistritos = new Set();
+            FilteredData.forEach(function(d){ uniqueDistritos.add(d.distrito); });
+            const distritos = Array.from(uniqueDistritos);
+            
+            const stats = distritos.map(function(distrito) {
+                const sub = FilteredData.filter(function(d){ return d.distrito === distrito; });
+                
+                let gerSrv = 0, subSrv = 0, gerP = 0, subP = 0, bkuCol = 0, colP = 0, certGerNum = 0, certSubNum = 0, totalPlantillaOcupada = 0;
+                let sumOcup = 0, countOcup = 0;
+                let recSum = 0, recCount = 0;
+                let sumBajas = 0;
+
+                const uSucs = new Set();
+                sub.forEach(function(d){ uSucs.add(d.sucursal); });
+                const sucursales = Array.from(uSucs);
+
+                sucursales.forEach(function(suc) {
+                    const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
+                    
+                    function getL(extractor) {
+                        const valid = branchSub.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
+                        return valid.length ? valid[valid.length - 1] : null;
+                    }
+
+                    gerSrv += getL(function(d){ return d.gerSrv; }) || 0;
+                    subSrv += getL(function(d){ return d.subSrv; }) || 0;
+                    gerP += getL(function(d){ return d.gerP; }) || 0;
+                    subP += getL(function(d){ return d.subP; }) || 0;
+                    bkuCol += getL(function(d){ return d.bkuCol; }) || 0;
+                    colP += getL(function(d){ return d.colP; }) || 0;
+                    certGerNum += getL(function(d){ return d.certGerNum; }) || 0;
+                    certSubNum += getL(function(d){ return d.certSubNum; }) || 0;
+                    totalPlantillaOcupada += getL(function(d){ return d.totalPlantillaOcupada; }) || 0;
+                    sumBajas += getL(function(d){ return d.bajas; }) || 0;
+
+                    const ocP = getL(function(d){ return d.rrhh ? d.rrhh.ocPlantilla : null; });
+                    if (ocP !== null) { 
+                        sumOcup += ocP; 
+                        countOcup++; 
+                    }
+                });
+
+                sub.forEach(function(d) {
+                    if (d.rec26r1 !== null && d.rec26r1 !== undefined) { recSum += d.rec26r1; recCount++; }
+                    if (d.rec26r2 !== null && d.rec26r2 !== undefined) { recSum += d.rec26r2; recCount++; }
+                });
+                
+                const validRev = sub.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
+                const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
+
+                const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
+                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
+                const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
+                const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
+                const rotacion = totalPlantillaOcupada > 0 ? (sumBajas / totalPlantillaOcupada) * 100 : null;
+                
+                const active = [];
+                if(srv !== null) active.push({v:srv});
+                if(m2 !== null) active.push({v:m2});
+                if(m3 !== null) active.push({v:m3});
+                if(cert !== null) active.push({v:cert});
+
+                const pro = active.length > 0 ? Math.round(active.reduce(function(a, b){ return a + b.v; }, 0) / active.length) : null;
+
+                return { 
+                    label: distrito, 
+                    srv: srv !== null ? Math.round(srv) : null, 
+                    m2: m2 !== null ? Math.round(m2) : null, 
+                    m3: m3 !== null ? Math.round(m3) : null, 
+                    cert: cert !== null ? Math.round(cert) : null, 
+                    ocup: ocup !== null ? Math.round(ocup) : null, 
+                    rec: rec !== null ? Math.round(rec) : null, 
+                    rotacion: rotacion !== null ? Math.round(rotacion) : null,
+                    bajas: sumBajas,
+                    plantilla: totalPlantillaOcupada,
+                    pro: pro 
+                };
+            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ 
+                let valA = a.cert !== null ? a.cert : -1;
+                let valB = b.cert !== null ? b.cert : -1;
+                if (valB === valA) {
+                    return (b.pro || 0) - (a.pro || 0);
+                }
+                return valB - valA; 
+            });
+
+            const minAnchoPorDistrito = 150; 
+            const anchoCalculado = Math.max(1000, stats.length * minAnchoPorDistrito);
+            document.getElementById('chart-distrito-wrapper').style.minWidth = anchoCalculado + 'px';
+
+            const ctx = document.getElementById('chart-distrito').getContext('2d');
+            
+            const rawFormatter = function(m) {
+                return [
+                    "Detalle de Indicadores:",
+                    "-----------------------------------",
+                    "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
+                    "BKU / PTE: " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
+                    "REV / OER: " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
+                    "Cert. Gerencial: " + (m.cert !== null ? m.cert + '%' : 'S/D'),
+                    "Ocup. Plantilla: " + (m.ocup !== null ? m.ocup + '%' : 'S/D'),
+                    "REC (Critical Visit): " + (m.rec !== null ? m.rec + '%' : 'S/D'),
+                    "Rotación: " + (m.rotacion !== null ? m.rotacion + '%' : 'S/D') + " (" + m.bajas + " bajas)"
+                ];
+            };
+
+            const ds = [];
+            const ind = selections.indicador;
+            
+            if (ind === 'Todos' || ind === 'srv') ds.push({ label: 'ServSafe', data: stats.map(function(d){ return d.srv; }), backgroundColor: activePalette.m1, borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(function(d){ return d.m2; }), backgroundColor: activePalette.m2, borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(function(d){ return d.m3; }), backgroundColor: activePalette.m3, borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(function(d){ return d.cert; }), backgroundColor: '#1F3864', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', data: stats.map(function(d){ return d.ocup; }), backgroundColor: '#4472C4', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'rec') ds.push({ label: 'REC (Critical Visit)', data: stats.map(function(d){ return d.rec; }), backgroundColor: '#64748b', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', data: stats.map(function(d){ return d.rotacion; }), rawData: stats.map(function(d){ return [d.bajas + " bajas de " + d.plantilla + " en plantilla"]; }), backgroundColor: '#eab308', borderRadius: 4 });
+
+            ChartsObj['chart-distrito'] = new Chart(ctx, {
+                type: 'bar',
+                data: { 
+                    labels: stats.map(function(d){ return d.label; }), 
+                    datasets: ds
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    layout: { padding: { top: 35 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    label += context.parsed.y + '%';
+                                    
+                                    const rawDetail = context.dataset.rawData ? context.dataset.rawData[context.dataIndex] : null;
+                                    if (rawDetail) {
+                                        if (Array.isArray(rawDetail)) {
+                                            return [label].concat(rawDetail); 
+                                        }
+                                        return [label, rawDetail]; 
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderSinGerente() {
+            const wrapper = document.getElementById('sin-gerente-wrapper');
+            const uniqueSucursales = new Set();
+            FilteredData.forEach(function(d){ uniqueSucursales.add(d.sucursal); });
+            const sucursales = Array.from(uniqueSucursales);
+
+            let afectadas = [];
+
+            sucursales.forEach(function(suc) {
+                const sub = FilteredData.filter(function(d){ return d.sucursal === suc; });
+                sub.sort(function(a, b){ return MESES_NOM.indexOf(a.mes) - MESES_NOM.indexOf(b.mes); });
+
+                if (sub.length === 0) return;
+
+                const latest = sub[sub.length - 1];
+                const isSinGerente = latest.gerente.toUpperCase().includes('SIN GERENTE') || latest.gerente === 'S/G';
+
+                if (isSinGerente) {
+                    let desdeMes = latest.mes;
+                    for (let i = sub.length - 2; i >= 0; i--) {
+                        if (sub[i].gerente.toUpperCase().includes('SIN GERENTE') || sub[i].gerente === 'S/G') {
+                            desdeMes = sub[i].mes;
+                        } else {
+                            break; 
+                        }
+                    }
+
+                    afectadas.push({
+                        sucursal: suc,
+                        cadena: latest.cadena,
+                        region: latest.region,
+                        distrito: latest.distrito,
+                        desde: desdeMes
+                    });
+                }
+            });
+
+            if (afectadas.length === 0) {
+                wrapper.innerHTML = '';
+                return;
+            }
+
+            let cardsHtml = '';
+            afectadas.forEach(function(info) {
+                let contextHtml = '';
+                if (selections.distrito !== 'Todos' && selections.region !== 'Todos') {
+                    contextHtml = '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Distrito:</span> ' + info.distrito + '</p>';
+                } else {
+                    contextHtml = '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Región:</span> ' + info.region + '</p><p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Distrito:</span> ' + info.distrito + '</p>';
+                }
+
+                cardsHtml += '<div class="bg-white p-4 rounded-2xl border border-orange-100 flex items-start gap-4 shadow-sm"><div class="w-8 h-8 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0 mt-1"><i data-lucide="user-minus" class="w-4 h-4 text-orange-500"></i></div><div class="overflow-hidden flex-1"><p class="font-bold text-slate-800 text-sm truncate" title="' + info.sucursal + '">' + info.sucursal + '</p><p class="text-[10px] text-orange-500 font-bold uppercase truncate mb-1">' + info.cadena + '</p><div class="mb-1.5 mt-0.5">' + contextHtml + '</div><div class="flex flex-wrap"><span class="inline-block bg-orange-100 text-orange-700 text-[9px] px-2 py-0.5 rounded-md font-bold mt-1 mr-1">Desde ' + info.desde + '</span></div></div></div>';
+            });
+
+            wrapper.innerHTML = '<div class="bg-orange-50 p-8 rounded-3xl shadow-sm border border-orange-200 mb-8 mt-8"><div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><i data-lucide="user-x" class="w-6 h-6 text-orange-600"></i></div><div><h3 class="text-xl font-bold text-orange-800 tracking-tight">Alerta Operativa: Sucursales Sin Gerente</h3><p class="text-xs text-orange-600 font-medium mt-1">Unidades que actualmente no cuentan con un Gerente de Negocio asignado</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">' + cardsHtml + '</div></div>';
+        }
+
+        function renderZeroProtocol() {
+            const wrapper = document.getElementById('zero-protocol-wrapper');
+            const zpData = FilteredData.filter(function(d){ return d.hasZeroProtocol; });
+            
+            if (zpData.length === 0) {
+                wrapper.innerHTML = '';
+                return;
+            }
+
+            const groupedZP = {};
+            zpData.forEach(function(d) {
+                if (!groupedZP[d.sucursal]) {
+                    groupedZP[d.sucursal] = { 
+                        cadena: d.cadena, 
+                        region: d.region,
+                        distrito: d.distrito,
+                        gerente: d.gerente,
+                        causes: new Set() 
+                    };
+                }
+                if (d.zpIncidences) {
+                    d.zpIncidences.forEach(function(inc){ groupedZP[d.sucursal].causes.add(inc); });
+                }
+            });
+
+            let htmlStr = '<div class="bg-red-50 p-8 rounded-3xl shadow-sm border border-red-200 mb-8 mt-8">' +
+                '<div class="flex items-center gap-3 mb-6">' +
+                    '<div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">' +
+                        '<i data-lucide="shield-alert" class="w-6 h-6 text-red-600"></i>' +
+                    '</div>' +
+                    '<div>' +
+                        '<h3 class="text-xl font-bold text-red-800 tracking-tight">Alerta Crítica: Zero Protocol</h3>' +
+                        '<p class="text-xs text-red-600 font-medium mt-1">Sucursales con incidencia detectada en los reportes</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">';
+
+            Object.keys(groupedZP).forEach(function(sucursal) {
+                const info = groupedZP[sucursal];
+                const causesHtml = Array.from(info.causes).map(function(c){ return '<span class="inline-block bg-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded-md font-bold mt-1 mr-1">' + c + '</span>'; }).join('');
+                
+                let contextHtml = '';
+                if (selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos') {
+                    contextHtml = '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Gerente:</span> ' + info.gerente + '</p>';
+                } else if (selections.region !== 'Todos') {
+                    contextHtml = '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Distrito:</span> ' + info.distrito + '</p>' +
+                                  '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Gerente:</span> ' + info.gerente + '</p>';
+                } else {
+                    contextHtml = '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Región:</span> ' + info.region + '</p>' +
+                                  '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Distrito:</span> ' + info.distrito + '</p>' +
+                                  '<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Gerente:</span> ' + info.gerente + '</p>';
+                }
+
+                htmlStr += '<div class="bg-white p-4 rounded-2xl border border-red-100 flex items-start gap-4 shadow-sm">' +
+                    '<div class="w-8 h-8 bg-red-50 rounded-full flex items-center justify-center flex-shrink-0 mt-1">' +
+                        '<i data-lucide="alert-octagon" class="w-4 h-4 text-red-500"></i>' +
+                    '</div>' +
+                    '<div class="overflow-hidden flex-1">' +
+                        '<p class="font-bold text-slate-800 text-sm truncate" title="' + sucursal + '">' + sucursal + '</p>' +
+                        '<p class="text-[10px] text-red-500 font-bold uppercase truncate mb-1">' + info.cadena + '</p>' +
+                        '<div class="mb-1.5 mt-0.5">' + contextHtml + '</div>' +
+                        '<div class="flex flex-wrap">' + causesHtml + '</div>' +
+                    '</div>' +
+                '</div>';
+            });
+            
+            htmlStr += '</div></div>';
+            wrapper.innerHTML = htmlStr;
+        }
+
+        function renderSucesion() {
+            const wrapper = document.getElementById('sucesion-wrapper');
+            const uniqueSucs = new Set();
+            FilteredData.forEach(function(d){ uniqueSucs.add(d.sucursal); });
+            const sucursales = Array.from(uniqueSucs);
+            
+            let validBranches = [];
+            
+            sucursales.forEach(function(suc) {
+                const sub = FilteredData.filter(function(d){ return d.sucursal === suc; });
+                const validSub = sub.filter(function(d){ return d.rrhh && d.rrhh.colSucesion !== undefined; });
+                
+                if (validSub.length > 0) {
+                    const avgSuc = Math.round(validSub.reduce(function(acc, d){ return acc + d.rrhh.colSucesion; }, 0) / validSub.length);
+                    if (avgSuc > 0) {
+                        validBranches.push({
+                            sucursal: suc,
+                            cadena: sub[0].cadena,
+                            count: avgSuc
+                        });
+                    }
+                }
+            });
+
+            if (validBranches.length === 0) {
+                wrapper.innerHTML = '';
+                return;
+            }
+
+            validBranches.sort(function(a, b) { return b.count - a.count; });
+
+            let hasZP = false;
+            FilteredData.forEach(function(d){ if(d.hasZeroProtocol) hasZP = true; });
+            const hasZPClass = hasZP ? '' : 'mt-8';
+
+            let htmlStr = '<div class="bg-indigo-50 p-8 rounded-3xl shadow-sm border border-indigo-200 mb-8 ' + hasZPClass + '">' +
+                '<div class="flex items-center gap-3 mb-6">' +
+                    '<div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">' +
+                        '<i data-lucide="user-check" class="w-6 h-6 text-indigo-600"></i>' +
+                    '</div>' +
+                    '<div>' +
+                        '<h3 class="text-xl font-bold text-indigo-900 tracking-tight">Desarrollo de Talento: Plan de Sucesión</h3>' +
+                        '<p class="text-xs text-indigo-700 font-medium mt-1">Sucursales con colaboradores listos para promoción</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">';
+
+            validBranches.forEach(function(info) {
+                const plural = info.count > 1 ? 'es' : '';
+                htmlStr += '<div class="bg-white p-4 rounded-2xl border border-indigo-100 flex items-start gap-4 shadow-sm">' +
+                    '<div class="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center flex-shrink-0 mt-1">' +
+                        '<i data-lucide="users" class="w-4 h-4 text-indigo-500"></i>' +
+                    '</div>' +
+                    '<div class="overflow-hidden flex-1">' +
+                        '<p class="font-bold text-slate-800 text-sm truncate" title="' + info.sucursal + '">' + info.sucursal + '</p>' +
+                        '<p class="text-[10px] text-indigo-500 font-bold uppercase truncate mb-1">' + info.cadena + '</p>' +
+                        '<div class="flex flex-wrap">' +
+                            '<span class="inline-block bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-md font-bold mt-1 mr-1">' +
+                                info.count + ' Colaborador' + plural +
+                            '</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            });
+
+            htmlStr += '</div></div>';
+            wrapper.innerHTML = htmlStr;
+        }
+
+        function renderTable() {
+            const body = document.getElementById('data-table-body');
+            
+            const sorted = [].concat(FilteredData).sort(function(a, b) {
+                if (a.promedio === null) return 1;
+                if (b.promedio === null) return -1;
+                return b.promedio - a.promedio;
+            });
+            
+            document.getElementById('badge-count').innerText = sorted.length + ' REGISTROS MOSTRADOS';
+            
+            const formatTablePct = function(v) {
+                if (v === null || v === undefined) return '-';
+                if (v <= 0) return '0%';
+                return Math.round(v) + '%';
+            };
+
+            let tableHtml = '';
+            sorted.forEach(function(d) {
+                tableHtml += '<tr class="hover:bg-slate-100 transition-colors group">' +
+                    '<td class="p-4 text-xs font-medium text-slate-500">' + d.region + '</td>' +
+                    '<td class="p-4 text-xs font-medium text-slate-500">' + d.distrito + '</td>' +
+                    '<td class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-tighter">' + d.cadena + '</td>' +
+                    '<td class="p-4 text-sm font-extrabold text-slate-700">' + d.sucursal + '</td>' +
+                    '<td class="p-4 text-[10px] font-bold text-slate-400 uppercase italic">' + d.gerente + '</td>' +
+                    '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.gerP + '</td>' +
+                    '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.subP + '</td>' +
+                    '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.colP + '</td>' +
+                    
+                    '<td class="p-4 text-center text-xs font-bold text-slate-500 border-l border-slate-200">' + formatTablePct(d.rrhh.certGerencial) + '</td>' +
+                    '<td class="p-4 text-center text-xs font-bold text-slate-500">' + formatTablePct(d.rrhh.ocPlantilla) + '</td>' +
+                    '<td class="p-4 text-center text-xs font-bold text-slate-500 border-r border-slate-200">' + (d.rrhh.colSucesion || '-') + '</td>' +
+                    '<td class="p-4 text-center font-bold" style="color: #d97706; background-color: #fef3c7;">' + formatTablePct(d.rotacion) + '</td>' +
+
+                    '<td class="p-4 text-center font-bold" style="color: var(--color-m1); background-color: var(--color-m1-light);">' + formatTablePct(d.srv) + '</td>' +
+                    '<td class="p-4 text-center font-bold" style="color: var(--color-m2); background-color: var(--color-m2-light);">' + formatTablePct(d.m2) + '</td>' +
+                    '<td class="p-4 text-center font-bold" style="color: var(--color-m3); background-color: var(--color-m3-light);">' + formatTablePct(d.m3) + '</td>' +
+                '</tr>';
+            });
+            body.innerHTML = tableHtml;
+        }
+
+        function renderRankings() {
+            const grouped = {};
+            FilteredData.forEach(function(d) {
+                if (!grouped[d.sucursal]) grouped[d.sucursal] = { name: d.sucursal, cadena: d.cadena, dataArr: [] };
+                grouped[d.sucursal].dataArr.push(d);
+            });
+
+            let sortKey = 'avg';
+            if (selections.indicador === 'srv') sortKey = 'srv';
+            else if (selections.indicador === 'm2') sortKey = 'm2';
+            else if (selections.indicador === 'm3') sortKey = 'm3';
+            else if (selections.indicador === 'cert') sortKey = 'cert';
+            else if (selections.indicador === 'ocup') sortKey = 'ocup';
+            else if (selections.indicador === 'rotacion') sortKey = 'rotacion';
+
+            const list = Object.keys(grouped).map(function(key) {
+                const g = grouped[key];
+                return { 
+                    name: g.name, cadena: g.cadena, 
+                    avg: safeAvg(g.dataArr, function(d){ return d.promedio; }),
+                    srv: safeAvg(g.dataArr, function(d){ return d.srv; }),
+                    m2: safeAvg(g.dataArr, function(d){ return d.m2; }),
+                    m3: safeAvg(g.dataArr, function(d){ return d.m3; }),
+                    cert: safeAvg(g.dataArr, function(d){ return d.rrhh.certGerencial; }),
+                    ocup: safeAvg(g.dataArr, function(d){ return d.rrhh.ocPlantilla; }),
+                    rotacion: safeAvg(g.dataArr, function(d){ return d.rotacion; })
+                };
+            }).filter(function(item){ return item[sortKey] !== null; }).sort(function(a,b){ return b[sortKey] - a[sortKey]; });
+            
+            const top5 = list.slice(0, 5);
+            const bottom5 = [].concat(list).reverse().slice(0, 5);
+
+            const metricLabels = {
+                'avg': 'CUMP. GENERAL',
+                'srv': 'SERVSAFE',
+                'm2': document.getElementById('label-m2').innerText.toUpperCase(),
+                'm3': document.getElementById('label-m3').innerText.toUpperCase(),
+                'cert': 'CERT. GERENCIAL',
+                'ocup': 'OCUP. PLANTILLA',
+                'rotacion': 'ROTACIÓN'
+            };
+
+            const formatRankVal = function(v) { return v <= 0 ? '0%' : Math.round(v) + '%'; };
+
+            const renderList = function(data, containerId, colorClass) {
+                const container = document.getElementById(containerId);
+                let htmlStr = '';
+                data.forEach(function(item, idx) {
+                    htmlStr += '<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-slate-200 transition-all">' +
+                        '<div class="flex items-center gap-4">' +
+                            '<span class="w-8 h-8 flex items-center justify-center bg-white rounded-full text-xs font-black shadow-sm text-slate-400 border border-slate-100">#' + (idx+1) + '</span>' +
+                            '<div>' +
+                                '<h4 class="font-bold text-slate-800 text-sm leading-none">' + item.name + '</h4>' +
+                                '<p class="text-[9px] font-black text-slate-400 uppercase mt-1 tracking-widest">' + item.cadena + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="text-right">' +
+                            '<p class="text-xl font-black ' + colorClass + '">' + formatRankVal(item[sortKey]) + '</p>' +
+                            '<p class="text-[8px] font-bold text-slate-300 uppercase">' + metricLabels[sortKey] + '</p>' +
+                        '</div>' +
+                    '</div>';
+                });
+                container.innerHTML = htmlStr;
+            };
+
+            renderList(top5, 'top-rank-container', 'text-green-600');
+            renderList(bottom5, 'bottom-rank-container', 'text-red-500');
+        }
+
+        function hideLoader() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(function() { overlay.style.display = 'none'; }, 500);
+        }
+
+        async function downloadPPTX() {
+            const btn = document.getElementById('btn-download-pptx');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando PPTX...';
+            lucide.createIcons();
+
+            try {
+                let pres = new PptxGenJS();
+                pres.layout = 'LAYOUT_16x9';
+
+                let slideCover = pres.addSlide();
+                const primaryColor = activePalette.m1.replace('#', '');
+                slideCover.background = { color: primaryColor };
+                
+                slideCover.addText("Panel de Control Estratégico", { 
+                    x: 1, y: 2, w: 8, h: 1, 
+                    fontSize: 44, bold: true, color: "FFFFFF", align: "center", fontFace: "Arial" 
+                });
+                
+                const subtitle = document.getElementById('dynamic-subtitle').innerText;
+                slideCover.addText(subtitle, { 
+                    x: 1, y: 3, w: 8, h: 0.5, 
+                    fontSize: 20, color: "E2E8F0", align: "center", fontFace: "Arial" 
+                });
+                
+                slideCover.addText(document.getElementById('current-date').innerText, { 
+                    x: 1, y: 4.5, w: 8, h: 0.5, 
+                    fontSize: 12, color: "FFFFFF", align: "center", fontFace: "Arial" 
+                });
+
+                const addSlide = async function(elementId, slideTitle) {
+                    const el = document.getElementById(elementId);
+                    if (!el || el.innerHTML.trim() === '' || el.classList.contains('hidden') || el.style.display === 'none') return;
+                    if (el.children.length === 0) return; 
+
+                    const canvas = await html2canvas(el, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: '#f4f7f9' 
+                    });
+
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    let slide = pres.addSlide();
+                    slide.background = { color: "F4F7F9" };
+                    
+                    slide.addText(slideTitle, { 
+                        x: 0.5, y: 0.3, w: 9, h: 0.5, 
+                        fontSize: 22, bold: true, color: primaryColor, fontFace: "Arial" 
+                    });
+
+                    const maxW = 9.0;
+                    const maxH = 4.5;
+                    const ratio = canvas.width / canvas.height;
+                    let finalW = maxW;
+                    let finalH = finalW / ratio;
+
+                    if (finalH > maxH) {
+                        finalH = maxH;
+                        finalW = finalH * ratio;
+                    }
+
+                    const finalX = (10 - finalW) / 2; 
+                    const finalY = 0.9 + (maxH - finalH) / 2; 
+
+                    slide.addImage({ data: imgData, x: finalX, y: finalY, w: finalW, h: finalH });
+                };
+
+                await addSlide('export-kpis', 'Resumen de Indicadores Clave (KPIs)');
+                await addSlide('container-rev-compare', 'Auditorías REV');
+                await addSlide('container-rec-compare', 'Auditorías REC (Critical Visit)');
+                await addSlide('container-oer-compare', 'Auditorías OER / RAV');
+                await addSlide('export-chart-gerente', 'Resultados por Gerente de Negocio');
+                await addSlide('export-chart-cadena', document.getElementById('title-chart-cadena').innerText);
+                await addSlide('export-chart-distrito', 'Desempeño Crítico por Gerente de Distrito');
+                await addSlide('zero-protocol-wrapper', 'Alerta Crítica: Zero Protocol');
+                await addSlide('sin-gerente-wrapper', 'Alerta Operativa: Sucursales Sin Gerente');
+                await addSlide('sucesion-wrapper', 'Desarrollo de Talento: Plan de Sucesión');
+                await addSlide('export-rankings', 'Top 5: Excelencia y Foco de Atención');
+                await addSlide('export-table', 'Registro Detallado por Sucursal');
+
+                const cadena = selections.cadena !== 'Todos' ? selections.cadena : 'General';
+                const sucursal = selections.gerente_sucursal !== 'Todos' ? selections.gerente_sucursal : '';
+                let filename = "Presentacion_Ejecutiva_" + cadena;
+                if(sucursal) filename += "_" + sucursal;
+                
+                await pres.writeFile({ fileName: filename.replace(/\s+/g, '_') + '.pptx' });
+
+            } catch (error) {
+                console.error("Error al generar PPTX:", error);
+                alert("Ocurrió un error al exportar a PowerPoint.");
+            } finally {
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }
+        }
+
+        async function downloadPDF() {
+            const btn = document.getElementById('btn-download-pdf');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando...';
+            lucide.createIcons();
+
+            const element = document.getElementById('dashboard-content');
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2, 
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#f4f7f9'
+                });
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const jsPDF = window.jspdf.jsPDF;
+                
+                const pdf = new jsPDF({
+                    orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                
+                pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+                
+                const cadena = selections.cadena !== 'Todos' ? selections.cadena : 'General';
+                const sucursal = selections.gerente_sucursal !== 'Todos' ? selections.gerente_sucursal : '';
+                let filename = "Dashboard_" + cadena;
+                if(sucursal) filename += "_" + sucursal;
+                filename += ".pdf";
+                
+                pdf.save(filename.replace(/\s+/g, '_'));
+            } catch (error) {
+                console.error("Error al generar PDF:", error);
+                alert("Ocurrió un error al exportar el PDF.");
+            } finally {
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>
