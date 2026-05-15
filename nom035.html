@@ -23,10 +23,10 @@
             font-family: 'Plus Jakarta Sans', sans-serif !important;
         }
 
-        .chart-container { position: relative; height: 320px; width: 100%; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
         
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Custom Scrollbar (aplica para scroll vertical y horizontal) */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -78,9 +78,8 @@
                     </button>
                 </header>
 
-                <!-- Filtros (Orden: Trimestre, Mes, Cadena, Regional, Distrito) -->
+                <!-- Filtros -->
                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-                    <!-- 1. Trimestre -->
                     <div class="card-panel p-4">
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Trimestre</label>
                         <div class="relative">
@@ -92,7 +91,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. Mes -->
                     <div class="card-panel p-4">
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Mes</label>
                         <div class="relative">
@@ -104,19 +102,17 @@
                         </div>
                     </div>
 
-                    <!-- 3. Cadena -->
                     <div class="card-panel p-4">
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cadena</label>
                         <div class="relative">
                             <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
                             <select id="filterCadena" onchange="handleFilterChange()" class="w-full pl-9 pr-8 py-2 bg-slate-50/50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:border-[#2F5597] focus:ring-1 focus:ring-[#2F5597] appearance-none">
-                                <option value="Todos">GES</option>
+                                <option value="Todos">Todas las Cadenas</option>
                             </select>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"></i>
                         </div>
                     </div>
 
-                    <!-- 4. Regional -->
                     <div class="card-panel p-4">
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Regional</label>
                         <div class="relative">
@@ -128,7 +124,6 @@
                         </div>
                     </div>
                     
-                    <!-- 5. Gerente Distrito -->
                     <div class="card-panel p-4">
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gerente Distrito</label>
                         <div class="relative">
@@ -143,8 +138,6 @@
 
                 <!-- 5 Tarjetas KPIs -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                    
-                    <!-- 1. KPI Sucursales -->
                     <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
                         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Total Sucursales</h3>
                         <div class="flex items-center justify-between">
@@ -155,7 +148,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. KPI Acuse Encuesta (Azul Fuerte) -->
                     <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
                         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Acuse Encuesta</h3>
                         <div class="flex items-baseline gap-1 mb-2">
@@ -167,7 +159,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. KPI Política (Azul Claro) -->
                     <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
                         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Política</h3>
                         <div class="flex items-baseline gap-1 mb-2">
@@ -179,7 +170,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. KPI Plan de Acción (Azul Extra Claro / Decorativo) -->
                     <div class="card-panel p-5 relative overflow-hidden flex flex-col justify-center">
                         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">% Plan de Acción</h3>
                         <div class="flex items-baseline gap-1 mb-2">
@@ -191,58 +181,64 @@
                         </div>
                     </div>
 
-                    <!-- 5. KPI Decorativo Meta -->
                     <div class="bg-white/50 rounded-2xl p-5 relative overflow-hidden flex flex-col items-center justify-center border-dashed border-2 border-slate-200 shadow-sm">
                         <i data-lucide="shield-check" class="w-8 h-8 text-slate-300 mb-2 stroke-[1.5]"></i>
                         <h3 class="text-[13px] font-bold text-slate-400 uppercase tracking-widest">Meta 100%</h3>
                     </div>
-
                 </div>
 
-                <!-- Gráficos: Configurados a 1 Sola Columna para que no estén juntos -->
+                <!-- Gráficos (Envueltos en Overflow-X-Auto para scroll horizontal) -->
                 <div class="grid grid-cols-1 gap-8 mb-6">
                     
                     <!-- 1. Gráfico por Mes -->
-                    <div id="chartMesContainer" class="card-panel p-6">
-                        <div class="flex items-center gap-2 mb-6">
-                            <i data-lucide="calendar" class="w-5 h-5 text-[#2F5597]"></i>
-                            <h3 class="text-sm font-bold text-slate-800">Cumplimiento por Mes</h3>
+                    <div id="chartMesContainer" class="card-panel p-6 overflow-hidden flex flex-col">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="history" class="w-5 h-5 text-[#2F5597]"></i>
+                            <h3 class="text-sm font-bold text-slate-800">Comparativo por Meses</h3>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="chartMes"></canvas>
+                        <div class="w-full overflow-x-auto custom-scrollbar pb-2">
+                            <div class="chart-container" id="wrapMes" style="min-width: 600px;">
+                                <canvas id="chartMes"></canvas>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 2. Gráfico Cumplimiento por Cadena -->
-                    <div class="card-panel p-6">
-                        <div class="flex items-center gap-2 mb-6">
+                    <div class="card-panel p-6 overflow-hidden flex flex-col">
+                        <div class="flex items-center gap-2 mb-4">
                             <i data-lucide="building-2" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="chartCadena"></canvas>
+                        <div class="w-full overflow-x-auto custom-scrollbar pb-2">
+                            <div class="chart-container" id="wrapCadena">
+                                <canvas id="chartCadena"></canvas>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 3. Gráfico Cumplimiento por Región -->
-                    <div class="card-panel p-6">
-                        <div class="flex items-center gap-2 mb-6">
+                    <div class="card-panel p-6 overflow-hidden flex flex-col">
+                        <div class="flex items-center gap-2 mb-4">
                             <i data-lucide="map" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="chartRegion"></canvas>
+                        <div class="w-full overflow-x-auto custom-scrollbar pb-2">
+                            <div class="chart-container" id="wrapRegion">
+                                <canvas id="chartRegion"></canvas>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 4. Gráfico Cumplimiento por Distrito -->
-                    <div class="card-panel p-6">
-                        <div class="flex items-center gap-2 mb-6">
+                    <div class="card-panel p-6 overflow-hidden flex flex-col">
+                        <div class="flex items-center gap-2 mb-4">
                             <i data-lucide="map-pin" class="w-5 h-5 text-[#2F5597]"></i>
                             <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="chartDistrito"></canvas>
+                        <div class="w-full overflow-x-auto custom-scrollbar pb-2">
+                            <div class="chart-container" id="wrapDistrito">
+                                <canvas id="chartDistrito"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -252,7 +248,7 @@
                     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <i data-lucide="table" class="w-5 h-5 text-[#2F5597]"></i>
-                            <h3 class="text-sm font-bold text-slate-800">Desglose General </h3>
+                            <h3 class="text-sm font-bold text-slate-800">Desglose General (Promedios Redondeados)</h3>
                         </div>
                     </div>
                     
@@ -302,7 +298,6 @@
     </div>
 
     <script>
-        // Registrar Plugin Globalmente
         Chart.register(ChartDataLabels);
         lucide.createIcons();
 
@@ -312,7 +307,6 @@
 
         const monthOrderFixed = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        // Parseador Robusto
         function parsePercentage(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim().replace(',', '.');
@@ -352,12 +346,9 @@
 
             try {
                 Papa.parse(CSV_URL, {
-                    download: true,
-                    header: false,
-                    skipEmptyLines: true,
+                    download: true, header: false, skipEmptyLines: true,
                     complete: function(results) {
                         const rows = results.data.slice(1);
-                        
                         let tempRawData = rows.map(row => {
                             const acuse = parsePercentage(row[5]);
                             const politica = parsePercentage(row[6]);
@@ -369,14 +360,11 @@
                                 distrital: row[2] || 'N/A',
                                 sucursal: row[3] || 'N/A',
                                 cadena: row[4] || 'N/A',
-                                acuse: acuse,
-                                politica: politica,
-                                plan: plan,
+                                acuse: acuse, politica: politica, plan: plan,
                                 promedio: (acuse + politica + plan) / 3
                             };
                         });
 
-                        // Regla 3: EXCLUIR filas futuras (donde todos los indicadores son 0%)
                         rawData = tempRawData.filter(item => !(item.acuse === 0 && item.politica === 0 && item.plan === 0));
 
                         initializeFilters();
@@ -387,20 +375,14 @@
                         setTimeout(() => overlay.style.display = 'none', 500);
 
                         const now = new Date();
-                        document.getElementById('lastUpdated').innerText = 
-                            now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    },
-                    error: function(err) {
-                        console.error('Error al procesar CSV:', err);
-                        alert("Error al cargar los datos.");
+                        document.getElementById('lastUpdated').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     }
                 });
             } catch (error) {
-                console.error("Error obteniendo datos:", error);
+                console.error("Error:", error);
             }
         }
 
-        // === LÓGICA DE FILTROS EN CASCADA ===
         function getSelectedFilters() {
             return {
                 trimestre: document.getElementById('filterTrimestre').value,
@@ -429,7 +411,7 @@
 
             let valueExists = false;
             sortedValues.forEach(value => {
-                if(value === 'N/A' || value === 'Desconocido') return; // Limpieza visual
+                if(value === 'N/A' || value === 'Desconocido') return;
                 const option = document.createElement('option');
                 option.value = value;
                 option.textContent = value;
@@ -437,12 +419,10 @@
                 select.appendChild(option);
             });
 
-            // Mantener valor si sigue siendo válido, si no, resetear a 'Todos'
             select.value = valueExists ? currentValue : 'Todos';
         }
 
         function initializeFilters() {
-            // Setup inicial de todas las opciones posibles
             const filters = { trim: new Set(), mes: new Set(), cad: new Set(), reg: new Set(), dist: new Set() };
             rawData.forEach(i => {
                 filters.trim.add(i.trimestre); filters.mes.add(i.mes);
@@ -482,11 +462,9 @@
             updateDashboard();
         }
 
-        // === ACTUALIZACIÓN PRINCIPAL DEL DASHBOARD ===
         function updateDashboard() {
             const sels = getSelectedFilters();
 
-            // Filtrado Maestro
             const filteredRows = rawData.filter(item => {
                 return (sels.mes === 'Todos' || item.mes === sels.mes) &&
                        (sels.trimestre === 'Todos' || item.trimestre === sels.trimestre) &&
@@ -495,7 +473,6 @@
                        (sels.distrital === 'Todos' || item.distrital === sels.distrital);
             });
 
-            // Agrupación por Sucursal (para calcular promedios anuales/trimestrales reales sin duplicar)
             const groupedBranches = {};
             filteredRows.forEach(item => {
                 const key = `${item.regional}|${item.distrital}|${item.cadena}|${item.sucursal}`;
@@ -512,23 +489,14 @@
                 const acuse = g.sumAcuse / g.count;
                 const politica = g.sumPolitica / g.count;
                 const plan = g.sumPlan / g.count;
-                return {
-                    ...g,
-                    acuse: acuse,
-                    politica: politica,
-                    plan: plan,
-                    promedio: (acuse + politica + plan) / 3
-                };
+                return { ...g, acuse, politica, plan, promedio: (acuse + politica + plan) / 3 };
             });
 
-            // KPIs Globales Redondeados
             const totalSucursales = aggregatedData.length;
             let sumGlobalAcuse = 0, sumGlobalPolitica = 0, sumGlobalPlan = 0;
 
             aggregatedData.forEach(item => {
-                sumGlobalAcuse += item.acuse;
-                sumGlobalPolitica += item.politica;
-                sumGlobalPlan += item.plan;
+                sumGlobalAcuse += item.acuse; sumGlobalPolitica += item.politica; sumGlobalPlan += item.plan;
             });
 
             const avgAcuse = totalSucursales ? Math.round(sumGlobalAcuse / totalSucursales) : 0;
@@ -536,66 +504,20 @@
             const avgPlan = totalSucursales ? Math.round(sumGlobalPlan / totalSucursales) : 0;
 
             document.getElementById('kpiTotal').innerText = totalSucursales;
-            document.getElementById('kpiAcuse').innerText = avgAcuse;
-            document.getElementById('barAcuse').style.width = `${avgAcuse}%`;
-            document.getElementById('kpiPolitica').innerText = avgPolitica;
-            document.getElementById('barPolitica').style.width = `${avgPolitica}%`;
-            document.getElementById('kpiPlan').innerText = avgPlan;
-            document.getElementById('barPlan').style.width = `${avgPlan}%`;
+            document.getElementById('kpiAcuse').innerText = avgAcuse; document.getElementById('barAcuse').style.width = `${avgAcuse}%`;
+            document.getElementById('kpiPolitica').innerText = avgPolitica; document.getElementById('barPolitica').style.width = `${avgPolitica}%`;
+            document.getElementById('kpiPlan').innerText = avgPlan; document.getElementById('barPlan').style.width = `${avgPlan}%`;
 
-            // Control de Visibilidad Gráfica Mes
             const chartMesContainer = document.getElementById('chartMesContainer');
-            if (sels.mes !== 'Todos') {
-                chartMesContainer.style.display = 'none';
-            } else {
-                chartMesContainer.style.display = 'block';
-            }
+            if (sels.mes !== 'Todos') chartMesContainer.style.display = 'none';
+            else chartMesContainer.style.display = 'block';
 
-            // Actualizar Componentes
             updateCharts(aggregatedData, filteredRows);
             updateTable(aggregatedData);
         }
 
-        // === GRÁFICAS (CHART.JS) ===
+        // === CONFIGURACIÓN DE GRÁFICAS SEPARADAS Y ESTABLES ===
         
-        // Configuración para la gráfica de Líneas (Meses)
-        function getLineChartConfig(labels, dataAcuse, dataPolitica, dataPlan) {
-            return {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Acuse Encuesta', data: dataAcuse, borderColor: '#2F5597', backgroundColor: '#2F5597', tension: 0.4, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2, fill: false },
-                        { label: 'Política', data: dataPolitica, borderColor: '#8FAADC', backgroundColor: '#8FAADC', tension: 0.4, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2, fill: false },
-                        { label: 'Plan de Acción', data: dataPlan, borderColor: '#B4C6E7', backgroundColor: '#B4C6E7', tension: 0.4, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 20 } },
-                    plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Plus Jakarta Sans'" } } },
-                        tooltip: { mode: 'index', intersect: false, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` } },
-                        datalabels: { display: false } // Ocultamos los labels en la gráfica de líneas para no saturar
-                    },
-                    scales: {
-                        y: { 
-                            max: 100, 
-                            beginAtZero: true, 
-                            grid: { color: '#f1f5f9' }, 
-                            ticks: { 
-                                color: '#94a3b8', 
-                                font: { family: "'Plus Jakarta Sans'" },
-                                callback: function(value) { return value + '%'; }
-                            } 
-                        },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" }, maxRotation: 0, minRotation: 0 } }
-                    }
-                }
-            };
-        }
-
-        // Configuración para las gráficas de Barras Agrupadas
         function getMultiChartConfig(labels, dataAcuse, dataPolitica, dataPlan) {
             return {
                 type: 'bar',
@@ -609,26 +531,26 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 20 } },
+                    layout: { padding: { top: 10, bottom: 0 } },
                     plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Plus Jakarta Sans'" } } },
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, padding: 20, font: { family: "'Plus Jakarta Sans'" } } },
                         tooltip: { mode: 'index', intersect: false, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%` } },
                         datalabels: {
                             display: function(context) { return context.dataset.data[context.dataIndex] > 0; },
                             formatter: (value) => value === 0 ? '' : Math.round(value) + '%',
-                            color: '#475569', anchor: 'end', align: 'end', offset: -2,
+                            color: '#475569', anchor: 'end', align: 'end', offset: 4,
                             font: { family: "'Plus Jakarta Sans', sans-serif", weight: 'bold', size: 9 }
                         }
                     },
                     scales: {
                         y: { 
-                            max: 100, 
+                            max: 115, 
                             beginAtZero: true, 
                             grid: { color: '#f1f5f9' }, 
                             ticks: { 
                                 color: '#94a3b8', 
-                                font: { family: "'Plus Jakarta Sans'" },
-                                callback: function(value) { return value + '%'; }
+                                font: { family: "'Plus Jakarta Sans'" }, 
+                                callback: (v) => v <= 100 ? v + '%' : '' 
                             } 
                         },
                         x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans'" }, maxRotation: 0, minRotation: 0 } }
@@ -640,7 +562,7 @@
         function updateCharts(aggregatedData, filteredRows) {
             Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
-            // 1. Lógica Gráfico Mensual Fija (Siempre 12 meses, usando data cruda)
+            // 1. Gráfico Mensual - ORDEN CRONOLÓGICO
             const mapMes = {};
             monthOrderFixed.forEach(m => mapMes[m] = { acuse: 0, pol: 0, plan: 0, count: 0 });
             
@@ -651,11 +573,12 @@
                 }
             });
 
+            const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             const dMesAcuse = monthOrderFixed.map(m => mapMes[m].count ? mapMes[m].acuse / mapMes[m].count : 0);
             const dMesPol = monthOrderFixed.map(m => mapMes[m].count ? mapMes[m].pol / mapMes[m].count : 0);
             const dMesPlan = monthOrderFixed.map(m => mapMes[m].count ? mapMes[m].plan / mapMes[m].count : 0);
 
-            // 2. Lógica Gráficos Agrupados (Cadena, Región, Distrito)
+            // 2. Gráficos Agrupados 
             const mapCad = {}, mapReg = {}, mapDist = {};
             aggregatedData.forEach(item => {
                 if(!mapCad[item.cadena]) mapCad[item.cadena] = { acuse: 0, pol: 0, plan: 0, count: 0 };
@@ -668,41 +591,44 @@
                 mapDist[item.distrital].acuse += item.acuse; mapDist[item.distrital].pol += item.politica; mapDist[item.distrital].plan += item.plan; mapDist[item.distrital].count += 1;
             });
 
-            const extract = (map) => {
+            const extractSorted = (map) => {
                 const arr = Object.keys(map).map(k => {
-                    const acuse = map[k].acuse / map[k].count;
-                    const pol = map[k].pol / map[k].count;
-                    const plan = map[k].plan / map[k].count;
-                    const avg = (acuse + pol + plan) / 3;
-                    return { label: k, acuse, pol, plan, avg };
+                    const acuse = map[k].acuse / map[k].count; const pol = map[k].pol / map[k].count; const plan = map[k].plan / map[k].count;
+                    return { label: k, acuse, pol, plan, avg: (acuse + pol + plan) / 3 };
                 });
-
-                // Ordenar de Mayor a Menor por el promedio de cumplimiento
                 arr.sort((a, b) => b.avg - a.avg);
-
-                return {
-                    l: arr.map(i => i.label),
-                    a: arr.map(i => i.acuse),
-                    po: arr.map(i => i.pol),
-                    pl: arr.map(i => i.plan)
-                };
+                return { l: arr.map(i => i.label), a: arr.map(i => i.acuse), po: arr.map(i => i.pol), pl: arr.map(i => i.plan) };
             };
 
-            const dataCad = extract(mapCad), dataReg = extract(mapReg), dataDist = extract(mapDist);
+            const dataCad = extractSorted(mapCad), dataReg = extractSorted(mapReg), dataDist = extractSorted(mapDist);
 
-            // Renderizar Gráficos
+            // Destruir gráficos anteriores
             if (charts.mes) charts.mes.destroy();
             if (charts.cadena) charts.cadena.destroy();
             if (charts.region) charts.region.destroy();
             if (charts.distrito) charts.distrito.destroy();
 
-            charts.mes = new Chart(document.getElementById('chartMes').getContext('2d'), getMultiChartConfig(monthOrderFixed, dMesAcuse, dMesPol, dMesPlan));
+            // AJUSTE DE ANCHOS DINÁMICOS (SCROLL HORIZONTAL)
+            // Calculamos 120px por cada grupo de barras para asegurar que nada se empalme jamás.
+            const widthCadena = Math.max(100, dataCad.l.length * 120);
+            document.getElementById('wrapCadena').style.minWidth = dataCad.l.length > 5 ? widthCadena + 'px' : '100%';
+
+            const widthRegion = Math.max(100, dataReg.l.length * 120);
+            document.getElementById('wrapRegion').style.minWidth = dataReg.l.length > 5 ? widthRegion + 'px' : '100%';
+
+            const widthDistrito = Math.max(100, dataDist.l.length * 120);
+            document.getElementById('wrapDistrito').style.minWidth = dataDist.l.length > 5 ? widthDistrito + 'px' : '100%';
+
+            const widthMes = Math.max(600, shortMonths.length * 100);
+            document.getElementById('wrapMes').style.minWidth = widthMes + 'px';
+
+            // Renderizar
+            charts.mes = new Chart(document.getElementById('chartMes').getContext('2d'), getMultiChartConfig(shortMonths, dMesAcuse, dMesPol, dMesPlan));
             charts.cadena = new Chart(document.getElementById('chartCadena').getContext('2d'), getMultiChartConfig(dataCad.l, dataCad.a, dataCad.po, dataCad.pl));
             charts.region = new Chart(document.getElementById('chartRegion').getContext('2d'), getMultiChartConfig(dataReg.l, dataReg.a, dataReg.po, dataReg.pl));
             charts.distrito = new Chart(document.getElementById('chartDistrito').getContext('2d'), getMultiChartConfig(dataDist.l, dataDist.a, dataDist.po, dataDist.pl));
         }
 
-        // === TABLA ===
         function updateTable(aggregatedData) {
             const tbody = document.getElementById('tableBody');
             if (aggregatedData.length === 0) {
@@ -710,11 +636,8 @@
                 return;
             }
 
-            // Ordenar de mayor a menor por % Cumplimiento (promedio). Si hay empate, ordena alfabéticamente.
             const sorted = [...aggregatedData].sort((a, b) => {
-                if (b.promedio !== a.promedio) {
-                    return b.promedio - a.promedio;
-                }
+                if (b.promedio !== a.promedio) return b.promedio - a.promedio;
                 return a.regional.localeCompare(b.regional) || a.distrital.localeCompare(b.distrital) || a.cadena.localeCompare(b.cadena);
             });
 
