@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Dashboard Corporativos</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -16,9 +18,38 @@ scroll-behavior:smooth;
 body{
 background:#f1f5f9;
 overflow-x:hidden;
+font-family:Arial, Helvetica, sans-serif;
 }
 
-/* ANIMACIÓN ENTRADA */
+/* =========================
+BANNER
+========================= */
+
+.banner-overlay{
+background:linear-gradient(
+to right,
+rgba(11,47,74,.90),
+rgba(11,47,74,.72)
+);
+}
+
+.title-animate{
+animation:floatText 3s ease-in-out infinite;
+}
+
+@keyframes floatText{
+0%,100%{
+transform:translateY(0px);
+}
+50%{
+transform:translateY(-5px);
+}
+}
+
+/* =========================
+ANIMACIONES
+========================= */
+
 .fade-up{
 opacity:0;
 transform:translateY(30px);
@@ -40,7 +71,10 @@ transform:translateY(0);
 }
 }
 
-/* EFECTO TARJETAS */
+/* =========================
+TARJETAS
+========================= */
+
 .dashboard{
 position:relative;
 overflow:hidden;
@@ -63,10 +97,10 @@ height:100%;
 background:linear-gradient(
 120deg,
 transparent,
-rgba(255,255,255,.45),
+rgba(255,255,255,.40),
 transparent
 );
-transition:.8s;
+transition:.9s;
 }
 
 .dashboard:hover::before{
@@ -79,30 +113,12 @@ transition:all .35s ease;
 }
 
 .dashboard:hover .brand-logo{
-transform:scale(1.12);
+transform:scale(1.05);
 }
 
-/* BANNER */
-.banner-overlay{
-background:linear-gradient(
-to right,
-rgba(11,47,74,.88),
-rgba(11,47,74,.70)
-);
-}
-
-/* TITULO */
-.title-animate{
-animation:floatText 3s ease-in-out infinite;
-}
-
-@keyframes floatText{
-0%,100%{
-transform:translateY(0px);
-}
-50%{
-transform:translateY(-5px);
-}
+/* FOOTER */
+footer{
+margin-top:auto;
 }
 
 </style>
@@ -111,7 +127,10 @@ transform:translateY(-5px);
 
 <body class="min-h-screen flex flex-col">
 
-<!-- BANNER -->
+<!-- =========================
+BANNER
+========================= -->
+
 <div class="relative w-full h-[250px] overflow-hidden">
 
 <img src="banner.png"
@@ -133,44 +152,42 @@ Portal interno de indicadores
 
 </div>
 
+<!-- =========================
+DASHBOARDS
+========================= -->
 
-<!-- DASHBOARDS -->
 <main class="flex-grow p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 max-w-7xl mx-auto w-full">
 
+<!-- =========================
+FRANQUICIAS
+========================= -->
 
-<!-- FRANQUICIAS -->
 <a href="indicadores_fqcias.html"
 data-enabled="true"
-class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-7 border border-slate-200 min-h-[210px]">
 
-<h2 class="font-bold text-xl text-slate-800 mb-4">
+<h2 class="font-bold text-xl text-slate-800">
 Indicadores estratégicos
 </h2>
 
-<div class="flex items-center gap-5 flex-wrap">
+<div class="flex justify-center items-center mt-6">
 
-<img src="pizza-hut.png"
-alt="Pizza Hut"
-class="brand-logo h-10 object-contain">
-
-<img src="burger-king.png"
-alt="Burger King"
-class="brand-logo h-10 object-contain">
-
-<img src="churchs.png"
-alt="Churchs"
-class="brand-logo h-10 object-contain">
+<img src="Logos dashboard.png"
+alt="Franquicias"
+class="brand-logo w-full max-w-[260px] object-contain">
 
 </div>
 
-<p class="text-slate-500 text-sm mt-4">
+<p class="text-slate-500 text-sm mt-5">
 Indicadores de franquicias
 </p>
 
 </a>
 
+<!-- =========================
+COMISIONES MIXTAS
+========================= -->
 
-<!-- COMISIONES -->
 <a href="comisiones-mixtas.html"
 data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
@@ -185,8 +202,10 @@ Seguimiento de comisiones
 
 </a>
 
+<!-- =========================
+GES CONTIGO
+========================= -->
 
-<!-- GES -->
 <a href="ges-contigo-360.html"
 data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
@@ -201,8 +220,10 @@ Indicadores de cumplimiento
 
 </a>
 
+<!-- =========================
+MYSTERY
+========================= -->
 
-<!-- MYSTERY -->
 <a href="mystery.html"
 data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
@@ -217,8 +238,10 @@ Resultados de protocolo Mystery Shopper
 
 </a>
 
+<!-- =========================
+NOM035
+========================= -->
 
-<!-- NOM035 -->
 <a href="nom035.html"
 data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
@@ -233,8 +256,10 @@ Seguimiento de cumplimiento NOM-035
 
 </a>
 
+<!-- =========================
+RECONOCIMIENTOS
+========================= -->
 
-<!-- RECONOCIMIENTOS -->
 <a href="reconocimientos.html"
 data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
@@ -249,8 +274,10 @@ Reconocimientos por cadena
 
 </a>
 
+<!-- =========================
+CODIGO DE ETICA
+========================= -->
 
-<!-- CODIGO ETICA -->
 <a href="codigo-etica.html"
 data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
@@ -267,11 +294,17 @@ Indicadores de cumplimiento
 
 </main>
 
+<!-- =========================
+FOOTER
+========================= -->
 
 <footer class="text-center text-xs text-slate-400 p-6">
 © 2026 Capacitación Corporativo GES
 </footer>
 
+<!-- =========================
+SCRIPT
+========================= -->
 
 <script>
 
