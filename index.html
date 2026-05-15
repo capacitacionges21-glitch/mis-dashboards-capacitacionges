@@ -2,27 +2,130 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Corporativos</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+html{
+scroll-behavior:smooth;
+}
+
+body{
+background:#f1f5f9;
+overflow-x:hidden;
+}
+
+/* ANIMACIÓN ENTRADA */
+.fade-up{
+opacity:0;
+transform:translateY(30px);
+animation:fadeUp .8s ease forwards;
+}
+
+.fade-up:nth-child(1){ animation-delay:.1s; }
+.fade-up:nth-child(2){ animation-delay:.2s; }
+.fade-up:nth-child(3){ animation-delay:.3s; }
+.fade-up:nth-child(4){ animation-delay:.4s; }
+.fade-up:nth-child(5){ animation-delay:.5s; }
+.fade-up:nth-child(6){ animation-delay:.6s; }
+.fade-up:nth-child(7){ animation-delay:.7s; }
+
+@keyframes fadeUp{
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+/* EFECTO TARJETAS */
+.dashboard{
+position:relative;
+overflow:hidden;
+transition:all .35s ease;
+}
+
+.dashboard:hover{
+transform:translateY(-8px) scale(1.02);
+box-shadow:0 20px 40px rgba(0,0,0,.12);
+}
+
+/* EFECTO BRILLO */
+.dashboard::before{
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,.45),
+transparent
+);
+transition:.8s;
+}
+
+.dashboard:hover::before{
+left:100%;
+}
+
+/* LOGOS */
+.brand-logo{
+transition:all .35s ease;
+}
+
+.dashboard:hover .brand-logo{
+transform:scale(1.12);
+}
+
+/* BANNER */
+.banner-overlay{
+background:linear-gradient(
+to right,
+rgba(11,47,74,.88),
+rgba(11,47,74,.70)
+);
+}
+
+/* TITULO */
+.title-animate{
+animation:floatText 3s ease-in-out infinite;
+}
+
+@keyframes floatText{
+0%,100%{
+transform:translateY(0px);
+}
+50%{
+transform:translateY(-5px);
+}
+}
+
+</style>
+
 </head>
 
-<body class="bg-slate-100 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
 <!-- BANNER -->
-<div class="relative w-full h-[245px] overflow-hidden">
+<div class="relative w-full h-[250px] overflow-hidden">
 
 <img src="banner.png"
 class="w-full h-full object-cover">
 
-<div class="absolute inset-0 bg-[#0b2f4a]/70"></div>
+<div class="absolute inset-0 banner-overlay"></div>
 
-<div class="absolute inset-0 flex flex-col justify-center items-center text-white text-center px-3">
+<div class="absolute inset-0 flex flex-col justify-center items-center text-white text-center px-4">
 
-<h1 class="text-5xl md:text-3xl font-bold">
+<h1 class="title-animate text-5xl md:text-4xl font-extrabold tracking-wide drop-shadow-lg">
 Dashboard Corporativos
 </h1>
 
-<p class="mt-2 text-sm md:text-base opacity-90">
+<p class="mt-3 text-sm md:text-lg opacity-90">
 Portal interno de indicadores
 </p>
 
@@ -32,36 +135,134 @@ Portal interno de indicadores
 
 
 <!-- DASHBOARDS -->
-<main class="flex-grow p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+<main class="flex-grow p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 max-w-7xl mx-auto w-full">
 
-<a href="codigo-etica.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg text-slate-800">📘 Código de Ética</h2>
-<p class="text-slate-500 text-sm">Indicadores de cumplimiento</p>
+
+<!-- FRANQUICIAS -->
+<a href="indicadores_fqcias.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800 mb-4">
+Indicadores estratégicos
+</h2>
+
+<div class="flex items-center gap-5 flex-wrap">
+
+<img src="pizza-hut.png"
+alt="Pizza Hut"
+class="brand-logo h-10 object-contain">
+
+<img src="burger-king.png"
+alt="Burger King"
+class="brand-logo h-10 object-contain">
+
+<img src="churchs.png"
+alt="Churchs"
+class="brand-logo h-10 object-contain">
+
+</div>
+
+<p class="text-slate-500 text-sm mt-4">
+Indicadores de franquicias
+</p>
+
 </a>
 
-<a href="comisiones-mixtas.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg text-slate-800">🤝 Comisiones Mixtas</h2>
-<p class="text-slate-500 text-sm">Seguimiento de comisiones</p>
+
+<!-- COMISIONES -->
+<a href="comisiones-mixtas.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800">
+🤝 Comisiones Mixtas
+</h2>
+
+<p class="text-slate-500 text-sm mt-2">
+Seguimiento de comisiones
+</p>
+
 </a>
 
-<a href="ges-contigo-360.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg text-slate-800">🧭 Ges Contigo 360</h2>
-<p class="text-slate-500 text-sm">Indicadores de cumplimiento</p>
+
+<!-- GES -->
+<a href="ges-contigo-360.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800">
+🧭 Ges Contigo 360
+</h2>
+
+<p class="text-slate-500 text-sm mt-2">
+Indicadores de cumplimiento
+</p>
+
 </a>
 
-<a href="mystery.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg text-slate-800">📈 Mystery</h2>
-<p class="text-slate-500 text-sm">Resultados de Protocolo Mystery Shopper Ingrese contraseña para acceder</p>
+
+<!-- MYSTERY -->
+<a href="mystery.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800">
+📈 Mystery
+</h2>
+
+<p class="text-slate-500 text-sm mt-2">
+Resultados de protocolo Mystery Shopper
+</p>
+
 </a>
 
-<a href="nom035.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg text-slate-800">🧠 NOM-035</h2>
-<p class="text-slate-500 text-sm">Seguimiento de cumplimiento NOM-035</p>
+
+<!-- NOM035 -->
+<a href="nom035.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800">
+🧠 NOM-035
+</h2>
+
+<p class="text-slate-500 text-sm mt-2">
+Seguimiento de cumplimiento NOM-035
+</p>
+
 </a>
 
-<a href="reconocimientos.html" data-enabled="true" class="dashboard bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-<h2 class="font-bold text-lg text-slate-800">🏆 Reconocimientos</h2>
-<p class="text-slate-500 text-sm">Reconocimientos por cadena</p>
+
+<!-- RECONOCIMIENTOS -->
+<a href="reconocimientos.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800">
+🏆 Reconocimientos
+</h2>
+
+<p class="text-slate-500 text-sm mt-2">
+Reconocimientos por cadena
+</p>
+
+</a>
+
+
+<!-- CODIGO ETICA -->
+<a href="codigo-etica.html"
+data-enabled="true"
+class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
+
+<h2 class="font-bold text-xl text-slate-800">
+📘 Código de Ética
+</h2>
+
+<p class="text-slate-500 text-sm mt-2">
+Indicadores de cumplimiento
+</p>
+
 </a>
 
 </main>
@@ -78,12 +279,19 @@ document.querySelectorAll(".dashboard").forEach(card => {
 
 if(card.dataset.enabled === "false"){
 
-card.classList.add("opacity-40","cursor-not-allowed")
-card.classList.remove("hover:shadow-lg")
+card.classList.add(
+"opacity-40",
+"cursor-not-allowed"
+)
 
 card.addEventListener("click", function(e){
+
 e.preventDefault()
-alert("Este dashboard está temporalmente deshabilitado")
+
+alert(
+"Este dashboard está temporalmente deshabilitado"
+)
+
 })
 
 }
@@ -94,18 +302,3 @@ alert("Este dashboard está temporalmente deshabilitado")
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
