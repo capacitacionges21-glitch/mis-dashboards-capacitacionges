@@ -165,12 +165,12 @@ DASHBOARDS
 FRANQUICIAS
 ========================= -->
 
-<a href="#"
-onclick="validarPassword(event)"
-class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-7 border border-slate-200 min-h-[210px]">
+<a href="indicadores_fqcias.html"
+data-password="FZ2026*"
+class="dashboard protected fade-up bg-white/90 backdrop-blur rounded-3xl p-7 border border-slate-200 min-h-[210px]">
 
 <h2 class="font-bold text-xl text-slate-800">
-🔒 Indicadores estratégicos
+Indicadores estratégicos
 </h2>
 
 <div class="flex justify-center items-center mt-6">
@@ -305,17 +305,25 @@ SCRIPT
 
 <script>
 
-function validarPassword(event){
+/* =========================
+DASHBOARDS CON PASSWORD
+========================= */
 
-event.preventDefault()
+document.querySelectorAll(".protected").forEach(card => {
 
-const password = prompt(
+card.addEventListener("click", function(e){
+
+e.preventDefault()
+
+const correctPassword = this.dataset.password
+
+const userPassword = prompt(
 "Ingrese la contraseña para acceder:"
 )
 
-if(password === "FZ2026*"){
+if(userPassword === correctPassword){
 
-window.location.href = "indicadores_fqcias.html"
+window.location.href = this.getAttribute("href")
 
 }else{
 
@@ -323,7 +331,9 @@ alert("Contraseña incorrecta")
 
 }
 
-}
+})
+
+})
 
 </script>
 
