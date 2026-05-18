@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Corporativo - Gestión Multi-Cadena</title>
     
-    <!-- Librerías Externas -->
+    <!-- Fuentes y Frameworks de Estilos -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -17,7 +17,6 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <style>
-        /* Variables CSS Dinámicas */
         :root {
             --bg-main: #f4f7f9;
             --color-m1: #2F5597;
@@ -52,7 +51,6 @@
             width: 100%;
         }
 
-        /* Contenedor específico para gráfica con scroll */
         .scrollable-chart-container {
             overflow-x: auto;
             overflow-y: hidden;
@@ -85,10 +83,20 @@
 </head>
 <body class="p-4 md:p-8">
 
+    <div id="toast-notification" class="fixed bottom-5 right-5 z-[200] transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700 max-w-md">
+        <div id="toast-icon-container" class="p-1 bg-slate-700 rounded-lg">
+            <i data-lucide="info" class="w-5 h-5 text-indigo-400"></i>
+        </div>
+        <div>
+            <p id="toast-message" class="text-sm font-semibold leading-tight"></p>
+            <p id="toast-sub" class="text-[10px] text-slate-400 mt-0.5 leading-none"></p>
+        </div>
+    </div>
+
     <div id="loading-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-100 h-16 w-16 mb-6"></div>
         <h2 class="text-xl font-bold text-slate-800">Cargando Indicadores Consolidados...</h2>
-        <p class="text-slate-500 mt-2">Sincronizando con bases de datos externas</p>
+        <p class="text-slate-500 mt-2">Sincronizando con bases de datos corporativas</p>
     </div>
 
     <div id="dashboard-content" class="max-w-[1600px] mx-auto space-y-8 pb-8">
@@ -105,7 +113,10 @@
             </div>
             
             <div class="hidden md:flex flex-1 justify-center px-4">
-                <img src="Logos dashboard.png" alt="Logos de las Marcas" class="h-16 md:h-20 lg:h-24 w-auto object-contain transition-transform duration-500 hover:scale-105" onerror="this.style.display='none'">
+                <div class="flex items-center gap-3 text-sm font-bold text-slate-400">
+                    <span id="data-status-badge" class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                    <span id="data-status-text">Inicializando...</span>
+                </div>
             </div>
             
             <div class="flex items-center gap-4">
@@ -121,9 +132,6 @@
                     <div class="text-right">
                         <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Estado de Datos</p>
                         <p id="current-date" class="text-sm font-bold text-slate-700"></p>
-                    </div>
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
                     </div>
                 </div>
             </div>
@@ -260,7 +268,6 @@
             </div>
         </div>
 
-        <!-- Tarjetas KPI Principales -->
         <div id="export-kpis" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden relative">
                 <div class="flex justify-between items-start z-10">
@@ -449,7 +456,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="kpi-card bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-200 flex flex-col justify-between overflow-hidden relative">
                 <div class="flex justify-between items-start z-10">
                     <div class="w-full pr-2">
@@ -471,7 +478,7 @@
                     <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">DESEMPEÑO GLOBAL</p>
-                <h3 class="text-2xl font-black mt-1 transition-colors duration-500 text-[var(--color-m1)]">90%</h3>
+                <h3 id="kpi-global-score" class="text-2xl font-black mt-1 transition-colors duration-500 text-[var(--color-m1)]">0%</h3>
                 <p class="text-[8.5px] font-bold text-slate-400 mt-2 leading-tight px-2">Aplica para: ServSafe, Plataforma de Entrenamiento, Auditoria de Marca, Cert. Gerencial</p>
             </div>
         </div>
@@ -663,6 +670,10 @@
     </div>
 
     <script>
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
+
         const SOURCES = {
             'Centura': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=250274755&single=true&output=csv',
             'Moteburger': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=98366889&single=true&output=csv',
@@ -683,6 +694,7 @@
         let ChartsObj = {};
         let activePalette = PALETTES['default'];
         let currentRevType = 'std'; 
+        let isUsingFallbackData = false;
         
         const selections = {
             trimestre: 'Todos', mes: 'Todos', cadena: 'Todos', indicador: 'Todos', region: 'Todos', distrito: 'Todos', gerente_sucursal: 'Todos'
@@ -692,8 +704,37 @@
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
             initCustomDropdowns(); 
             await fetchAllData();
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         };
+
+        function showToast(message, subMessage = "", type = "info") {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            const toastSub = document.getElementById('toast-sub');
+            const iconContainer = document.getElementById('toast-icon-container');
+
+            if (!toast || !toastMsg || !toastSub) return;
+
+            toastMsg.innerText = message;
+            toastSub.innerText = subMessage;
+
+            if (type === "success") {
+                iconContainer.className = "p-1 bg-green-900 rounded-lg text-green-400";
+                iconContainer.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+            } else if (type === "error") {
+                iconContainer.className = "p-1 bg-red-900 rounded-lg text-red-400";
+                iconContainer.innerHTML = '<i data-lucide="x" class="w-5 h-5"></i>';
+            } else {
+                iconContainer.className = "p-1 bg-slate-700 rounded-lg text-indigo-400";
+                iconContainer.innerHTML = '<i data-lucide="info" class="w-5 h-5"></i>';
+            }
+            if (window.lucide) lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 4500);
+        }
 
         function safeAvg(arr, valFn) {
             const validItems = arr.filter(function(d) { return valFn(d) !== null && valFn(d) !== undefined && !isNaN(valFn(d)); });
@@ -742,12 +783,115 @@
                 
                 FilteredData = [].concat(RawData);
                 
+                document.getElementById('data-status-badge').className = "w-2.5 h-2.5 rounded-full bg-green-500";
+                document.getElementById('data-status-text').innerText = "Datos Remotos Sincronizados (Google Sheets)";
+
                 populateFilters();
                 updateDashboard();
                 hideLoader();
+                showToast("Datos Sincronizados", "Conexión en vivo activa con Google Sheets", "success");
             } catch (err) {
-                console.error("Error cargando datos:", err);
+                console.warn("Fallo de CORS/Red al cargar Google Sheets. Cargando simulación de datos locales...");
+                isUsingFallbackData = true;
+                loadFallbackData();
             }
+        }
+
+        function loadFallbackData() {
+            const brands = ['Centura', 'Moteburger', 'Churchs'];
+            const districts = ['Distrito Norte', 'Distrito Sur', 'Distrito Centro', 'Distrito Este'];
+            const regions = ['Región Metropolitana', 'Región Occidente', 'Región Oriente'];
+            const managers = ['Carlos Gómez', 'Ana Martínez', 'Luis Rodríguez', 'Diana Pérez', 'S/G', 'Sin Gerente'];
+            const branches = {
+                'Centura': ['Centura Mall', 'Centura Plaza', 'Centura Centro', 'Centura Express'],
+                'Moteburger': ['Mote Norte', 'Mote Sur', 'Mote Lindavista', 'Mote Universidad'],
+                'Churchs': ['Church\'s Altabrisa', 'Church\'s Montejo', 'Church\'s Centro', 'Church\'s Américas']
+            };
+
+            RawData = [];
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril'];
+            
+            meses.forEach(function(mes) {
+                brands.forEach(function(brand) {
+                    const brandBranches = branches[brand];
+                    brandBranches.forEach(function(suc) {
+                        const randomManager = managers[Math.floor(Math.random() * managers.length)];
+                        const gerP = Math.random() > 0.1 ? 1 : 0;
+                        const subP = Math.floor(Math.random() * 2);
+                        const colP = 5 + Math.floor(Math.random() * 10);
+                        const totalPlantillaOcupada = gerP + subP + colP;
+                        
+                        const gerSrv = gerP > 0 ? (Math.random() > 0.2 ? 1 : 0) : 0;
+                        const subSrv = subP > 0 ? Math.floor(Math.random() * (subP + 1)) : 0;
+                        
+                        const bkuCol = Math.floor(Math.random() * (totalPlantillaOcupada + 1));
+                        const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : 0;
+                        const m2Val = 55 + Math.floor(Math.random() * 35); 
+                        const m3Val = 70 + Math.floor(Math.random() * 25);
+                        
+                        const hasZeroProtocol = Math.random() > 0.93;
+                        const zpIncidences = hasZeroProtocol ? ['Critical Audit Fail'] : [];
+
+                        const certGerNum = gerP > 0 ? (Math.random() > 0.3 ? 1 : 0) : 0;
+                        const certSubNum = subP > 0 ? Math.floor(Math.random() * (subP + 1)) : 0;
+
+                        const rrhh = {
+                            ocPlantilla: 85 + Math.floor(Math.random() * 15),
+                            sucesionGer: Math.random() > 0.7 ? 1 : 0,
+                            sucesionSub: Math.random() > 0.7 ? 1 : 0,
+                            colSucesion: 0
+                        };
+                        rrhh.certGerencial = (gerP + subP) > 0 ? (((certGerNum + certSubNum) / (gerP + subP)) * 100) : null;
+                        rrhh.colSucesion = rrhh.sucesionGer + rrhh.sucesionSub;
+
+                        RawData.push({
+                            mes: mes,
+                            trimestre: getTrimestre(mes),
+                            region: regions[Math.floor(Math.random() * regions.length)],
+                            distrito: districts[Math.floor(Math.random() * districts.length)],
+                            gerente: randomManager,
+                            cadena: brand,
+                            sucursal: suc,
+                            gerente_sucursal: suc + ' - ' + randomManager,
+                            colAut: totalPlantillaOcupada + 2,
+                            altasCount: Math.floor(Math.random() * 3),
+                            pctAltas: Math.random() * 15,
+                            gerP: gerP,
+                            subP: subP,
+                            colP: colP,
+                            totalPlantillaOcupada: totalPlantillaOcupada,
+                            gerSrv: gerSrv,
+                            subSrv: subSrv,
+                            bkuCol: bkuCol,
+                            certGerNum: certGerNum,
+                            certSubNum: certSubNum,
+                            srv: srv,
+                            m2: m2Val, 
+                            m3: m3Val,
+                            promedio: Math.round((srv + m2Val + m3Val) / 3),
+                            rev26r1: { std: m3Val, re: null, extra: null, re2: null, ccv: null },
+                            rev26r2: { std: null, re: null, extra: null, re2: null, ccv: null },
+                            rec26r1: Math.random() > 0.5 ? 100 : 0,
+                            rec26r2: null,
+                            bajas: Math.floor(Math.random() * 2),
+                            rrhh: rrhh,
+                            hasZeroProtocol: hasZeroProtocol,
+                            zpIncidences: zpIncidences
+                        });
+                    });
+                });
+            });
+
+            RawData.sort(function(a, b) { return MESES_NOM.indexOf(a.mes) - MESES_NOM.indexOf(b.mes); });
+            FilteredData = [].concat(RawData);
+            
+            document.getElementById('data-status-badge').className = "w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse";
+            document.getElementById('data-status-text').innerText = "Modo de Demostración (Datos simulados localmente)";
+
+            populateFilters();
+            updateDashboard();
+            hideLoader();
+            showToast("Modo Demostración Activo", "Datos cargados localmente de forma segura.", "info");
         }
 
         function fetchData(sourceName, url) {
@@ -756,7 +900,6 @@
                     download: true, header: false, skipEmptyLines: true,
                     complete: function(results) {
                         const cleanRows = [];
-                        
                         const rowsToProcess = results.data.slice(1).filter(function(row) {
                             return row.length >= 20;
                         });
@@ -802,7 +945,6 @@
                             if (isChurchs) {
                                 srv = parsePct(row[14]); 
                                 m2 = parsePct(row[17]); 
-                                
                                 m3 = parsePct(row[18]); 
                                 if (m3 === null) m3 = parsePct(row[19]); 
 
@@ -819,12 +961,10 @@
                                 rrhh.sucesionGer = parseCount(row[23]) || 0;
                                 rrhh.sucesionSub = parseCount(row[24]) || 0;
                                 rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0); 
-                                
                                 bajas = parseCount(row[25]) || 0;
                             } else {
                                 srv = parsePct(row[14]); 
                                 m2 = parsePct(row[17]); 
-                                
                                 m3 = parsePct(row[18]); 
                                 if (m3 === null) m3 = parsePct(row[24]); 
                                 
@@ -834,7 +974,6 @@
                                 checkZP(row[21], '2nd Re 26 R1');
                                 checkZP(row[22], 'CCV 26 R1');
                                 checkZP(row[23], 'REC 26 R1');
-                                
                                 checkZP(row[24], 'Std 26 R2');
                                 checkZP(row[25], 'Re-Audit 26 R2');
                                 checkZP(row[26], 'Extra 26 R2');
@@ -849,12 +988,10 @@
                                 
                                 certGerNum = parseCount(row[30]);
                                 certSubNum = parseCount(row[31]);
-                                
                                 rrhh.ocPlantilla = parsePct(row[32]);
                                 rrhh.sucesionGer = parseCount(row[33]) || 0;
                                 rrhh.sucesionSub = parseCount(row[34]) || 0;
                                 rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
-                                
                                 bajas = parseCount(row[35]) || 0;
                             }
 
@@ -900,8 +1037,7 @@
                                 srv: srv, m2: m2, m3: m3, promedio: promedio,
                                 rev26r1: rev26r1, rev26r2: rev26r2,
                                 rec26r1: rec26r1, rec26r2: rec26r2,
-                                bajas: bajas,
-                                rrhh: rrhh, hasZeroProtocol: isZeroProtocol, zpIncidences: zpIncidences
+                                bajas: bajas, rrhh: rrhh, hasZeroProtocol: isZeroProtocol, zpIncidences: zpIncidences
                             });
                         });
                         resolve(cleanRows);
@@ -986,7 +1122,6 @@
                 const searchInput = document.getElementById('search-' + level);
                 
                 if (!listEl) return;
-                
                 if(searchInput) searchInput.value = '';
 
                 const uniqueVals = new Set();
@@ -1073,6 +1208,7 @@
             
             populateFilters();
             updateDashboard();
+            hideLoader();
         }
 
         function resetFilters() {
@@ -1098,7 +1234,7 @@
             renderSucesion();
             renderTable();
             renderRankings();
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
 
         function updateThemeAndLabels() {
@@ -1274,7 +1410,7 @@
                 const sub = FilteredData.filter(function(d){ return d.sucursal === suc; });
                 
                 function getLatest(key) {
-                    const valid = sub.filter(function(d){ return d[key] !== null && d[key] !== undefined && !isNaN(d[key]); });
+                    const valid = sub.filter(function(d) { return d[key] !== null && d[key] !== undefined && !isNaN(d[key]); });
                     return valid.length ? valid[valid.length - 1][key] : 0;
                 }
 
@@ -1341,7 +1477,7 @@
             document.getElementById('kpi-sucursales').innerText = count;
             
             const srv = (sumGerP + sumSubP) > 0 ? ((sumGerSrv + sumSubSrv) / (sumGerP + sumSubP)) * 100 : null;
-            const m2 = sumTotalPlantillaOcupada > 0 ? (sumBkuCol / sumTotalPlantillaOcupada) * 100 : null;
+            const m2 = safeAvg(FilteredData, function(d) { return d.m2; });
             const m3 = safeAvg(FilteredData, function(d){ return d.m3; });
 
             let pctAltasTotal = null;
@@ -1472,6 +1608,14 @@
                 const pctSg = count > 0 ? ((sinGerenteCount / count) * 100).toFixed(1) : 0;
                 detailSg.innerHTML = pctSg + "% de la red sin gerente<br>&nbsp;";
             }
+
+            const activeGlobalMetrics = [];
+            if (srv !== null) activeGlobalMetrics.push(srv);
+            if (m2 !== null) activeGlobalMetrics.push(m2);
+            if (m3 !== null) activeGlobalMetrics.push(m3);
+            if (cert !== null) activeGlobalMetrics.push(cert);
+            const globalAvg = activeGlobalMetrics.length > 0 ? Math.round(activeGlobalMetrics.reduce((a,b) => a+b, 0) / activeGlobalMetrics.length) : 0;
+            document.getElementById('kpi-global-score').innerText = globalAvg + '%';
         }
 
         const tooltipZpConfig = {
@@ -1519,12 +1663,9 @@
         };
 
         function renderCharts() {
-            Chart.register(ChartDataLabels);
-            
             renderRevCompareChart();
             renderRecCompareChart();
             renderOerCompareChart();
-            
             renderZpChart();
             renderGerenteChart(); 
             
@@ -1971,7 +2112,7 @@
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
 
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                const m2 = safeAvg(rows, function(d) { return d.m2; });
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
@@ -1986,9 +2127,7 @@
                 const pro = active.length > 0 ? Math.round(active.reduce(function(a, b){ return a + b.v; }, 0) / active.length) : null;
 
                 return {
-                    gerente: gerente,
-                    sucursal: sucursalStr,
-                    cadena: rows[0].cadena,
+                    gerente: gerente, sucursal: sucursalStr, cadena: rows[0].cadena,
                     pro: pro, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rec: rec, rotacion: rotacion !== null ? Math.round(rotacion) : null,
                     raw: { gerSrv: gerSrv, subSrv: subSrv, gerP: gerP, subP: subP, bkuCol: bkuCol, colP: colP, certGerNum: certGerNum, certSubNum: certSubNum, validRev: validRev.length, totalPlantillaOcupada: totalPlantillaOcupada, recCount: recCount, avgBajas: Math.round(totalAvgBajas) }
                 };
@@ -2019,7 +2158,7 @@
                 const dataVals = [m.srv, m.m2, m.m3, m.cert, m.ocup, m.rec, m.rotacion];
                 const rawDataVals = [
                     ["Gerentes: " + m.raw.gerSrv + " con ServSafe de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.subSrv + " con ServSafe de " + m.raw.subP + " en plantilla ocupada"],
-                    ["Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"],
+                    ["Promedio directo de la columna R (m2) para este periodo"],
                     ["Basado en el promedio de " + m.raw.validRev + " auditorías evaluadas"],
                     ["Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"],
                     ["Promedio de ocupación en el periodo seleccionado"],
@@ -2034,19 +2173,13 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'Cumplimiento',
-                            data: dataVals,
-                            rawData: rawDataVals,
-                            backgroundColor: bgColors,
-                            borderRadius: 6
+                            label: 'Cumplimiento', data: dataVals, rawData: rawDataVals, backgroundColor: bgColors, borderRadius: 6
                         }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                         plugins: {
-                            legend: { display: false },
-                            datalabels: datalabelsZpConfig,
-                            tooltip: genericTooltipWithRaw
+                            legend: { display: false }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
                         },
                         scales: {
                             y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; } }, border: { dash: [4,4] } },
@@ -2074,8 +2207,7 @@
                         const lblM2 = isChurchs ? 'PTE' : 'BKU';
                         const lblM3 = isChurchs ? 'OER/RAV' : 'REV Standard';
                         return [
-                            "Sucursal: " + m.sucursal,
-                            "Gerente: " + m.gerente,
+                            "Sucursal: " + m.sucursal, "Gerente: " + m.gerente,
                             "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
                             lblM2 + ": " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
                             lblM3 + ": " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
@@ -2094,7 +2226,7 @@
                     metricKey = 'm2';
                     rawFormatter = function(m) { return [
                         "Sucursal: " + m.sucursal,
-                        "Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
+                        "Promedio directo de la columna R (m2) de " + m.raw.totalPlantillaOcupada + " plantilla evaluada"
                     ];};
                 } else if (ind === 'm3') {
                     metricKey = 'm3';
@@ -2112,20 +2244,17 @@
                 } else if (ind === 'ocup') {
                     metricKey = 'ocup';
                     rawFormatter = function(m) { return [
-                        "Sucursal: " + m.sucursal,
-                        "Promedio de ocupación en el periodo seleccionado"
+                        "Sucursal: " + m.sucursal, "Promedio de ocupación en el periodo seleccionado"
                     ];};
                 } else if (ind === 'rec') {
                     metricKey = 'rec';
                     rawFormatter = function(m) { return [
-                        "Sucursal: " + m.sucursal,
-                        "Basado en " + m.raw.recCount + " visitas registradas"
+                        "Sucursal: " + m.sucursal, "Basado en " + m.raw.recCount + " visitas registradas"
                     ];};
                 } else if (ind === 'rotacion') {
                     metricKey = 'rotacion';
                     rawFormatter = function(m) { return [
-                        "Sucursal: " + m.sucursal,
-                        m.raw.avgBajas + " bajas promedio de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
+                        "Sucursal: " + m.sucursal, m.raw.avgBajas + " bajas promedio de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
                     ];};
                 }
 
@@ -2137,8 +2266,7 @@
                         label: cadena,
                         data: managerStats.map(function(m){ return m.cadena === cadena ? m[metricKey] : null; }),
                         rawData: managerStats.map(function(m){ return m.cadena === cadena ? rawFormatter(m) : null; }),
-                        backgroundColor: color,
-                        borderRadius: 6
+                        backgroundColor: color, borderRadius: 6
                     };
                 });
 
@@ -2149,8 +2277,7 @@
                         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                         plugins: {
                             legend: {
-                                position: 'bottom',
-                                labels: { padding: 25, font: { weight: 'bold' } },
+                                position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } },
                                 onClick: function(e, legendItem, legend) {
                                     const chart = legend.chart;
                                     const index = legendItem.datasetIndex;
@@ -2175,12 +2302,10 @@
                                             return manager && manager.cadena === dataset.label ? rawFormatter(manager) : null;
                                         });
                                     });
-
                                     chart.update();
                                 }
                             },
-                            datalabels: { display: false },
-                            tooltip: genericTooltipWithRaw
+                            datalabels: { display: false }, tooltip: genericTooltipWithRaw
                         },
                         scales: {
                             y: { stacked: true, min: 0, max: 100, ticks: { callback: function(v){ return v + '%' ;} }, border: { dash: [4,4] } },
@@ -2259,8 +2384,7 @@
             }
             if (ind === 'Todos' || ind === 'rotacion') {
                 ds.push({ 
-                    label: 'Rotación', 
-                    data: stats.map(function(d){ return d.rotacion; }), 
+                    label: 'Rotación', data: stats.map(function(d){ return d.rotacion; }), 
                     rawData: stats.map(function(d){ return [d.avgBajas + " bajas promedio de " + d.plantilla + " en plantilla"]; }),
                     backgroundColor: '#eab308', borderRadius: 6 
                 });
@@ -2345,7 +2469,7 @@
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
 
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                const m2 = safeAvg(sub, function(d){ return d.m2; });
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
@@ -2368,9 +2492,7 @@
                     ocup: ocup !== null ? Math.round(ocup) : null, 
                     rec: rec !== null ? Math.round(rec) : null, 
                     rotacion: rotacion !== null ? Math.round(rotacion) : null,
-                    avgBajas: Math.round(totalAvgBajas),
-                    plantilla: totalPlantillaOcupada,
-                    pro: pro 
+                    avgBajas: Math.round(totalAvgBajas), plantilla: totalPlantillaOcupada, pro: pro 
                 };
             }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ 
                 let valA = a.cert !== null ? a.cert : -1;
@@ -2386,21 +2508,6 @@
             document.getElementById('chart-distrito-wrapper').style.minWidth = anchoCalculado + 'px';
 
             const ctx = document.getElementById('chart-distrito').getContext('2d');
-            
-            const rawFormatter = function(m) {
-                return [
-                    "Detalle de Indicadores:",
-                    "-----------------------------------",
-                    "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
-                    "BKU / PTE: " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
-                    "REV / OER: " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
-                    "Cert. Gerencial: " + (m.cert !== null ? m.cert + '%' : 'S/D'),
-                    "Ocup. Plantilla: " + (m.ocup !== null ? m.ocup + '%' : 'S/D'),
-                    "REC (Critical Visit): " + (m.rec !== null ? m.rec + '%' : 'S/D'),
-                    "Rotación: " + (m.rotacion !== null ? m.rotacion + '%' : 'S/D') + " (" + m.avgBajas + " bajas promedio)"
-                ];
-            };
-
             const ds = [];
             const ind = selections.indicador;
             
@@ -2414,35 +2521,12 @@
 
             ChartsObj['chart-distrito'] = new Chart(ctx, {
                 type: 'bar',
-                data: { 
-                    labels: stats.map(function(d){ return d.label; }), 
-                    datasets: ds
-                },
+                data: { labels: stats.map(function(d){ return d.label; }), datasets: ds },
                 options: {
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    layout: { padding: { top: 35 } },
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
-                        datalabels: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    label += context.parsed.y + '%';
-                                    
-                                    const rawDetail = context.dataset.rawData ? context.dataset.rawData[context.dataIndex] : null;
-                                    if (rawDetail) {
-                                        if (Array.isArray(rawDetail)) {
-                                            return [label].concat(rawDetail); 
-                                        }
-                                        return [label, rawDetail]; 
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
+                        datalabels: { display: false }, tooltip: genericTooltipWithRaw
                     },
                     scales: {
                         y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
@@ -2465,11 +2549,7 @@
             zpData.forEach(function(d) {
                 if (!groupedZP[d.sucursal]) {
                     groupedZP[d.sucursal] = { 
-                        cadena: d.cadena, 
-                        region: d.region,
-                        distrito: d.distrito,
-                        gerente: d.gerente,
-                        causes: new Set() 
+                        cadena: d.cadena, region: d.region, distrito: d.distrito, gerente: d.gerente, causes: new Set() 
                     };
                 }
                 if (d.zpIncidences) {
@@ -2550,11 +2630,7 @@
                     }
 
                     afectadas.push({
-                        sucursal: suc,
-                        cadena: latest.cadena,
-                        region: latest.region,
-                        distrito: latest.distrito,
-                        desde: desdeMes
+                        sucursal: suc, cadena: latest.cadena, region: latest.region, distrito: latest.distrito, desde: desdeMes
                     });
                 }
             });
@@ -2595,9 +2671,7 @@
                     const avgSuc = Math.round(validSub.reduce(function(acc, d){ return acc + d.rrhh.colSucesion; }, 0) / validSub.length);
                     if (avgSuc > 0) {
                         validBranches.push({
-                            sucursal: suc,
-                            cadena: sub[0].cadena,
-                            count: avgSuc
+                            sucursal: suc, cadena: sub[0].cadena, count: avgSuc
                         });
                     }
                 }
@@ -2676,15 +2750,13 @@
                 const certSubNum = getL(function(d){ return d.certSubNum; }) || 0;
                 const gerSrv = getL(function(d){ return d.gerSrv; }) || 0;
                 const subSrv = getL(function(d){ return d.subSrv; }) || 0;
-                const bkuCol = getL(function(d){ return d.bkuCol; }) || 0;
 
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                const m2 = safeAvg(rows, function(d){ return d.m2; });
                 
                 const validRev = rows.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
-                
                 const ocup = getL(function(d){ return d.rrhh ? d.rrhh.ocPlantilla : null; });
                 
                 let maxGer = 0, maxSub = 0;
@@ -2707,22 +2779,10 @@
                 const pro = active.length > 0 ? Math.round(active.reduce(function(a, b){ return a + b.v; }, 0) / active.length) : null;
 
                 return {
-                    region: rows[0].region,
-                    distrito: rows[0].distrito,
-                    cadena: rows[0].cadena,
-                    sucursal: suc,
+                    region: rows[0].region, distrito: rows[0].distrito, cadena: rows[0].cadena, sucursal: suc,
                     gerente: getL(function(d){ return d.gerente; }) || 'S/G',
-                    gerP: gerP,
-                    subP: subP,
-                    colP: colP,
-                    cert: cert,
-                    ocup: ocup,
-                    sucesion: colSucesion,
-                    rotacion: rotacion,
-                    srv: srv,
-                    m2: m2,
-                    m3: m3,
-                    promedio: pro
+                    gerP: gerP, subP: subP, colP: colP, cert: cert, ocup: ocup, sucesion: colSucesion, rotacion: rotacion,
+                    srv: srv, m2: m2, m3: m3, promedio: pro
                 };
             });
 
@@ -2751,12 +2811,10 @@
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.gerP + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.subP + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.colP + '</td>' +
-                    
                     '<td class="p-4 text-center text-xs font-bold text-slate-500 border-l border-slate-200">' + formatTablePct(d.cert) + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + formatTablePct(d.ocup) + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500 border-r border-slate-200">' + (d.sucesion || '-') + '</td>' +
                     '<td class="p-4 text-center font-bold" style="color: #d97706; background-color: #fef3c7;">' + formatTablePct(d.rotacion) + '</td>' +
-
                     '<td class="p-4 text-center font-bold" style="color: var(--color-m1); background-color: var(--color-m1-light);">' + formatTablePct(d.srv) + '</td>' +
                     '<td class="p-4 text-center font-bold" style="color: var(--color-m2); background-color: var(--color-m2-light);">' + formatTablePct(d.m2) + '</td>' +
                     '<td class="p-4 text-center font-bold" style="color: var(--color-m3); background-color: var(--color-m3-light);">' + formatTablePct(d.m3) + '</td>' +
@@ -2815,13 +2873,10 @@
             const bottom5 = [].concat(list).reverse().slice(0, 5);
 
             const metricLabels = {
-                'avg': 'CUMP. GENERAL',
-                'srv': 'SERVSAFE',
+                'avg': 'CUMP. GENERAL', 'srv': 'SERVSAFE',
                 'm2': document.getElementById('label-m2').innerText.toUpperCase(),
                 'm3': document.getElementById('label-m3').innerText.toUpperCase(),
-                'cert': 'CERT. GERENCIAL',
-                'ocup': 'OCUP. PLANTILLA',
-                'rotacion': 'ROTACIÓN'
+                'cert': 'CERT. GERENCIAL', 'ocup': 'OCUP. PLANTILLA', 'rotacion': 'ROTACIÓN'
             };
 
             const formatRankVal = function(v) { return v <= 0 ? '0%' : Math.round(v) + '%'; };
@@ -2853,8 +2908,10 @@
 
         function hideLoader() {
             const overlay = document.getElementById('loading-overlay');
-            overlay.style.opacity = '0';
-            setTimeout(function() { overlay.style.display = 'none'; }, 500);
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(function() { overlay.style.display = 'none'; }, 500);
+            }
         }
 
         async function downloadPPTX() {
@@ -2862,7 +2919,7 @@
             const originalContent = btn.innerHTML;
             
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando PPTX...';
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
 
             try {
                 let pres = new PptxGenJS();
@@ -2873,19 +2930,16 @@
                 slideCover.background = { color: primaryColor };
                 
                 slideCover.addText("Panel de Control Estratégico", { 
-                    x: 1, y: 2, w: 8, h: 1, 
-                    fontSize: 44, bold: true, color: "FFFFFF", align: "center", fontFace: "Arial" 
+                    x: 1, y: 2, w: 8, h: 1, fontSize: 44, bold: true, color: "FFFFFF", align: "center", fontFace: "Arial" 
                 });
                 
                 const subtitle = document.getElementById('dynamic-subtitle').innerText;
                 slideCover.addText(subtitle, { 
-                    x: 1, y: 3, w: 8, h: 0.5, 
-                    fontSize: 20, color: "E2E8F0", align: "center", fontFace: "Arial" 
+                    x: 1, y: 3, w: 8, h: 0.5, fontSize: 20, color: "E2E8F0", align: "center", fontFace: "Arial" 
                 });
                 
                 slideCover.addText(document.getElementById('current-date').innerText, { 
-                    x: 1, y: 4.5, w: 8, h: 0.5, 
-                    fontSize: 12, color: "FFFFFF", align: "center", fontFace: "Arial" 
+                    x: 1, y: 4.5, w: 8, h: 0.5, fontSize: 12, color: "FFFFFF", align: "center", fontFace: "Arial" 
                 });
 
                 const addSlide = async function(elementId, slideTitle) {
@@ -2894,9 +2948,7 @@
                     if (el.children.length === 0) return; 
 
                     const canvas = await html2canvas(el, { 
-                        scale: 2, 
-                        useCORS: true, 
-                        backgroundColor: '#f4f7f9' 
+                        scale: 2, useCORS: true, backgroundColor: '#f4f7f9' 
                     });
 
                     const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -2904,8 +2956,7 @@
                     slide.background = { color: "F4F7F9" };
                     
                     slide.addText(slideTitle, { 
-                        x: 0.5, y: 0.3, w: 9, h: 0.5, 
-                        fontSize: 22, bold: true, color: primaryColor, fontFace: "Arial" 
+                        x: 0.5, y: 0.3, w: 9, h: 0.5, fontSize: 22, bold: true, color: primaryColor, fontFace: "Arial" 
                     });
 
                     const maxW = 9.0;
@@ -2944,13 +2995,14 @@
                 if(sucursal) filename += "_" + sucursal;
                 
                 await pres.writeFile({ fileName: filename.replace(/\s+/g, '_') + '.pptx' });
+                showToast("PPTX Descargado", "Presentación ejecutiva generada con éxito", "success");
 
             } catch (error) {
                 console.error("Error al generar PPTX:", error);
-                alert("Ocurrió un error al exportar a PowerPoint.");
+                showToast("Fallo al Exportar", "No se pudo generar la presentación PowerPoint.", "error");
             } finally {
                 btn.innerHTML = originalContent;
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
             }
         }
 
@@ -2958,17 +3010,14 @@
             const btn = document.getElementById('btn-download-pdf');
             const originalContent = btn.innerHTML;
             
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando...';
-            lucide.createIcons();
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando PDF...';
+            if (window.lucide) lucide.createIcons();
 
             const element = document.getElementById('dashboard-content');
             
             try {
                 const canvas = await html2canvas(element, {
-                    scale: 2, 
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#f4f7f9'
+                    scale: 2, useCORS: true, logging: false, backgroundColor: '#f4f7f9'
                 });
                 
                 const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -2989,12 +3038,13 @@
                 filename += ".pdf";
                 
                 pdf.save(filename.replace(/\s+/g, '_'));
+                showToast("PDF Descargado", "Documento PDF generado con éxito", "success");
             } catch (error) {
                 console.error("Error al generar PDF:", error);
-                alert("Ocurrió un error al exportar el PDF.");
+                showToast("Fallo al Exportar", "No se pudo generar el documento PDF.", "error");
             } finally {
                 btn.innerHTML = originalContent;
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
             }
         }
     </script>
