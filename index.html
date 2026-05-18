@@ -165,12 +165,12 @@ DASHBOARDS
 FRANQUICIAS
 ========================= -->
 
-<a href="indicadores_fqcias.html"
-data-enabled="true"
+<a href="#"
+onclick="validarPassword(event)"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-7 border border-slate-200 min-h-[210px]">
 
 <h2 class="font-bold text-xl text-slate-800">
-Indicadores estratégicos
+🔒 Indicadores estratégicos
 </h2>
 
 <div class="flex justify-center items-center mt-6">
@@ -192,7 +192,6 @@ COMISIONES MIXTAS
 ========================= -->
 
 <a href="comisiones-mixtas.html"
-data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
 
 <h2 class="font-bold text-xl text-slate-800">
@@ -210,7 +209,6 @@ GES CONTIGO
 ========================= -->
 
 <a href="ges-contigo-360.html"
-data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
 
 <h2 class="font-bold text-xl text-slate-800">
@@ -228,7 +226,6 @@ MYSTERY
 ========================= -->
 
 <a href="mystery.html"
-data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
 
 <h2 class="font-bold text-xl text-slate-800">
@@ -246,7 +243,6 @@ NOM035
 ========================= -->
 
 <a href="nom035.html"
-data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
 
 <h2 class="font-bold text-xl text-slate-800">
@@ -264,7 +260,6 @@ RECONOCIMIENTOS
 ========================= -->
 
 <a href="reconocimientos.html"
-data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200">
 
 <h2 class="font-bold text-xl text-slate-800">
@@ -282,7 +277,6 @@ CODIGO DE ETICA
 ========================= -->
 
 <a href="codigo-etica.html"
-data-enabled="true"
 class="dashboard fade-up bg-white/90 backdrop-blur rounded-3xl p-6 border border-slate-200 lg:col-start-3">
 
 <h2 class="font-bold text-xl text-slate-800">
@@ -311,28 +305,25 @@ SCRIPT
 
 <script>
 
-document.querySelectorAll(".dashboard").forEach(card => {
+function validarPassword(event){
 
-if(card.dataset.enabled === "false"){
+event.preventDefault()
 
-card.classList.add(
-"opacity-40",
-"cursor-not-allowed"
+const password = prompt(
+"Ingrese la contraseña para acceder:"
 )
 
-card.addEventListener("click", function(e){
+if(password === "FZ2026*"){
 
-e.preventDefault()
+window.location.href = "indicadores_fqcias.html"
 
-alert(
-"Este dashboard está temporalmente deshabilitado"
-)
+}else{
 
-})
+alert("Contraseña incorrecta")
 
 }
 
-})
+}
 
 </script>
 
