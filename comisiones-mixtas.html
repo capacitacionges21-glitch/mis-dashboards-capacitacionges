@@ -55,16 +55,13 @@
                         <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">Comisiones Mixtas <span class="text-[#2F5597] font-semibold">Dashboard</span></h1>
                         <div class="flex items-center gap-1.5 text-xs font-semibold mt-1">
                             <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                            <span class="text-emerald-500 tracking-wide">SINCRONIZADO:</span>
-                            <span id="lastUpdated" class="text-slate-500 font-medium">--:--</span>
+                            <span class="text-emerald-500 tracking-wide uppercase">ÚLTIMA ACTUALIZACIÓN:</span>
+                            <span id="lastUpdated" class="text-slate-500 font-medium">--</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <button class="p-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors hidden sm:block">
-                        <i data-lucide="download" class="w-5 h-5"></i>
-                    </button>
                     <button onclick="loadData()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                         Actualizar Datos
@@ -352,10 +349,15 @@
                         overlay.style.opacity = '0';
                         setTimeout(() => overlay.style.display = 'none', 500);
 
-                        // Fecha actualización
+                        // Fecha actualización calculada (el día 2 del mes correspondiente)
                         const now = new Date();
-                        document.getElementById('lastUpdated').innerText = 
-                            now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        let lastUpdateDate = new Date(now.getFullYear(), now.getMonth(), 2);
+                        // Si hoy es día 1, la última actualización real fue el día 2 del mes anterior
+                        if (now.getDate() < 2) {
+                            lastUpdateDate = new Date(now.getFullYear(), now.getMonth() - 1, 2);
+                        }
+                        const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                        document.getElementById('lastUpdated').innerText = `2 de ${mesesNombres[lastUpdateDate.getMonth()]}`;
                     },
                     error: function(err) {
                         console.error('Error al procesar el CSV:', err);
