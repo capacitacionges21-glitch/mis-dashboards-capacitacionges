@@ -456,7 +456,7 @@
                     </div>
                 </div>
             </div>
-
+            
             <div class="kpi-card bg-orange-50 p-6 rounded-3xl shadow-sm border border-orange-200 flex flex-col justify-between overflow-hidden relative">
                 <div class="flex justify-between items-start z-10">
                     <div class="w-full pr-2">
@@ -768,6 +768,37 @@
             return isNaN(n) ? null : n;
         }
 
+        function calculateBajasParaSubset(subsetRows) {
+            let sumBajas = 0;
+            let countMeses = 0;
+            const mesesSet = new Set();
+
+            subsetRows.forEach(function(d) {
+                let includeInBajas = false;
+                if (selections.mes !== 'Todos') {
+                    if (d.mes === selections.mes) includeInBajas = true;
+                } else if (selections.trimestre !== 'Todos') {
+                    if (d.trimestre === selections.trimestre) includeInBajas = true;
+                } else {
+                    includeInBajas = true;
+                }
+
+                if (includeInBajas) {
+                    sumBajas += (d.bajas || 0);
+                    if (!mesesSet.has(d.mes)) {
+                        mesesSet.add(d.mes);
+                        countMeses++;
+                    }
+                }
+            });
+
+            if (selections.mes !== 'Todos') {
+                return sumBajas;
+            } else {
+                return countMeses > 0 ? (sumBajas / countMeses) : 0;
+            }
+        }
+
         async function fetchAllData() {
             try {
                 const promises = Object.keys(SOURCES).map(function(key) {
@@ -988,6 +1019,7 @@
                                 
                                 certGerNum = parseCount(row[30]);
                                 certSubNum = parseCount(row[31]);
+                                
                                 rrhh.ocPlantilla = parsePct(row[32]);
                                 rrhh.sucesionGer = parseCount(row[33]) || 0;
                                 rrhh.sucesionSub = parseCount(row[34]) || 0;
@@ -1208,7 +1240,6 @@
             
             populateFilters();
             updateDashboard();
-            hideLoader();
         }
 
         function resetFilters() {
@@ -1401,7 +1432,8 @@
             let sumTotalPlantillaOcupada = 0;
             let sumSucGer = 0, sumSucSub = 0;
             let sumOcup = 0, countOcup = 0;
-            let totalAvgBajas = 0;
+            let totalBajasCalculadas = 0;
+            const useAverageBajas = selections.mes === 'Todos';
 
             const sucursales = Array.from(uniqueSucursales);
             let totalSuc = 0;
@@ -1432,11 +1464,7 @@
                 sumCertSub += getLatest('certSubNum');
                 sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
 
-                let branchBajas = 0;
-                sub.forEach(function(d) {
-                    branchBajas += (d.bajas || 0);
-                });
-                totalAvgBajas += sub.length > 0 ? (branchBajas / sub.length) : 0;
+                totalBajasCalculadas += calculateBajasParaSubset(sub);
 
                 const latestOcupObj = sub.filter(function(d){ return d.rrhh && d.rrhh.ocPlantilla !== null; });
                 if (latestOcupObj.length > 0) {
@@ -1487,7 +1515,7 @@
 
             let rotacionGral = null;
             if (sumTotalPlantillaOcupada > 0) {
-                rotacionGral = (totalAvgBajas / sumTotalPlantillaOcupada) * 100;
+                rotacionGral = (totalBajasCalculadas / sumTotalPlantillaOcupada) * 100;
             }
             
             function displayKPI(val) {
@@ -1525,7 +1553,8 @@
             if(rotBar) rotBar.style.width = widthKPI(rotacionGral);
             const rotDetail = document.getElementById('detail-rotacion');
             if(rotDetail) {
-                rotDetail.innerHTML = Math.round(totalAvgBajas) + " bajas promedio de " + sumTotalPlantillaOcupada + " en plantilla ocupada<br>&nbsp;";
+                const txtBajas = useAverageBajas ? " bajas promedio de " : " bajas de ";
+                rotDetail.innerHTML = Math.round(totalBajasCalculadas) + txtBajas + sumTotalPlantillaOcupada + " en plantilla ocupada<br>&nbsp;";
             }
             
             const srvDetail = document.getElementById('detail-srv');
@@ -1614,8 +1643,9 @@
             if (m2 !== null) activeGlobalMetrics.push(m2);
             if (m3 !== null) activeGlobalMetrics.push(m3);
             if (cert !== null) activeGlobalMetrics.push(cert);
-            const globalAvg = activeGlobalMetrics.length > 0 ? Math.round(activeGlobalMetrics.reduce((a,b) => a+b, 0) / activeGlobalMetrics.length) : 0;
-            document.getElementById('kpi-global-score').innerText = globalAvg + '%';
+            const globalAvg = activeGlobalMetrics.length > 0 ? Math.round(activeGlobalMetrics.reduce(function(a,b){ return a+b; }, 0) / activeGlobalMetrics.length) : 0;
+            const globalEl = document.getElementById('kpi-global-score');
+            if(globalEl) globalEl.innerText = globalAvg + '%';
         }
 
         const tooltipZpConfig = {
@@ -1663,9 +1693,14 @@
         };
 
         function renderCharts() {
+            if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+            }
+            
             renderRevCompareChart();
             renderRecCompareChart();
             renderOerCompareChart();
+            
             renderZpChart();
             renderGerenteChart(); 
             
@@ -1708,7 +1743,7 @@
             let raw26r1 = [], raw26r2 = [];
 
             if (isSingleSucursal) {
-                selectEl.classList.add('hidden');
+                if(selectEl) selectEl.classList.add('hidden');
                 document.getElementById('title-rev-compare').innerText = "Auditorías REV: " + sucursales[0];
                 
                 labels = ['Standard', 'Re-Audit', 'Extra REV', '2nd Re-Audit', 'CCV'];
@@ -1722,7 +1757,7 @@
                 raw26r2 = [ ["Promedio de " + countTarget('rev26r2', 'std') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 're') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 'extra') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 're2') + " auditorías evaluadas"], ["Promedio de " + countTarget('rev26r2', 'ccv') + " auditorías evaluadas"] ];
 
             } else if (isMidFilter) {
-                selectEl.classList.remove('hidden');
+                if(selectEl) selectEl.classList.remove('hidden');
                 document.getElementById('title-rev-compare').innerText = "REV por Sucursal";
                 
                 const sucStats = sucursales.map(function(suc) {
@@ -1745,7 +1780,7 @@
                 raw26r2 = sucStats.map(function(s){ return ["Promedio de " + s.c26_2 + " auditorías evaluadas"]; });
                 
             } else {
-                selectEl.classList.remove('hidden');
+                if(selectEl) selectEl.classList.remove('hidden');
                 document.getElementById('title-rev-compare').innerText = "Evolución Trimestral REV";
                 labels = ['T1', 'T2', 'T3', 'T4'];
                 
@@ -2064,7 +2099,8 @@
                 let gerSrv = 0, subSrv = 0, gerP = 0, subP = 0, bkuCol = 0, colP = 0, certGerNum = 0, certSubNum = 0, totalPlantillaOcupada = 0;
                 let sumOcup = 0, countOcup = 0;
                 let recSum = 0, recCount = 0;
-                let totalAvgBajas = 0;
+                let totalBajasCalculadas = 0;
+                const useAverageBajas = selections.mes === 'Todos';
                 
                 const uSucs = new Set();
                 rows.forEach(function(d){ uSucs.add(d.sucursal); });
@@ -2075,11 +2111,7 @@
                 sucursales.forEach(function(suc) {
                     const branchSub = rows.filter(function(d){ return d.sucursal === suc; });
                     
-                    let branchBajas = 0;
-                    branchSub.forEach(function(d) {
-                        branchBajas += (d.bajas || 0);
-                    });
-                    totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
+                    totalBajasCalculadas += calculateBajasParaSubset(branchSub);
 
                     function getL(extractor) {
                         const valid = branchSub.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
@@ -2112,11 +2144,11 @@
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
 
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = safeAvg(rows, function(d) { return d.m2; });
+                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
-                const rotacion = totalPlantillaOcupada > 0 ? (totalAvgBajas / totalPlantillaOcupada) * 100 : null;
+                const rotacion = totalPlantillaOcupada > 0 ? (totalBajasCalculadas / totalPlantillaOcupada) * 100 : null;
 
                 const active = [];
                 if (srv !== null) active.push({v:srv});
@@ -2127,9 +2159,11 @@
                 const pro = active.length > 0 ? Math.round(active.reduce(function(a, b){ return a + b.v; }, 0) / active.length) : null;
 
                 return {
-                    gerente: gerente, sucursal: sucursalStr, cadena: rows[0].cadena,
+                    gerente: gerente,
+                    sucursal: sucursalStr,
+                    cadena: rows[0].cadena,
                     pro: pro, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rec: rec, rotacion: rotacion !== null ? Math.round(rotacion) : null,
-                    raw: { gerSrv: gerSrv, subSrv: subSrv, gerP: gerP, subP: subP, bkuCol: bkuCol, colP: colP, certGerNum: certGerNum, certSubNum: certSubNum, validRev: validRev.length, totalPlantillaOcupada: totalPlantillaOcupada, recCount: recCount, avgBajas: Math.round(totalAvgBajas) }
+                    raw: { gerSrv: gerSrv, subSrv: subSrv, gerP: gerP, subP: subP, bkuCol: bkuCol, colP: colP, certGerNum: certGerNum, certSubNum: certSubNum, validRev: validRev.length, totalPlantillaOcupada: totalPlantillaOcupada, recCount: recCount, bajasCalculadas: Math.round(totalBajasCalculadas) }
                 };
             }).filter(function(item){ return item.pro !== null; });
 
@@ -2153,17 +2187,18 @@
                 const isChurchs = m.cadena.toLowerCase().includes('church');
                 const lblM2 = isChurchs ? 'PTE' : 'BKU';
                 const lblM3 = isChurchs ? 'OER / RAV' : 'REV Standard';
+                const txtBajas = selections.mes === 'Todos' ? " bajas promedio de " : " bajas de ";
 
                 const labels = ['ServSafe', lblM2, lblM3, 'Cert. Gerencial', 'Ocup. Plantilla', 'REC', 'Rotación'];
                 const dataVals = [m.srv, m.m2, m.m3, m.cert, m.ocup, m.rec, m.rotacion];
                 const rawDataVals = [
                     ["Gerentes: " + m.raw.gerSrv + " con ServSafe de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.subSrv + " con ServSafe de " + m.raw.subP + " en plantilla ocupada"],
-                    ["Promedio directo de la columna R (m2) para este periodo"],
+                    ["Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"],
                     ["Basado en el promedio de " + m.raw.validRev + " auditorías evaluadas"],
                     ["Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"],
                     ["Promedio de ocupación en el periodo seleccionado"],
                     ["Basado en " + m.raw.recCount + " visitas registradas"],
-                    [m.raw.avgBajas + " bajas promedio de " + m.raw.totalPlantillaOcupada + " en plantilla"]
+                    [m.raw.bajasCalculadas + txtBajas + m.raw.totalPlantillaOcupada + " en plantilla"]
                 ];
 
                 const bgColors = [activePalette.m1, activePalette.m2, activePalette.m3, '#1F3864', '#4472C4', '#64748b', '#eab308'];
@@ -2173,13 +2208,19 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'Cumplimiento', data: dataVals, rawData: rawDataVals, backgroundColor: bgColors, borderRadius: 6
+                            label: 'Cumplimiento',
+                            data: dataVals,
+                            rawData: rawDataVals,
+                            backgroundColor: bgColors,
+                            borderRadius: 6
                         }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                         plugins: {
-                            legend: { display: false }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                            legend: { display: false },
+                            datalabels: datalabelsZpConfig,
+                            tooltip: genericTooltipWithRaw
                         },
                         scales: {
                             y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; } }, border: { dash: [4,4] } },
@@ -2207,7 +2248,8 @@
                         const lblM2 = isChurchs ? 'PTE' : 'BKU';
                         const lblM3 = isChurchs ? 'OER/RAV' : 'REV Standard';
                         return [
-                            "Sucursal: " + m.sucursal, "Gerente: " + m.gerente,
+                            "Sucursal: " + m.sucursal,
+                            "Gerente: " + m.gerente,
                             "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
                             lblM2 + ": " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
                             lblM3 + ": " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
@@ -2226,7 +2268,7 @@
                     metricKey = 'm2';
                     rawFormatter = function(m) { return [
                         "Sucursal: " + m.sucursal,
-                        "Promedio directo de la columna R (m2) de " + m.raw.totalPlantillaOcupada + " plantilla evaluada"
+                        "Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
                     ];};
                 } else if (ind === 'm3') {
                     metricKey = 'm3';
@@ -2244,18 +2286,24 @@
                 } else if (ind === 'ocup') {
                     metricKey = 'ocup';
                     rawFormatter = function(m) { return [
-                        "Sucursal: " + m.sucursal, "Promedio de ocupación en el periodo seleccionado"
+                        "Sucursal: " + m.sucursal,
+                        "Promedio de ocupación en el periodo seleccionado"
                     ];};
                 } else if (ind === 'rec') {
                     metricKey = 'rec';
                     rawFormatter = function(m) { return [
-                        "Sucursal: " + m.sucursal, "Basado en " + m.raw.recCount + " visitas registradas"
+                        "Sucursal: " + m.sucursal,
+                        "Basado en " + m.raw.recCount + " visitas registradas"
                     ];};
                 } else if (ind === 'rotacion') {
                     metricKey = 'rotacion';
-                    rawFormatter = function(m) { return [
-                        "Sucursal: " + m.sucursal, m.raw.avgBajas + " bajas promedio de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
-                    ];};
+                    rawFormatter = function(m) { 
+                        const txtBajas = selections.mes === 'Todos' ? " bajas promedio de " : " bajas de ";
+                        return [
+                            "Sucursal: " + m.sucursal,
+                            m.raw.bajasCalculadas + txtBajas + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
+                        ];
+                    };
                 }
 
                 const ds = cadenas.map(function(cadena, index) {
@@ -2266,7 +2314,8 @@
                         label: cadena,
                         data: managerStats.map(function(m){ return m.cadena === cadena ? m[metricKey] : null; }),
                         rawData: managerStats.map(function(m){ return m.cadena === cadena ? rawFormatter(m) : null; }),
-                        backgroundColor: color, borderRadius: 6
+                        backgroundColor: color,
+                        borderRadius: 6
                     };
                 });
 
@@ -2277,7 +2326,8 @@
                         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                         plugins: {
                             legend: {
-                                position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } },
+                                position: 'bottom',
+                                labels: { padding: 25, font: { weight: 'bold' } },
                                 onClick: function(e, legendItem, legend) {
                                     const chart = legend.chart;
                                     const index = legendItem.datasetIndex;
@@ -2302,10 +2352,12 @@
                                             return manager && manager.cadena === dataset.label ? rawFormatter(manager) : null;
                                         });
                                     });
+
                                     chart.update();
                                 }
                             },
-                            datalabels: { display: false }, tooltip: genericTooltipWithRaw
+                            datalabels: { display: false },
+                            tooltip: genericTooltipWithRaw
                         },
                         scales: {
                             y: { stacked: true, min: 0, max: 100, ticks: { callback: function(v){ return v + '%' ;} }, border: { dash: [4,4] } },
@@ -2330,18 +2382,15 @@
                 const cert = safeAvg(sub, function(d){ return d.rrhh.certGerencial; });
                 const ocup = safeAvg(sub, function(d){ return d.rrhh.ocPlantilla; });
 
-                let totalAvgBajas = 0;
+                let totalBajasCalculadas = 0;
                 let sumPlantilla = 0;
+                const useAverageBajas = selections.mes === 'Todos';
                 const uSucs = new Set();
                 sub.forEach(function(d){ uSucs.add(d.sucursal); });
                 Array.from(uSucs).forEach(function(suc) {
                     const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
                     
-                    let branchBajas = 0;
-                    branchSub.forEach(function(d) {
-                        branchBajas += (d.bajas || 0);
-                    });
-                    totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
+                    totalBajasCalculadas += calculateBajasParaSubset(branchSub);
 
                     const latest = branchSub[branchSub.length - 1];
                     if (latest) {
@@ -2351,7 +2400,7 @@
                 
                 let rot = null;
                 if (sumPlantilla > 0) {
-                    rot = Math.round((totalAvgBajas / sumPlantilla) * 100);
+                    rot = Math.round((totalBajasCalculadas / sumPlantilla) * 100);
                 }
 
                 const active = [];
@@ -2361,7 +2410,7 @@
 
                 const pro = active.length > 0 ? safeAvg(active, function(x){ return x.v; }) : null;
                 
-                return { label: g, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rotacion: rot, pro: pro, avgBajas: Math.round(totalAvgBajas), plantilla: sumPlantilla };
+                return { label: g, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rotacion: rot, pro: pro, bajasCalculadas: Math.round(totalBajasCalculadas), plantilla: sumPlantilla };
             }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; }).slice(0, 15);
 
             const ind = selections.indicador;
@@ -2383,9 +2432,11 @@
                 ds.push({ label: 'Ocup. Plantilla', data: stats.map(function(d){ return d.ocup; }), backgroundColor: '#4472C4', borderRadius: 6 });
             }
             if (ind === 'Todos' || ind === 'rotacion') {
+                const txtBajas = selections.mes === 'Todos' ? " bajas promedio de " : " bajas de ";
                 ds.push({ 
-                    label: 'Rotación', data: stats.map(function(d){ return d.rotacion; }), 
-                    rawData: stats.map(function(d){ return [d.avgBajas + " bajas promedio de " + d.plantilla + " en plantilla"]; }),
+                    label: 'Rotación', 
+                    data: stats.map(function(d){ return d.rotacion; }), 
+                    rawData: stats.map(function(d){ return [d.bajasCalculadas + txtBajas + d.plantilla + " en plantilla"]; }),
                     backgroundColor: '#eab308', borderRadius: 6 
                 });
             }
@@ -2423,7 +2474,8 @@
                 let gerSrv = 0, subSrv = 0, gerP = 0, subP = 0, bkuCol = 0, colP = 0, certGerNum = 0, certSubNum = 0, totalPlantillaOcupada = 0;
                 let sumOcup = 0, countOcup = 0;
                 let recSum = 0, recCount = 0;
-                let totalAvgBajas = 0;
+                let totalBajasCalculadas = 0;
+                const useAverageBajas = selections.mes === 'Todos';
 
                 const uSucs = new Set();
                 sub.forEach(function(d){ uSucs.add(d.sucursal); });
@@ -2432,11 +2484,7 @@
                 sucursales.forEach(function(suc) {
                     const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
                     
-                    let branchBajas = 0;
-                    branchSub.forEach(function(d) {
-                        branchBajas += (d.bajas || 0);
-                    });
-                    totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
+                    totalBajasCalculadas += calculateBajasParaSubset(branchSub);
 
                     function getL(extractor) {
                         const valid = branchSub.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
@@ -2469,11 +2517,11 @@
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
 
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = safeAvg(sub, function(d){ return d.m2; });
+                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
-                const rotacion = totalPlantillaOcupada > 0 ? (totalAvgBajas / totalPlantillaOcupada) * 100 : null;
+                const rotacion = totalPlantillaOcupada > 0 ? (totalBajasCalculadas / totalPlantillaOcupada) * 100 : null;
                 
                 const active = [];
                 if(srv !== null) active.push({v:srv});
@@ -2492,7 +2540,9 @@
                     ocup: ocup !== null ? Math.round(ocup) : null, 
                     rec: rec !== null ? Math.round(rec) : null, 
                     rotacion: rotacion !== null ? Math.round(rotacion) : null,
-                    avgBajas: Math.round(totalAvgBajas), plantilla: totalPlantillaOcupada, pro: pro 
+                    bajasCalculadas: Math.round(totalBajasCalculadas),
+                    plantilla: totalPlantillaOcupada,
+                    pro: pro 
                 };
             }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ 
                 let valA = a.cert !== null ? a.cert : -1;
@@ -2508,6 +2558,22 @@
             document.getElementById('chart-distrito-wrapper').style.minWidth = anchoCalculado + 'px';
 
             const ctx = document.getElementById('chart-distrito').getContext('2d');
+            
+            const rawFormatter = function(m) {
+                const txtBajas = selections.mes === 'Todos' ? " bajas promedio)" : " bajas)";
+                return [
+                    "Detalle de Indicadores:",
+                    "-----------------------------------",
+                    "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
+                    "BKU / PTE: " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
+                    "REV / OER: " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
+                    "Cert. Gerencial: " + (m.cert !== null ? m.cert + '%' : 'S/D'),
+                    "Ocup. Plantilla: " + (m.ocup !== null ? m.ocup + '%' : 'S/D'),
+                    "REC (Critical Visit): " + (m.rec !== null ? m.rec + '%' : 'S/D'),
+                    "Rotación: " + (m.rotacion !== null ? m.rotacion + '%' : 'S/D') + " (" + m.bajasCalculadas + txtBajas
+                ];
+            };
+
             const ds = [];
             const ind = selections.indicador;
             
@@ -2517,16 +2583,42 @@
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(function(d){ return d.cert; }), backgroundColor: '#1F3864', borderRadius: 4 });
             if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', data: stats.map(function(d){ return d.ocup; }), backgroundColor: '#4472C4', borderRadius: 4 });
             if (ind === 'Todos' || ind === 'rec') ds.push({ label: 'REC (Critical Visit)', data: stats.map(function(d){ return d.rec; }), backgroundColor: '#64748b', borderRadius: 4 });
-            if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', data: stats.map(function(d){ return d.rotacion; }), rawData: stats.map(function(d){ return [d.avgBajas + " bajas promedio de " + d.plantilla + " en plantilla"]; }), backgroundColor: '#eab308', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'rotacion') {
+                const txtBajasDs = selections.mes === 'Todos' ? " bajas promedio de " : " bajas de ";
+                ds.push({ label: 'Rotación', data: stats.map(function(d){ return d.rotacion; }), rawData: stats.map(function(d){ return [d.bajasCalculadas + txtBajasDs + d.plantilla + " en plantilla"]; }), backgroundColor: '#eab308', borderRadius: 4 });
+            }
 
             ChartsObj['chart-distrito'] = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: stats.map(function(d){ return d.label; }), datasets: ds },
+                data: { 
+                    labels: stats.map(function(d){ return d.label; }), 
+                    datasets: ds
+                },
                 options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    layout: { padding: { top: 35 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
-                        datalabels: { display: false }, tooltip: genericTooltipWithRaw
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    label += context.parsed.y + '%';
+                                    
+                                    const rawDetail = context.dataset.rawData ? context.dataset.rawData[context.dataIndex] : null;
+                                    if (rawDetail) {
+                                        if (Array.isArray(rawDetail)) {
+                                            return [label].concat(rawDetail); 
+                                        }
+                                        return [label, rawDetail]; 
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
@@ -2549,7 +2641,11 @@
             zpData.forEach(function(d) {
                 if (!groupedZP[d.sucursal]) {
                     groupedZP[d.sucursal] = { 
-                        cadena: d.cadena, region: d.region, distrito: d.distrito, gerente: d.gerente, causes: new Set() 
+                        cadena: d.cadena, 
+                        region: d.region,
+                        distrito: d.distrito,
+                        gerente: d.gerente,
+                        causes: new Set() 
                     };
                 }
                 if (d.zpIncidences) {
@@ -2630,7 +2726,11 @@
                     }
 
                     afectadas.push({
-                        sucursal: suc, cadena: latest.cadena, region: latest.region, distrito: latest.distrito, desde: desdeMes
+                        sucursal: suc,
+                        cadena: latest.cadena,
+                        region: latest.region,
+                        distrito: latest.distrito,
+                        desde: desdeMes
                     });
                 }
             });
@@ -2671,7 +2771,9 @@
                     const avgSuc = Math.round(validSub.reduce(function(acc, d){ return acc + d.rrhh.colSucesion; }, 0) / validSub.length);
                     if (avgSuc > 0) {
                         validBranches.push({
-                            sucursal: suc, cadena: sub[0].cadena, count: avgSuc
+                            sucursal: suc,
+                            cadena: sub[0].cadena,
+                            count: avgSuc
                         });
                     }
                 }
@@ -2732,15 +2834,14 @@
 
             const uniqueSucsData = Object.keys(grouped).map(function(suc) {
                 const rows = grouped[suc].dataArr;
+                const useAverageBajas = selections.mes === 'Todos';
                 
                 function getL(extractor) {
                     const valid = rows.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
                     return valid.length ? valid[valid.length - 1] : null;
                 }
 
-                let sumBajas = 0;
-                rows.forEach(function(d) { sumBajas += (d.bajas || 0); });
-                let avgBajas = rows.length > 0 ? (sumBajas / rows.length) : 0;
+                let bajasCalculadas = calculateBajasParaSubset(rows);
 
                 const gerP = getL(function(d){ return d.gerP; }) || 0;
                 const subP = getL(function(d){ return d.subP; }) || 0;
@@ -2750,6 +2851,7 @@
                 const certSubNum = getL(function(d){ return d.certSubNum; }) || 0;
                 const gerSrv = getL(function(d){ return d.gerSrv; }) || 0;
                 const subSrv = getL(function(d){ return d.subSrv; }) || 0;
+                const bkuCol = getL(function(d){ return d.bkuCol; }) || 0;
 
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
@@ -2768,7 +2870,7 @@
 
                 let rotacion = null;
                 if (totalPlantillaOcupada > 0) {
-                    rotacion = (avgBajas / totalPlantillaOcupada) * 100;
+                    rotacion = (bajasCalculadas / totalPlantillaOcupada) * 100;
                 }
 
                 const active = [];
@@ -2779,10 +2881,22 @@
                 const pro = active.length > 0 ? Math.round(active.reduce(function(a, b){ return a + b.v; }, 0) / active.length) : null;
 
                 return {
-                    region: rows[0].region, distrito: rows[0].distrito, cadena: rows[0].cadena, sucursal: suc,
+                    region: rows[0].region,
+                    distrito: rows[0].distrito,
+                    cadena: rows[0].cadena,
+                    sucursal: suc,
                     gerente: getL(function(d){ return d.gerente; }) || 'S/G',
-                    gerP: gerP, subP: subP, colP: colP, cert: cert, ocup: ocup, sucesion: colSucesion, rotacion: rotacion,
-                    srv: srv, m2: m2, m3: m3, promedio: pro
+                    gerP: gerP,
+                    subP: subP,
+                    colP: colP,
+                    cert: cert,
+                    ocup: ocup,
+                    sucesion: colSucesion,
+                    rotacion: rotacion,
+                    srv: srv,
+                    m2: m2,
+                    m3: m3,
+                    promedio: pro
                 };
             });
 
@@ -2811,10 +2925,12 @@
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.gerP + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.subP + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.colP + '</td>' +
+                    
                     '<td class="p-4 text-center text-xs font-bold text-slate-500 border-l border-slate-200">' + formatTablePct(d.cert) + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + formatTablePct(d.ocup) + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500 border-r border-slate-200">' + (d.sucesion || '-') + '</td>' +
                     '<td class="p-4 text-center font-bold" style="color: #d97706; background-color: #fef3c7;">' + formatTablePct(d.rotacion) + '</td>' +
+
                     '<td class="p-4 text-center font-bold" style="color: var(--color-m1); background-color: var(--color-m1-light);">' + formatTablePct(d.srv) + '</td>' +
                     '<td class="p-4 text-center font-bold" style="color: var(--color-m2); background-color: var(--color-m2-light);">' + formatTablePct(d.m2) + '</td>' +
                     '<td class="p-4 text-center font-bold" style="color: var(--color-m3); background-color: var(--color-m3-light);">' + formatTablePct(d.m3) + '</td>' +
@@ -2841,6 +2957,7 @@
             const list = Object.keys(grouped).map(function(key) {
                 const g = grouped[key];
                 const rows = g.dataArr;
+                const useAverageBajas = selections.mes === 'Todos';
                 
                 function getL(extractor) {
                     const valid = rows.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
@@ -2848,13 +2965,11 @@
                 }
                 
                 const totalPlantilla = getL(function(d){ return d.totalPlantillaOcupada; }) || 0;
-                let sumBajas = 0;
-                rows.forEach(function(d) { sumBajas += (d.bajas || 0); });
-                let avgBajas = rows.length > 0 ? (sumBajas / rows.length) : 0;
+                let bajasCalculadas = calculateBajasParaSubset(rows);
                 
                 let rotacion = null;
                 if (totalPlantilla > 0) {
-                    rotacion = (avgBajas / totalPlantilla) * 100;
+                    rotacion = (bajasCalculadas / totalPlantilla) * 100;
                 }
 
                 return { 
@@ -2873,10 +2988,13 @@
             const bottom5 = [].concat(list).reverse().slice(0, 5);
 
             const metricLabels = {
-                'avg': 'CUMP. GENERAL', 'srv': 'SERVSAFE',
+                'avg': 'CUMP. GENERAL',
+                'srv': 'SERVSAFE',
                 'm2': document.getElementById('label-m2').innerText.toUpperCase(),
                 'm3': document.getElementById('label-m3').innerText.toUpperCase(),
-                'cert': 'CERT. GERENCIAL', 'ocup': 'OCUP. PLANTILLA', 'rotacion': 'ROTACIÓN'
+                'cert': 'CERT. GERENCIAL',
+                'ocup': 'OCUP. PLANTILLA',
+                'rotacion': 'ROTACIÓN'
             };
 
             const formatRankVal = function(v) { return v <= 0 ? '0%' : Math.round(v) + '%'; };
