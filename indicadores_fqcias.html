@@ -701,7 +701,15 @@
         };
 
         window.onload = async function() {
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            // Calcular el último lunes
+            const fecha = new Date();
+            const diaSemana = fecha.getDay();
+            // Si es domingo (0), restamos 6 días. Si es cualquier otro día, restamos diaSemana - 1
+            const diferencia = diaSemana === 0 ? 6 : diaSemana - 1;
+            fecha.setDate(fecha.getDate() - diferencia);
+
+            document.getElementById('current-date').innerText = fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            
             initCustomDropdowns(); 
             await fetchAllData();
             if (window.lucide) lucide.createIcons();
@@ -2195,10 +2203,10 @@
                     ["Gerentes: " + m.raw.gerSrv + " con ServSafe de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.subSrv + " con ServSafe de " + m.raw.subP + " en plantilla ocupada"],
                     ["Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"],
                     ["Basado en el promedio de " + m.raw.validRev + " auditorías evaluadas"],
-                    ["Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"],
+                    ["Estatus: " + (m.raw.certGerNum > 0 ? "CERTIFICADO" : "NO CERTIFICADO"), "Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"],
                     ["Promedio de ocupación en el periodo seleccionado"],
                     ["Basado en " + m.raw.recCount + " visitas registradas"],
-                    [m.raw.bajasCalculadas + txtBajas + m.raw.totalPlantillaOcupada + " en plantilla"]
+                    [m.raw.avgBajas + txtBajas + m.raw.totalPlantillaOcupada + " en plantilla"]
                 ];
 
                 const bgColors = [activePalette.m1, activePalette.m2, activePalette.m3, '#1F3864', '#4472C4', '#64748b', '#eab308'];
@@ -2247,9 +2255,10 @@
                         const isChurchs = m.cadena.toLowerCase().includes('church');
                         const lblM2 = isChurchs ? 'PTE' : 'BKU';
                         const lblM3 = isChurchs ? 'OER/RAV' : 'REV Standard';
+                        const estatusCert = m.raw.certGerNum > 0 ? "Sí" : "No";
                         return [
                             "Sucursal: " + m.sucursal,
-                            "Gerente: " + m.gerente,
+                            "Gerente: " + m.gerente + " (Certificado: " + estatusCert + ")",
                             "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
                             lblM2 + ": " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
                             lblM3 + ": " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
@@ -2280,6 +2289,7 @@
                     metricKey = 'cert';
                     rawFormatter = function(m) { return [
                         "Sucursal: " + m.sucursal,
+                        "Estatus: " + (m.raw.certGerNum > 0 ? "CERTIFICADO" : "NO CERTIFICADO"),
                         "Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada",
                         "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"
                     ];};
@@ -2886,6 +2896,7 @@
                     cadena: rows[0].cadena,
                     sucursal: suc,
                     gerente: getL(function(d){ return d.gerente; }) || 'S/G',
+                    certGerNum: certGerNum,
                     gerP: gerP,
                     subP: subP,
                     colP: colP,
@@ -2921,7 +2932,7 @@
                     '<td class="p-4 text-xs font-medium text-slate-500">' + d.distrito + '</td>' +
                     '<td class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-tighter">' + d.cadena + '</td>' +
                     '<td class="p-4 text-sm font-extrabold text-slate-700">' + d.sucursal + '</td>' +
-                    '<td class="p-4 text-[10px] font-bold text-slate-400 uppercase italic">' + d.gerente + '</td>' +
+                    '<td class="p-4 text-[10px] font-bold text-slate-400 uppercase italic">' + d.gerente + '<br><span class="' + (d.certGerNum > 0 ? 'text-green-500' : 'text-red-400') + ' text-[8.5px] leading-none inline-block mt-1">' + (d.certGerNum > 0 ? 'CERTIFICADO' : 'NO CERTIFICADO') + '</span></td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.gerP + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.subP + '</td>' +
                     '<td class="p-4 text-center text-xs font-bold text-slate-500">' + d.colP + '</td>' +
