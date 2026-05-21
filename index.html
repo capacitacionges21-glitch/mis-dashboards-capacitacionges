@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -18,13 +19,12 @@ scroll-behavior:smooth;
 body{
 background:#f1f5f9;
 overflow-x:hidden;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial,Helvetica,sans-serif;
 }
 
-/* BANNER */
-
 .banner-overlay{
-background:linear-gradient(
+background:
+linear-gradient(
 to right,
 rgba(11,47,74,.90),
 rgba(11,47,74,.72)
@@ -32,20 +32,31 @@ rgba(11,47,74,.72)
 }
 
 .title-animate{
-animation:floatText 3s ease-in-out infinite;
+animation:floatText 3s ease infinite;
 }
 
 @keyframes floatText{
-0%,100%{transform:translateY(0);}
-50%{transform:translateY(-5px);}
+
+0%,100%{
+transform:translateY(0);
 }
 
-/* ANIMACIONES */
+50%{
+transform:translateY(-5px);
+}
+
+}
 
 .fade-up{
+
 opacity:0;
-transform:translateY(30px);
-animation:fadeUp .8s ease forwards;
+
+transform:
+translateY(30px);
+
+animation:
+fadeUp .8s ease forwards;
+
 }
 
 .fade-up:nth-child(1){animation-delay:.1s;}
@@ -58,32 +69,53 @@ animation:fadeUp .8s ease forwards;
 .fade-up:nth-child(8){animation-delay:.8s;}
 
 @keyframes fadeUp{
+
 to{
+
 opacity:1;
-transform:translateY(0);
-}
+
+transform:
+translateY(0);
+
 }
 
-/* TARJETAS */
+}
 
 .dashboard{
+
 position:relative;
+
 overflow:hidden;
+
 transition:.35s;
+
 }
 
 .dashboard:hover{
-transform:translateY(-8px) scale(1.02);
-box-shadow:0 20px 40px rgba(0,0,0,.12);
+
+transform:
+translateY(-8px)
+scale(1.02);
+
+box-shadow:
+0 20px 40px rgba(0,0,0,.12);
+
 }
 
 .dashboard::before{
+
 content:"";
+
 position:absolute;
+
 top:0;
+
 left:-100%;
+
 width:100%;
+
 height:100%;
+
 background:
 linear-gradient(
 120deg,
@@ -91,19 +123,28 @@ transparent,
 rgba(255,255,255,.4),
 transparent
 );
+
 transition:.9s;
+
 }
 
 .dashboard:hover::before{
+
 left:100%;
+
 }
 
 .brand-logo{
+
 transition:.35s;
+
 }
 
 .dashboard:hover .brand-logo{
-transform:scale(1.05);
+
+transform:
+scale(1.05);
+
 }
 
 footer{
@@ -120,7 +161,8 @@ margin-top:auto;
 
 <div class="relative w-full h-[250px] overflow-hidden">
 
-<img src="banner.png"
+<img
+src="banner.png"
 class="w-full h-full object-cover">
 
 <div class="absolute inset-0 banner-overlay"></div>
@@ -128,18 +170,22 @@ class="w-full h-full object-cover">
 <div class="absolute inset-0 flex flex-col justify-center items-center text-white">
 
 <h1 class="title-animate text-5xl md:text-4xl font-bold">
+
 Dashboard Corporativos
+
 </h1>
 
 <p class="mt-3">
+
 Portal interno de indicadores
+
 </p>
 
 </div>
 
 </div>
 
-<!-- GRID -->
+<!-- DASHBOARDS -->
 
 <main class="flex-grow p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 max-w-7xl mx-auto w-full">
 
@@ -147,11 +193,14 @@ Portal interno de indicadores
 
 <a
 href="indicadores_fqcias.html"
+data-enabled="true"
 data-password="FZ2026*"
 class="dashboard protected fade-up bg-white rounded-3xl p-7 border min-h-[210px]">
 
 <h2 class="font-bold text-xl">
+
 Indicadores estratégicos
+
 </h2>
 
 <div class="flex justify-center mt-6">
@@ -163,7 +212,9 @@ class="brand-logo w-full max-w-[200px] object-contain">
 </div>
 
 <p class="text-slate-500 text-sm mt-5">
+
 Indicadores de franquicias
+
 </p>
 
 </a>
@@ -172,11 +223,14 @@ Indicadores de franquicias
 
 <a
 href="indicadores_estaciones.html"
+data-enabled="true"
 data-password="ES2026*"
 class="dashboard protected fade-up bg-white rounded-3xl p-6 border">
 
 <h2 class="font-bold text-xl">
+
 ⛽ Indicadores Estaciones
+
 </h2>
 
 <div class="flex justify-center mt-6">
@@ -188,7 +242,9 @@ class="brand-logo w-full max-w-[150px] object-contain">
 </div>
 
 <p class="text-slate-500 text-sm mt-5">
+
 Dashboard de indicadores para estaciones
+
 </p>
 
 </a>
@@ -197,14 +253,19 @@ Dashboard de indicadores para estaciones
 
 <a
 href="comisiones-mixtas.html"
+data-enabled="true"
 class="dashboard fade-up bg-white rounded-3xl p-6 border">
 
 <h2 class="font-bold text-xl">
+
 🤝 Comisiones Mixtas
+
 </h2>
 
 <p class="text-slate-500 mt-2">
+
 Seguimiento de comisiones
+
 </p>
 
 </a>
@@ -213,14 +274,19 @@ Seguimiento de comisiones
 
 <a
 href="ges-contigo-360.html"
+data-enabled="true"
 class="dashboard fade-up bg-white rounded-3xl p-6 border">
 
 <h2 class="font-bold text-xl">
+
 🧭 Ges Contigo 360
+
 </h2>
 
 <p class="text-slate-500 mt-2">
+
 Indicadores de cumplimiento
+
 </p>
 
 </a>
@@ -229,14 +295,19 @@ Indicadores de cumplimiento
 
 <a
 href="mystery.html"
+data-enabled="true"
 class="dashboard fade-up bg-white rounded-3xl p-6 border">
 
 <h2 class="font-bold text-xl">
+
 📈 Mystery
+
 </h2>
 
 <p class="text-slate-500 mt-2">
+
 Resultados Mystery Shopper
+
 </p>
 
 </a>
@@ -245,14 +316,19 @@ Resultados Mystery Shopper
 
 <a
 href="nom035.html"
+data-enabled="true"
 class="dashboard fade-up bg-white rounded-3xl p-6 border">
 
 <h2 class="font-bold text-xl">
+
 🧠 NOM-035
+
 </h2>
 
 <p class="text-slate-500 mt-2">
+
 Seguimiento NOM-035
+
 </p>
 
 </a>
@@ -261,14 +337,19 @@ Seguimiento NOM-035
 
 <a
 href="reconocimientos.html"
+data-enabled="true"
 class="dashboard fade-up bg-white rounded-3xl p-6 border">
 
 <h2 class="font-bold text-xl">
+
 🏆 Reconocimientos
+
 </h2>
 
 <p class="text-slate-500 mt-2">
+
 Reconocimientos por cadena
+
 </p>
 
 </a>
@@ -277,14 +358,19 @@ Reconocimientos por cadena
 
 <a
 href="codigo-etica.html"
+data-enabled="true"
 class="dashboard fade-up bg-white rounded-3xl p-6 border lg:col-start-3">
 
 <h2 class="font-bold text-xl">
+
 📘 Código de Ética
+
 </h2>
 
 <p class="text-slate-500 mt-2">
+
 Indicadores de cumplimiento
+
 </p>
 
 </a>
@@ -292,28 +378,68 @@ Indicadores de cumplimiento
 </main>
 
 <footer class="text-center text-xs text-slate-400 p-6">
+
 © 2026 Capacitación Corporativo GES
+
 </footer>
 
 <script>
 
-/* PASSWORD */
-
-document.querySelectorAll(".protected")
+document
+.querySelectorAll(".dashboard")
 .forEach(card=>{
 
-card.addEventListener("click",e=>{
+const enabled =
+card.dataset.enabled !== "false"
+
+if(!enabled){
+
+card.classList.add(
+"opacity-50",
+"grayscale",
+"cursor-not-allowed"
+)
+
+card.addEventListener(
+"click",
+e=>{
 
 e.preventDefault()
 
-const pass=
-prompt("Ingrese la contraseña para acceder:")
+alert(
+"Este dashboard está temporalmente deshabilitado"
+)
+
+}
+)
+
+return
+
+}
 
 if(
-pass===card.dataset.password
+card.classList.contains(
+"protected"
+)
 ){
 
-window.location=
+card.addEventListener(
+"click",
+e=>{
+
+e.preventDefault()
+
+const pass =
+prompt(
+"Ingrese la contraseña para acceder:"
+)
+
+if(
+pass ===
+card.dataset.password
+){
+
+window.location =
 card.href
 
 }else{
@@ -324,11 +450,15 @@ alert(
 
 }
 
-})
+}
+)
+
+}
 
 })
 
 </script>
 
 </body>
+
 </html>
