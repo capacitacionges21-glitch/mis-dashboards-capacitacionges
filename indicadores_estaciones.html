@@ -87,9 +87,9 @@
         <!-- Header (Estilo exacto a la imagen) -->
         <header class="card p-4 flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-brand-blue rounded-xl flex items-center justify-center text-white shadow-sm">
-                    <i data-lucide="bar-chart-2" class="w-7 h-7"></i>
-                </div>
+                <!-- Se reemplaza el icono azul por la imagen del logo -->
+                <img src="logo-estaciones.png" alt="Logo Estaciones" class="h-14 w-auto object-contain">
+                
                 <div>
                     <h1 class="text-2xl font-extrabold text-brand-blue tracking-tight" id="app-name">Panel de Control Estratégico</h1>
                     <p class="text-brand-muted text-sm font-medium">Consolidado General Multi-Marca</p>
@@ -198,11 +198,11 @@
         </div>
 
         <!-- 1 y 2. Gráficas: Auditoria y Mystery -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-1 gap-6 mb-6">
             <div class="card p-6">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-6 bg-brand-blue rounded-full"></div>
-                    <h3 class="font-bold text-brand-blue text-lg">Comparativo: Auditoría LA GAS</h3>
+                    <h3 class="font-bold text-brand-blue text-lg">Comparativo Mensual: Auditoría LA GAS</h3>
                 </div>
                 <div class="relative w-full h-[300px]">
                     <canvas id="auditoriaChart"></canvas>
@@ -212,7 +212,7 @@
             <div class="card p-6">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-6 bg-brand-lightBlue rounded-full"></div>
-                    <h3 class="font-bold text-brand-blue text-lg">Comparativo: Protocolo Mystery</h3>
+                    <h3 class="font-bold text-brand-blue text-lg">Comparativo Mensual: Protocolo Mystery</h3>
                 </div>
                 <div class="relative w-full h-[300px]">
                     <canvas id="mysteryChart"></canvas>
@@ -385,10 +385,25 @@
                         else if (['octubre', 'noviembre', 'diciembre', 'oct', 'nov', 'dic', '10', '11', '12'].includes(mesStr)) cleanedRow['Trimestre'] = 'Q4';
                         else cleanedRow['Trimestre'] = 'Sin Asignar';
 
+                        // Lógica de validación "La Gas"
+                        const isLaGas = (cleanedRow['Negocio'] || '').toLowerCase().includes('la gas');
+                        
+                        // Anular indicadores si no es sucursal "La Gas"
+                        if (!isLaGas) {
+                            cleanedRow['LA GAS Auditoria'] = null;
+                            cleanedRow['PROTOCOLO MYSTERY'] = null;
+                        }
+
                         // Calcular cumplimiento general de la sucursal
                         let validKpis = 0;
                         let sumKpis = 0;
-                        ['LA GAS Auditoria', 'PROTOCOLO MYSTERY', 'CERTIFICACION GERENTES', 'OCUPACION DE PLANTILLAS'].forEach(k => {
+                        
+                        const kpisToEvaluate = ['CERTIFICACION GERENTES', 'OCUPACION DE PLANTILLAS'];
+                        if (isLaGas) {
+                            kpisToEvaluate.push('LA GAS Auditoria', 'PROTOCOLO MYSTERY');
+                        }
+
+                        kpisToEvaluate.forEach(k => {
                             if(cleanedRow[k] !== null && !isNaN(cleanedRow[k])) {
                                 sumKpis += cleanedRow[k];
                                 validKpis++;
@@ -545,9 +560,18 @@
                 const ocup = getAvg('OCUPACION DE PLANTILLAS');
                 const rot = getAvg('ROTACION(BAJAS)');
 
+                // Validación "La Gas" en los datos agrupados
+                const isLaGas = group['Negocio'].toLowerCase().includes('la gas');
+
                 let validKpis = 0;
                 let sumKpis = 0;
-                [aud, mys, cert, ocup].forEach(v => {
+                
+                const kpisToEvaluate = [cert, ocup];
+                if (isLaGas) {
+                    kpisToEvaluate.push(aud, mys);
+                }
+
+                kpisToEvaluate.forEach(v => {
                     if (v !== null) { sumKpis += v; validKpis++; }
                 });
                 const cump = validKpis > 0 ? (sumKpis / validKpis) : 0;
@@ -666,7 +690,7 @@
             const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
             
             html += `
-            <div class="bg-[#FFF7ED] border-orange-200 p-5 rounded-xl border shadow-sm flex flex-col justify-between lg:col-span-2">
+            <div class="bg-[#FFF7ED] border-orange-200 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-xs font-bold text-orange-600 uppercase tracking-wider">SIN GERENTE</h4>
                     <span class="text-[10px] font-bold px-2 py-1 rounded bg-orange-100 text-orange-700">ALERTA</span>
@@ -757,12 +781,19 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600'} } }
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600'} } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: { 
                             beginAtZero: true, max: 100,
-                            ticks: { callback: v => v + '%', font: {size: 10} },
+                            ticks: { callback: v => Math.round(v) + '%', font: {size: 10} },
                             grid: { color: '#F1F5F9' }
                         },
                         x: { grid: { display: false }, ticks: { font: {size: 10} } }
@@ -772,54 +803,103 @@
                 }
             });
 
-            // --- NUEVAS GRÁFICAS ---
+            // --- NUEVAS GRÁFICAS MENSULARES ---
+            const MESES_COMPLETOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            // Calcular valores pero mantener los null para meses sin datos
+            const dataAuditoriaMes = MESES_COMPLETOS.map((mes) => {
+                const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
+                const valid = dataMes.filter(d => typeof d['LA GAS Auditoria'] === 'number');
+                return valid.length ? valid.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / valid.length : null;
+            });
+
+            const dataMysteryMes = MESES_COMPLETOS.map((mes) => {
+                const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
+                const valid = dataMes.filter(d => typeof d['PROTOCOLO MYSTERY'] === 'number');
+                return valid.length ? valid.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / valid.length : null;
+            });
             
-            // 1. Auditoría LA GAS
+            // 1. Auditoría LA GAS (Mensual)
             const ctxAud = document.getElementById('auditoriaChart').getContext('2d');
             if(state.auditoriaChartInstance) state.auditoriaChartInstance.destroy();
             state.auditoriaChartInstance = new Chart(ctxAud, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: labels,
+                    labels: MESES_CORTOS,
                     datasets: [{
                         label: 'Auditoría LA GAS',
-                        data: dataAuditoria,
-                        backgroundColor: CONFIG.colors.chartAuditoria,
-                        borderRadius: 4
+                        data: dataAuditoriaMes,
+                        borderColor: '#1E3A8A', // Azul fuerte
+                        backgroundColor: 'transparent',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#FFFFFF',
+                        pointBorderColor: '#1E3A8A',
+                        pointBorderWidth: 2,
+                        pointRadius: 4.5,
+                        pointHoverRadius: 6.5,
+                        tension: 0.4, // Curvatura suave
+                        spanGaps: true
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
-                        x: { grid: { display: false }, ticks: { font: {size: 10} } }
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
+                        x: { grid: { display: true, color: '#F1F5F9' }, ticks: { font: {size: 10} } } // Mostrar grid vertical
                     }
                 }
             });
 
-            // 2. Protocolo Mystery
+            // 2. Protocolo Mystery (Mensual)
             const ctxMys = document.getElementById('mysteryChart').getContext('2d');
             if(state.mysteryChartInstance) state.mysteryChartInstance.destroy();
             state.mysteryChartInstance = new Chart(ctxMys, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: labels,
+                    labels: MESES_CORTOS,
                     datasets: [{
                         label: 'Protocolo Mystery',
-                        data: dataMystery,
-                        backgroundColor: CONFIG.colors.chartMystery,
-                        borderRadius: 4
+                        data: dataMysteryMes,
+                        borderColor: '#3B82F6', // Azul claro
+                        backgroundColor: 'transparent',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#FFFFFF',
+                        pointBorderColor: '#3B82F6',
+                        pointBorderWidth: 2,
+                        pointRadius: 4.5,
+                        pointHoverRadius: 6.5,
+                        tension: 0.4, // Curvatura suave
+                        spanGaps: true
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
-                        x: { grid: { display: false }, ticks: { font: {size: 10} } }
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
+                        x: { grid: { display: true, color: '#F1F5F9' }, ticks: { font: {size: 10} } } // Mostrar grid vertical
                     }
                 }
             });
@@ -856,9 +936,18 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
                         x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45, font: {size: 9} } }
                     }
                 }
