@@ -325,7 +325,7 @@
             },
             metas: {
                 'LA GAS Auditoria': 90,
-                'PROTOCOLO MYSTERY': 85,
+                'PROTOCOLO MYSTERY': 90, // Actualizado a 90%
                 'CERTIFICACION GERENTES': 95,
                 'OCUPACION DE PLANTILLAS': 96,
                 'ROTACION(BAJAS)': 4.5, // % Max
@@ -634,10 +634,10 @@
                         ${isAlert ? `<span class="text-[10px] font-bold px-2 py-1 rounded ${metaClass}">MÁX ${meta}%</span>` : ''}
                     </div>
                 </div>
-                <div class="mb-2">
+                <div class="mb-1">
                     <span class="text-3xl font-extrabold ${textValueClass} tracking-tight">${value.toFixed(0)}%</span>
                 </div>
-                <div class="text-[10px] font-medium text-gray-500 mb-4 h-6 flex items-end">
+                <div class="text-[10px] font-medium text-gray-500 mb-3 flex flex-col gap-0.5 min-h-[28px] justify-end">
                     ${subtext}
                 </div>
                 ${!isAlert ? `
@@ -668,22 +668,41 @@
                 <div class="text-[10px] font-medium text-gray-500 mt-auto">Unidades operativas activas</div>
             </div>`;
 
-            // Card 2, 3, 4: KPIs
-            const auditoria = calcAvg(data, 'LA GAS Auditoria');
-            html += buildCardHTML('Auditoria LA GAS', auditoria, CONFIG.metas['LA GAS Auditoria'], 'Promedio general de la red evaluada', null);
+            // Card 2: Auditoria LA GAS
+            const audValidData = data.filter(d => typeof d['LA GAS Auditoria'] === 'number');
+            const audAuditoria = audValidData.length ? audValidData.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / audValidData.length : 0;
+            const audVisitas = audValidData.length;
+            const audMetaCount = audValidData.filter(d => d['LA GAS Auditoria'] >= 90).length;
+            const audNoMetaCount = audVisitas - audMetaCount;
+            const audSubtext = `
+                <div>Visitas: <span class="font-bold text-gray-700">${audVisitas}</span></div>
+                <div><span class="text-emerald-600 font-bold">Meta: ${audMetaCount}</span> <span class="text-gray-300 mx-1">|</span> <span class="text-red-500 font-bold">No meta: ${audNoMetaCount}</span></div>
+            `;
+            html += buildCardHTML('Auditoria LA GAS', audAuditoria, CONFIG.metas['LA GAS Auditoria'], audSubtext, null);
             
-            const mystery = calcAvg(data, 'PROTOCOLO MYSTERY');
-            html += buildCardHTML('Protocolo Mystery', mystery, CONFIG.metas['PROTOCOLO MYSTERY'], 'Promedio de visitas misteriosas', null);
+            // Card 3: Protocolo Mystery
+            const mysValidData = data.filter(d => typeof d['PROTOCOLO MYSTERY'] === 'number');
+            const mysMystery = mysValidData.length ? mysValidData.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / mysValidData.length : 0;
+            const mysVisitas = mysValidData.length;
+            const mysMetaCount = mysValidData.filter(d => d['PROTOCOLO MYSTERY'] >= 90).length;
+            const mysNoMetaCount = mysVisitas - mysMetaCount;
+            const mysSubtext = `
+                <div>Visitas: <span class="font-bold text-gray-700">${mysVisitas}</span></div>
+                <div><span class="text-emerald-600 font-bold">Meta: ${mysMetaCount}</span> <span class="text-gray-300 mx-1">|</span> <span class="text-red-500 font-bold">No meta: ${mysNoMetaCount}</span></div>
+            `;
+            html += buildCardHTML('Protocolo Mystery', mysMystery, CONFIG.metas['PROTOCOLO MYSTERY'], mysSubtext, null);
 
+            // Card 4: Ocupacion Plantillas
             const ocupacion = calcAvg(data, 'OCUPACION DE PLANTILLAS');
-            html += buildCardHTML('Ocup. Plantillas', ocupacion, CONFIG.metas['OCUPACION DE PLANTILLAS'], 'Nivel de cobertura de plantilla ideal', null);
+            html += buildCardHTML('Ocup. Plantillas', ocupacion, CONFIG.metas['OCUPACION DE PLANTILLAS'], '<span>Nivel de cobertura de plantilla ideal</span>', null);
 
-            // Segunda Fila
+            // Segunda Fila - Certificacion
             const cert = calcAvg(data, 'CERTIFICACION GERENTES');
-            html += buildCardHTML('Cert. Gerencial', cert, CONFIG.metas['CERTIFICACION GERENTES'], 'Acreditación operativa de gerentes', null);
+            html += buildCardHTML('Cert. Gerencial', cert, CONFIG.metas['CERTIFICACION GERENTES'], '<span>Acreditación operativa de gerentes</span>', null);
 
+            // Segunda Fila - Rotacion
             const rotacion = calcAvg(data, 'ROTACION(BAJAS)');
-            html += buildCardHTML('Rotación', rotacion, CONFIG.metas['ROTACION(BAJAS)'], 'Bajas promedio vs plantilla ocupada', null, 'warning');
+            html += buildCardHTML('Rotación', rotacion, CONFIG.metas['ROTACION(BAJAS)'], '<span>Bajas promedio vs plantilla ocupada</span>', null, 'warning');
 
             // Sucursales sin gerente
             const sinGerente = data.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
