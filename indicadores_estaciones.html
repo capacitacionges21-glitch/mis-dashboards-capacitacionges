@@ -368,7 +368,8 @@
                         const numericCols = [
                             'Plantilla autorizada Gerentes', 'Plantilla autorizada Subgerentes', 'Plantilla Autorizada colaboradores',
                             'Plantilla Gerentes Ocupada', 'Plantilla Subgerentes Ocupada', 'Plantilla colaboradores Ocupada',
-                            'PROTOCOLO MYSTERY', 'LA GAS Auditoria', 'CERTIFICACION GERENTES', 'OCUPACION DE PLANTILLAS', 'ROTACION(BAJAS)'
+                            'PROTOCOLO MYSTERY', 'LA GAS Auditoria', 'CERTIFICACION GERENTES', 'OCUPACION DE PLANTILLAS', 'ROTACION(BAJAS)',
+                            'COLABORADORES EN SUCESION GERENTES', 'COLABORADORES EN SUCESION SUBGERENTES', 'COLABORADORES EN SUCESION RESPONSABLES'
                         ];
                         numericCols.forEach(col => {
                             if(cleanedRow[col] !== undefined && cleanedRow[col] !== null) {
@@ -637,7 +638,7 @@
                 <div class="mb-1">
                     <span class="text-3xl font-extrabold ${textValueClass} tracking-tight">${value.toFixed(0)}%</span>
                 </div>
-                <div class="text-[10px] font-medium text-gray-500 mb-3 flex flex-col gap-0.5 min-h-[28px] justify-end">
+                <div class="text-[10px] font-medium text-gray-500 mb-3 flex flex-col gap-1 justify-end">
                     ${subtext}
                 </div>
                 ${!isAlert ? `
@@ -668,41 +669,117 @@
                 <div class="text-[10px] font-medium text-gray-500 mt-auto">Unidades operativas activas</div>
             </div>`;
 
+            // Helper para calcular métricas, total de evaluaciones y conteo de metas
+            const getKpiStats = (key, goal, isInverse = false) => {
+                const validData = data.filter(d => typeof d[key] === 'number');
+                const avg = validData.length ? validData.reduce((acc, curr) => acc + curr[key], 0) / validData.length : 0;
+                const total = validData.length;
+                const metaCount = validData.filter(d => isInverse ? d[key] <= goal : d[key] >= goal).length;
+                const noMetaCount = total - metaCount;
+                
+                const subtext = `
+                    <span>Total Evaluaciones: <b class="text-gray-700">${total}</b></span>
+                    <span>Sucursales que llegaron a su meta: <b class="text-gray-700">${metaCount}</b></span>
+                    <span>Sucursales que no llegaron a la meta: <b class="text-gray-700">${noMetaCount}</b></span>
+                `;
+                return { avg, subtext };
+            };
+
             // Card 2: Auditoria LA GAS
-            const audValidData = data.filter(d => typeof d['LA GAS Auditoria'] === 'number');
-            const audAuditoria = audValidData.length ? audValidData.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / audValidData.length : 0;
-            const audVisitas = audValidData.length;
-            const audMetaCount = audValidData.filter(d => d['LA GAS Auditoria'] >= 90).length;
-            const audNoMetaCount = audVisitas - audMetaCount;
-            const audSubtext = `
-                <div>Visitas: <span class="font-bold text-gray-700">${audVisitas}</span></div>
-                <div><span class="text-emerald-600 font-bold">Meta: ${audMetaCount}</span> <span class="text-gray-300 mx-1">|</span> <span class="text-red-500 font-bold">No meta: ${audNoMetaCount}</span></div>
-            `;
-            html += buildCardHTML('Auditoria LA GAS', audAuditoria, CONFIG.metas['LA GAS Auditoria'], audSubtext, null);
+            const aud = getKpiStats('LA GAS Auditoria', CONFIG.metas['LA GAS Auditoria']);
+            html += buildCardHTML('Auditoria LA GAS', aud.avg, CONFIG.metas['LA GAS Auditoria'], aud.subtext, null);
             
             // Card 3: Protocolo Mystery
-            const mysValidData = data.filter(d => typeof d['PROTOCOLO MYSTERY'] === 'number');
-            const mysMystery = mysValidData.length ? mysValidData.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / mysValidData.length : 0;
-            const mysVisitas = mysValidData.length;
-            const mysMetaCount = mysValidData.filter(d => d['PROTOCOLO MYSTERY'] >= 90).length;
-            const mysNoMetaCount = mysVisitas - mysMetaCount;
-            const mysSubtext = `
-                <div>Visitas: <span class="font-bold text-gray-700">${mysVisitas}</span></div>
-                <div><span class="text-emerald-600 font-bold">Meta: ${mysMetaCount}</span> <span class="text-gray-300 mx-1">|</span> <span class="text-red-500 font-bold">No meta: ${mysNoMetaCount}</span></div>
+            const mys = getKpiStats('PROTOCOLO MYSTERY', CONFIG.metas['PROTOCOLO MYSTERY']);
+            html += buildCardHTML('Protocolo Mystery', mys.avg, CONFIG.metas['PROTOCOLO MYSTERY'], mys.subtext, null);
+
+            // Helper para sumar columnas numéricas de forma segura y soportar variaciones de nombre
+            const getSum = (key) => data.reduce((acc, curr) => acc + (!isNaN(parseFloat(curr[key])) ? parseFloat(curr[key]) : 0), 0);
+
+            // Card 4: Ocupacion Plantillas (Detalle por roles)
+            const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
+            const gerentesAut = getSum('Plantilla autorizada Gerentes');
+            const subgerentesOcu = getSum('Plantilla Subgerentes Ocupada');
+            const subgerentesAut = getSum('Plantilla autorizada Subgerentes');
+            const respOcu = getSum('Plantilla Responsables Ocupada') || 0;
+            const respAut = getSum('Plantilla autorizada Responsables') || 0;
+            const promOcu = getSum('Plantilla colaboradores Ocupada') || getSum('Plantilla Promotores Ocupada') || 0;
+            const promAut = getSum('Plantilla Autorizada colaboradores') || getSum('Plantilla autorizada Promotores') || 0;
+
+            const ocuAvg = calcAvg(data, 'OCUPACION DE PLANTILLAS');
+            const ocuSubtext = `
+                <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-gray-500 mt-1 w-full">
+                    <span>Gerentes: <b class="text-gray-700">${gerentesOcu}/${gerentesAut}</b></span>
+                    <span>Subgerentes: <b class="text-gray-700">${subgerentesOcu}/${subgerentesAut}</b></span>
+                    <span>Responsables: <b class="text-gray-700">${respOcu}/${respAut}</b></span>
+                    <span>Promotores: <b class="text-gray-700">${promOcu}/${promAut}</b></span>
+                </div>
             `;
-            html += buildCardHTML('Protocolo Mystery', mysMystery, CONFIG.metas['PROTOCOLO MYSTERY'], mysSubtext, null);
+            html += buildCardHTML('Ocup. Plantillas', ocuAvg, CONFIG.metas['OCUPACION DE PLANTILLAS'], ocuSubtext, null);
 
-            // Card 4: Ocupacion Plantillas
-            const ocupacion = calcAvg(data, 'OCUPACION DE PLANTILLAS');
-            html += buildCardHTML('Ocup. Plantillas', ocupacion, CONFIG.metas['OCUPACION DE PLANTILLAS'], '<span>Nivel de cobertura de plantilla ideal</span>', null);
+            // Segunda Fila - Certificacion (Detalle Gerentes y Certificados)
+            let gerentesCert = getSum('Gerentes certificados') || getSum('Gerentes Certificados');
+            if (gerentesCert === 0) {
+                // Cálculo estimado en caso de no existir la columna raw en el CSV
+                gerentesCert = Math.round(data.reduce((acc, curr) => {
+                    const cert = parseFloat(curr['CERTIFICACION GERENTES']) || 0;
+                    const hc = parseFloat(curr['Plantilla Gerentes Ocupada']) || 0;
+                    return acc + (hc * (cert / 100));
+                }, 0));
+            }
+            const cerAvg = calcAvg(data, 'CERTIFICACION GERENTES');
+            const cerSubtext = `
+                <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
+                    <span>Gerentes Ocupados: <b class="text-gray-700">${gerentesOcu}</b></span>
+                    <span>Gerentes Certificados: <b class="text-gray-700">${gerentesCert}</b></span>
+                </div>
+            `;
+            html += buildCardHTML('Cert. Gerencial', cerAvg, CONFIG.metas['CERTIFICACION GERENTES'], cerSubtext, null);
 
-            // Segunda Fila - Certificacion
-            const cert = calcAvg(data, 'CERTIFICACION GERENTES');
-            html += buildCardHTML('Cert. Gerencial', cert, CONFIG.metas['CERTIFICACION GERENTES'], '<span>Acreditación operativa de gerentes</span>', null);
+            // Segunda Fila - Rotacion (Detalle Bajas vs Plantilla)
+            let totalBajas = getSum('Bajas') || getSum('BAJAS') || getSum('Rotación Bajas');
+            const plantillaTotal = gerentesOcu + subgerentesOcu + respOcu + promOcu;
+            if (totalBajas === 0) {
+               // Cálculo estimado a la inversa si la columna de bajas puras no existe
+               totalBajas = Math.round(data.reduce((acc, curr) => {
+                   const rot = parseFloat(curr['ROTACION(BAJAS)']) || 0;
+                   const hc = (parseFloat(curr['Plantilla Gerentes Ocupada']) || 0) + 
+                              (parseFloat(curr['Plantilla Subgerentes Ocupada']) || 0) + 
+                              (parseFloat(curr['Plantilla colaboradores Ocupada']) || parseFloat(curr['Plantilla Promotores Ocupada']) || 0) +
+                              (parseFloat(curr['Plantilla Responsables Ocupada']) || 0);
+                   return acc + (hc * (rot / 100));
+               }, 0));
+            }
+            const rotAvg = calcAvg(data, 'ROTACION(BAJAS)');
+            const rotSubtext = `
+                <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
+                    <span>Total Bajas: <b class="text-gray-700">${totalBajas}</b></span>
+                    <span>Plantilla Total: <b class="text-gray-700">${plantillaTotal}</b></span>
+                </div>
+            `;
+            html += buildCardHTML('Rotación', rotAvg, CONFIG.metas['ROTACION(BAJAS)'], rotSubtext, null, 'warning');
 
-            // Segunda Fila - Rotacion
-            const rotacion = calcAvg(data, 'ROTACION(BAJAS)');
-            html += buildCardHTML('Rotación', rotacion, CONFIG.metas['ROTACION(BAJAS)'], '<span>Bajas promedio vs plantilla ocupada</span>', null, 'warning');
+            // NUEVO KPI: Colaboradores en Sucesión
+            const sucGerentes = getSum('COLABORADORES EN SUCESION GERENTES') || 0;
+            const sucSubgerentes = getSum('COLABORADORES EN SUCESION SUBGERENTES') || 0;
+            const sucResponsables = getSum('COLABORADORES EN SUCESION RESPONSABLES') || 0;
+            const totalSucesion = sucGerentes + sucSubgerentes + sucResponsables;
+
+            html += `
+            <div class="bg-white border-gray-100 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">EN SUCESIÓN</h4>
+                    <i data-lucide="graduation-cap" class="w-4 h-4 text-brand-blue"></i>
+                </div>
+                <div class="mb-2">
+                    <span class="text-3xl font-extrabold text-gray-800 tracking-tight">${totalSucesion}</span>
+                </div>
+                <div class="text-[10px] font-medium text-gray-500 mt-auto flex flex-col gap-1">
+                    <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Gerente:</span> <b class="text-gray-700">${sucGerentes}</b></div>
+                    <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Subgerente:</span> <b class="text-gray-700">${sucSubgerentes}</b></div>
+                    <div class="flex justify-between"><span>Para Responsable:</span> <b class="text-gray-700">${sucResponsables}</b></div>
+                </div>
+            </div>`;
 
             // Sucursales sin gerente
             const sinGerente = data.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
@@ -764,21 +841,47 @@
 
             const distritos = getUniqueValues('Gerente de Distrito');
             
-            // Preparar datos para gráfica agrupada
+            // Preparar datos para gráfica agrupada (Distritos)
             const labels = [];
             const dataAuditoria = [];
             const dataMystery = [];
             const dataOcupacion = [];
             const dataCertificacion = [];
 
+            // Objeto para almacenar las estadísticas de cada barra de distrito
+            const statsDistrito = { auditoria: [], mystery: [], ocupacion: [], certificacion: [] };
+
             distritos.forEach(dist => {
                 const group = state.filteredData.filter(d => d['Gerente de Distrito'] === dist);
                 if(group.length) {
                     labels.push(dist.substring(0, 15) + (dist.length>15?'...':''));
-                    dataAuditoria.push(calcAvg(group, 'LA GAS Auditoria'));
-                    dataMystery.push(calcAvg(group, 'PROTOCOLO MYSTERY'));
-                    dataOcupacion.push(calcAvg(group, 'OCUPACION DE PLANTILLAS'));
-                    dataCertificacion.push(calcAvg(group, 'CERTIFICACION GERENTES'));
+                    
+                    // Helper para obtener promedio, total y desglose de metas por cada KPI
+                    const getStats = (key, meta) => {
+                        const valid = group.filter(d => typeof d[key] === 'number');
+                        if(!valid.length) return { avg: null, total: 0, meta: 0, noMeta: 0 };
+                        return {
+                            avg: valid.reduce((acc, curr) => acc + curr[key], 0) / valid.length,
+                            total: valid.length,
+                            meta: valid.filter(d => d[key] >= meta).length,
+                            noMeta: valid.filter(d => d[key] < meta).length
+                        };
+                    };
+
+                    const statAud = getStats('LA GAS Auditoria', CONFIG.metas['LA GAS Auditoria']);
+                    const statMys = getStats('PROTOCOLO MYSTERY', CONFIG.metas['PROTOCOLO MYSTERY']);
+                    const statOcu = getStats('OCUPACION DE PLANTILLAS', CONFIG.metas['OCUPACION DE PLANTILLAS']);
+                    const statCer = getStats('CERTIFICACION GERENTES', CONFIG.metas['CERTIFICACION GERENTES']);
+
+                    statsDistrito.auditoria.push(statAud);
+                    statsDistrito.mystery.push(statMys);
+                    statsDistrito.ocupacion.push(statOcu);
+                    statsDistrito.certificacion.push(statCer);
+
+                    dataAuditoria.push(statAud.avg);
+                    dataMystery.push(statMys.avg);
+                    dataOcupacion.push(statOcu.avg);
+                    dataCertificacion.push(statCer.avg);
                 }
             });
 
@@ -790,8 +893,8 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Auditoria', data: dataAuditoria, backgroundColor: CONFIG.colors.chartAuditoria, borderRadius: 2 },
-                        { label: 'Mystery', data: dataMystery, backgroundColor: CONFIG.colors.chartMystery, borderRadius: 2 },
+                        { label: 'Auditoria LA GAS', data: dataAuditoria, backgroundColor: CONFIG.colors.chartAuditoria, borderRadius: 2 },
+                        { label: 'Protocolo Mystery', data: dataMystery, backgroundColor: CONFIG.colors.chartMystery, borderRadius: 2 },
                         { label: 'Ocupación', data: dataOcupacion, backgroundColor: CONFIG.colors.chartOcupacion, borderRadius: 2 },
                         { label: 'Certificación', data: dataCertificacion, backgroundColor: CONFIG.colors.chartCertificacion, borderRadius: 2 }
                     ]
@@ -804,7 +907,19 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                    let stat;
+                                    if (context.datasetIndex === 0) stat = statsDistrito.auditoria[context.dataIndex];
+                                    else if (context.datasetIndex === 1) stat = statsDistrito.mystery[context.dataIndex];
+                                    else if (context.datasetIndex === 2) stat = statsDistrito.ocupacion[context.dataIndex];
+                                    else if (context.datasetIndex === 3) stat = statsDistrito.certificacion[context.dataIndex];
+                                    
+                                    if (!stat || stat.total === 0) return context.dataset.label + ': Sin datos';
+                                    return [
+                                        `${context.dataset.label} (Promedio): ${Math.round(stat.avg)}%`,
+                                        `Total Evaluaciones: ${stat.total}`,
+                                        `Sucursales que llegaron a su meta: ${stat.meta}`,
+                                        `Sucursales que no llegaron a la meta: ${stat.noMeta}`
+                                    ];
                                 }
                             }
                         }
@@ -826,18 +941,33 @@
             const MESES_COMPLETOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-            // Calcular valores pero mantener los null para meses sin datos
-            const dataAuditoriaMes = MESES_COMPLETOS.map((mes) => {
+            // Calcular estadísticas detalladas para Auditoría (Mensual)
+            const statsAuditoriaMes = MESES_COMPLETOS.map((mes) => {
                 const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
                 const valid = dataMes.filter(d => typeof d['LA GAS Auditoria'] === 'number');
-                return valid.length ? valid.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / valid.length : null;
+                if (!valid.length) return null;
+                return {
+                    avg: valid.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / valid.length,
+                    total: valid.length,
+                    meta: valid.filter(d => d['LA GAS Auditoria'] >= CONFIG.metas['LA GAS Auditoria']).length,
+                    noMeta: valid.filter(d => d['LA GAS Auditoria'] < CONFIG.metas['LA GAS Auditoria']).length
+                };
             });
+            const dataAuditoriaMes = statsAuditoriaMes.map(s => s ? s.avg : null);
 
-            const dataMysteryMes = MESES_COMPLETOS.map((mes) => {
+            // Calcular estadísticas detalladas para Protocolo Mystery (Mensual)
+            const statsMysteryMes = MESES_COMPLETOS.map((mes) => {
                 const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
                 const valid = dataMes.filter(d => typeof d['PROTOCOLO MYSTERY'] === 'number');
-                return valid.length ? valid.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / valid.length : null;
+                if (!valid.length) return null;
+                return {
+                    avg: valid.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / valid.length,
+                    total: valid.length,
+                    meta: valid.filter(d => d['PROTOCOLO MYSTERY'] >= CONFIG.metas['PROTOCOLO MYSTERY']).length,
+                    noMeta: valid.filter(d => d['PROTOCOLO MYSTERY'] < CONFIG.metas['PROTOCOLO MYSTERY']).length
+                };
             });
+            const dataMysteryMes = statsMysteryMes.map(s => s ? s.avg : null);
             
             // 1. Auditoría LA GAS (Mensual)
             const ctxAud = document.getElementById('auditoriaChart').getContext('2d');
@@ -869,7 +999,14 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                    const stats = statsAuditoriaMes[context.dataIndex];
+                                    if (!stats) return '';
+                                    return [
+                                        `Promedio: ${Math.round(stats.avg)}%`,
+                                        `Total Evaluaciones: ${stats.total}`,
+                                        `Sucursales que llegaron a su meta: ${stats.meta}`,
+                                        `Sucursales que no llegaron a la meta: ${stats.noMeta}`
+                                    ];
                                 }
                             }
                         }
@@ -911,7 +1048,14 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                    const stats = statsMysteryMes[context.dataIndex];
+                                    if (!stats) return '';
+                                    return [
+                                        `Promedio: ${Math.round(stats.avg)}%`,
+                                        `Total Evaluaciones: ${stats.total}`,
+                                        `Sucursales que llegaron a su meta: ${stats.meta}`,
+                                        `Sucursales que no llegaron a la meta: ${stats.noMeta}`
+                                    ];
                                 }
                             }
                         }
@@ -939,6 +1083,18 @@
             });
             const dataSucursal = sucursalesData.map(d => d.cumplimientoGeneral);
 
+            // Calcular el detalle de meses por cada sucursal para el Tooltip
+            const statsSucursal = sucursalesData.map(d => {
+                const records = state.filteredData.filter(r => r['Negocio'] === d['Negocio']);
+                const valid = records.filter(r => r.cumplimientoGeneral > 0);
+                return {
+                    avg: d.cumplimientoGeneral,
+                    total: valid.length,
+                    meta: valid.filter(r => r.cumplimientoGeneral >= 90).length,
+                    noMeta: valid.filter(r => r.cumplimientoGeneral < 90).length
+                };
+            });
+
             const ctxSuc = document.getElementById('sucursalChart').getContext('2d');
             if(state.sucursalChartInstance) state.sucursalChartInstance.destroy();
             state.sucursalChartInstance = new Chart(ctxSuc, {
@@ -960,7 +1116,14 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                    const stats = statsSucursal[context.dataIndex];
+                                    if (!stats) return '';
+                                    return [
+                                        `Cumplimiento General: ${Math.round(stats.avg)}%`,
+                                        `Meses Evaluados: ${stats.total}`,
+                                        `Meses que cumplieron la meta: ${stats.meta}`,
+                                        `Meses sin cumplir la meta: ${stats.noMeta}`
+                                    ];
                                 }
                             }
                         }
