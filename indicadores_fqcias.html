@@ -286,7 +286,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m1)]">ServSafe</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 95%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                     </div>
                     <h3 id="kpi-srv" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-srv" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -323,7 +323,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p id="label-altas" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-indigo-500">BKU / PTE ALTAS</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
                     </div>
                     <h3 id="kpi-altas" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-altas" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -377,7 +377,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest text-[#1F3864]">Cert. Gerencial</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 95%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                     </div>
                     <h3 id="kpi-cert" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-cert" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -578,8 +578,10 @@
                         <span id="meta-badge-cadena" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chart-cadena"></canvas>
+                <div class="scrollable-chart-container">
+                    <div id="chart-cadena-wrapper" style="min-width: 100%; height: 450px;">
+                        <canvas id="chart-cadena"></canvas>
+                    </div>
                 </div>
             </div>
             
@@ -647,9 +649,9 @@
                             <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Cadena</th>
                             <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Sucursal</th>
                             <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Gerente</th>
-                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center" title="Gerentes">G (P)</th>
-                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center" title="Subgerentes">S (P)</th>
-                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center" title="Colaboradores">C (P)</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center" title="Gerentes">GERENTES</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center" title="Subgerentes">SUBGERENTES</th>
+                            <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center" title="Colaboradores">COLABORADORES</th>
                             
                             <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 border-l border-slate-200 text-center">Cert. Ger</th>
                             <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 text-center">Ocup. Plan</th>
@@ -2376,7 +2378,18 @@
                 const pro = active.length > 0 ? safeAvg(active, function(x){ return x.v; }) : null;
                 
                 return { label: g, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rotacion: rot, pro: pro, avgBajas: Math.round(totalAvgBajas), plantilla: sumPlantilla };
-            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; }).slice(0, 15);
+            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; });
+
+            if (field === 'sucursal') {
+                const wrapper = document.getElementById('chart-cadena-wrapper');
+                if (wrapper) {
+                    const calculatedWidth = Math.max(1000, stats.length * 120);
+                    wrapper.style.minWidth = calculatedWidth + 'px';
+                }
+            } else {
+                const wrapper = document.getElementById('chart-cadena-wrapper');
+                if (wrapper) wrapper.style.minWidth = '100%';
+            }
 
             const ind = selections.indicador;
             const ds = [];
@@ -2412,11 +2425,12 @@
                     responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
-                        datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                        datalabels: { display: false }, 
+                        tooltip: genericTooltipWithRaw
                     },
                     scales: {
                         y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
-                        x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: { size: 10 } } }
                     }
                 }
             });
@@ -2544,7 +2558,7 @@
                     },
                     scales: {
                         y: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } }, border: { dash: [4,4] } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: { size: 10 } } }
                     }
                 }
             });
@@ -2751,6 +2765,11 @@
                     const valid = rows.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
                     return valid.length ? valid[valid.length - 1] : null;
                 }
+                
+                function getLStr(extractor) {
+                    const valid = rows.map(extractor).filter(function(v) { return v !== null && v !== undefined && v !== ''; });
+                    return valid.length ? valid[valid.length - 1] : null;
+                }
 
                 let sumBajas = 0;
                 rows.forEach(function(d) { sumBajas += (d.bajas || 0); });
@@ -2794,7 +2813,7 @@
 
                 return {
                     region: rows[0].region, distrito: rows[0].distrito, cadena: rows[0].cadena, sucursal: suc,
-                    gerente: getL(function(d){ return d.gerente; }) || 'S/G',
+                    gerente: getLStr(function(d){ return d.gerente; }) || 'S/G',
                     gerP: gerP, subP: subP, colP: colP, cert: cert, ocup: ocup, sucesion: colSucesion, rotacion: rotacion,
                     srv: srv, m2: m2, m3: m3, promedio: pro
                 };
