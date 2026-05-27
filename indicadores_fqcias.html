@@ -286,7 +286,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m1)]">ServSafe</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 95%</span>
                     </div>
                     <h3 id="kpi-srv" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-srv" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -323,7 +323,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p id="label-altas" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-indigo-500">BKU / PTE ALTAS</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                     </div>
                     <h3 id="kpi-altas" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-altas" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -377,7 +377,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest text-[#1F3864]">Cert. Gerencial</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 95%</span>
                     </div>
                     <h3 id="kpi-cert" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-cert" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -1678,15 +1678,19 @@
             renderZpChart();
             renderGerenteChart(); 
             
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const titleCadenaEl = document.getElementById('title-chart-cadena');
+            const wrapperCadena = document.getElementById('export-chart-cadena');
             
-            if (isHierarchyFiltered) {
+            if (selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos') {
+                if (wrapperCadena) wrapperCadena.classList.remove('hidden');
                 if (titleCadenaEl) titleCadenaEl.innerText = "Comparativa por Unidades de Negocio";
                 renderBarChart('chart-cadena', 'sucursal');
-            } else {
+            } else if (selections.cadena === 'Todos') {
+                if (wrapperCadena) wrapperCadena.classList.remove('hidden');
                 if (titleCadenaEl) titleCadenaEl.innerText = "Comparativa por Franquicia";
                 renderBarChart('chart-cadena', 'cadena');
+            } else {
+                if (wrapperCadena) wrapperCadena.classList.add('hidden');
             }
             
             renderDistritoChart();
@@ -2224,6 +2228,7 @@
                         const lblM3 = isChurchs ? 'OER/RAV' : 'REV Standard';
                         return [
                             "Sucursal: " + m.sucursal, "Gerente: " + m.gerente,
+                            "Gerente Certificado: " + (m.raw.certGerNum > 0 ? 'Sí' : 'No'),
                             "ServSafe: " + (m.srv !== null ? m.srv + '%' : 'S/D'),
                             lblM2 + ": " + (m.m2 !== null ? m.m2 + '%' : 'S/D'),
                             lblM3 + ": " + (m.m3 !== null ? m.m3 + '%' : 'S/D'),
@@ -2340,14 +2345,12 @@
             
             const stats = groups.map(function(g) {
                 const sub = FilteredData.filter(function(d){ return d[field] === g; });
-                const srv = safeAvg(sub, function(d){ return d.srv; });
-                const m2 = safeAvg(sub, function(d){ return d.m2; });
-                const m3 = safeAvg(sub, function(d){ return d.m3; });
-                const cert = safeAvg(sub, function(d){ return d.rrhh.certGerencial; });
-                const ocup = safeAvg(sub, function(d){ return d.rrhh.ocPlantilla; });
-
+                
+                let sumGerP = 0, sumSubP = 0, sumCertGer = 0, sumCertSub = 0, sumGerSrv = 0, sumSubSrv = 0;
+                let sumOcup = 0, countOcup = 0;
                 let totalAvgBajas = 0;
                 let sumPlantilla = 0;
+
                 const uSucs = new Set();
                 sub.forEach(function(d){ uSucs.add(d.sucursal); });
                 Array.from(uSucs).forEach(function(suc) {
@@ -2359,9 +2362,23 @@
                     });
                     totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
 
-                    const latest = branchSub[branchSub.length - 1];
-                    if (latest) {
-                        sumPlantilla += latest.totalPlantillaOcupada || 0;
+                    function getL(extractor) {
+                        const valid = branchSub.map(extractor).filter(function(v) { return v !== null && v !== undefined && !isNaN(v); });
+                        return valid.length ? valid[valid.length - 1] : null;
+                    }
+
+                    sumPlantilla += getL(function(d){ return d.totalPlantillaOcupada; }) || 0;
+                    sumGerP += getL(function(d){ return d.gerP; }) || 0;
+                    sumSubP += getL(function(d){ return d.subP; }) || 0;
+                    sumCertGer += getL(function(d){ return d.certGerNum; }) || 0;
+                    sumCertSub += getL(function(d){ return d.certSubNum; }) || 0;
+                    sumGerSrv += getL(function(d){ return d.gerSrv; }) || 0;
+                    sumSubSrv += getL(function(d){ return d.subSrv; }) || 0;
+
+                    const ocP = getL(function(d){ return d.rrhh ? d.rrhh.ocPlantilla : null; });
+                    if (ocP !== null) { 
+                        sumOcup += ocP; 
+                        countOcup++; 
                     }
                 });
                 
@@ -2370,6 +2387,13 @@
                     rot = Math.round((totalAvgBajas / sumPlantilla) * 100);
                 }
 
+                const srv = (sumGerP + sumSubP) > 0 ? ((sumGerSrv + sumSubSrv) / (sumGerP + sumSubP)) * 100 : null;
+                const cert = (sumGerP + sumSubP) > 0 ? ((sumCertGer + sumCertSub) / (sumGerP + sumSubP)) * 100 : null;
+                const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
+                
+                const m2 = safeAvg(sub, function(d){ return d.m2; });
+                const m3 = safeAvg(sub, function(d){ return d.m3; });
+
                 const active = [];
                 if (srv !== null) active.push({v:srv});
                 if (m2 !== null) active.push({v:m2});
@@ -2377,8 +2401,23 @@
 
                 const pro = active.length > 0 ? safeAvg(active, function(x){ return x.v; }) : null;
                 
-                return { label: g, srv: srv, m2: m2, m3: m3, cert: cert, ocup: ocup, rotacion: rot, pro: pro, avgBajas: Math.round(totalAvgBajas), plantilla: sumPlantilla };
-            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; });
+                return { 
+                    label: g, 
+                    srv: srv !== null ? Math.round(srv) : null, 
+                    m2: m2 !== null ? Math.round(m2) : null, 
+                    m3: m3 !== null ? Math.round(m3) : null, 
+                    cert: cert !== null ? Math.round(cert) : null, 
+                    ocup: ocup !== null ? Math.round(ocup) : null, 
+                    rotacion: rot, pro: pro, avgBajas: Math.round(totalAvgBajas), plantilla: sumPlantilla 
+                };
+            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ 
+                let valA = a.cert !== null ? a.cert : -1;
+                let valB = b.cert !== null ? b.cert : -1;
+                if (valB === valA) {
+                    return (b.pro || 0) - (a.pro || 0);
+                }
+                return valB - valA; 
+            });
 
             if (field === 'sucursal') {
                 const wrapper = document.getElementById('chart-cadena-wrapper');
