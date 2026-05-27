@@ -64,9 +64,6 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button onclick="exportToCSV()" class="p-2.5 rounded-xl border border-azul-muy-claro hover:bg-azul-muy-claro/20 transition-colors text-azul-claro">
-                        <i data-lucide="download" class="w-5 h-5"></i>
-                    </button>
                     <button onclick="refreshData()" class="bg-azul-fuerte text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-all shadow-md">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden sm:inline">Actualizar</span>
                     </button>
@@ -117,39 +114,53 @@
 
         <main class="flex-grow max-w-[1600px] mx-auto px-4 sm:px-6 py-8 w-full space-y-8">
             
-            <!-- KPIs -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Conectados - Azul Fuerte -->
-                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
-                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4 text-azul-fuerte">Colaboradores Conectados</p>
-                    <div class="flex items-end justify-between">
-                        <h3 id="kpiAsistentes" class="text-5xl font-black text-slate-900 tracking-tighter">--</h3>
-                        <div class="p-3 bg-azul-fuerte/10 rounded-2xl text-azul-fuerte">
-                            <i data-lucide="monitor" class="w-6 h-6"></i>
+            <!-- KPIs (Estilo actualizado) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Card 1: Conectados (Con borde activo) -->
+                <div class="bg-white p-5 rounded-2xl border border-azul-fuerte shadow-sm flex flex-col justify-between kpi-card">
+                    <p class="text-[10px] font-bold text-azul-claro uppercase tracking-widest mb-2">Colaboradores Conectados</p>
+                    <div class="flex items-end justify-between mt-3">
+                        <h3 id="kpiAsistentes" class="text-4xl font-black text-slate-900 tracking-tight leading-none">--</h3>
+                        <div class="w-8 h-8 bg-azul-fuerte/10 rounded-lg flex items-center justify-center text-azul-fuerte">
+                            <i data-lucide="award" class="w-4 h-4"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Plantilla - Azul Claro -->
-                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
-                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-4">Plantilla </p>
-                    <div class="flex items-end justify-between">
-                        <h3 id="kpiPlantilla" class="text-5xl font-black text-slate-900 tracking-tighter">--</h3>
-                        <div class="p-3 bg-azul-claro/10 rounded-2xl text-azul-claro">
-                            <i data-lucide="users-round" class="w-6 h-6"></i>
+                <!-- Card 2: Plantilla -->
+                <div class="bg-white p-5 rounded-2xl border border-azul-muy-claro shadow-sm flex flex-col justify-between kpi-card">
+                    <p class="text-[10px] font-bold text-azul-claro uppercase tracking-widest mb-2">Plantilla</p>
+                    <div class="flex items-end justify-between mt-3">
+                        <h3 id="kpiPlantilla" class="text-4xl font-black text-slate-900 tracking-tight leading-none">--</h3>
+                        <div class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
+                            <i data-lucide="users" class="w-4 h-4"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Porcentaje - Azul Fuerte -->
-                <div class="kpi-card bg-white p-7 rounded-[2rem] shadow-sm border border-azul-muy-claro flex flex-col justify-between">
-                    <p class="text-[11px] font-bold text-azul-claro uppercase tracking-widest mb-1">% Cumplimiento (Meta 30% Plantilla)</p>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 id="kpiPorcentaje" class="text-5xl font-black text-slate-900 tracking-tighter">--%</h3>
-                        <div id="statusDot" class="w-4 h-4 rounded-full bg-azul-muy-claro animate-pulse"></div>
+                <!-- Card 3: % Cumplimiento -->
+                <div class="bg-white p-5 rounded-2xl border border-azul-muy-claro shadow-sm flex flex-col justify-between relative kpi-card">
+                    <div class="flex justify-between items-start">
+                        <p class="text-[10px] font-bold text-azul-claro uppercase tracking-widest">% Cumplimiento</p>
+                        <div class="w-2 h-2 rounded-full bg-slate-200 mt-1"></div>
                     </div>
-                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div id="kpiProgressBar" class="bg-azul-fuerte h-full w-0 transition-all duration-1000"></div>
+                    <div class="mt-1">
+                        <h3 id="kpiPorcentaje" class="text-4xl font-black text-slate-900 tracking-tight leading-none mb-2">--%</h3>
+                        <p id="kpiDetalleMeta" class="text-[10px] font-medium text-slate-500 mb-2">-- de -- colaboradores (Meta 30%)</p>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                            <div id="kpiProgressBar" class="bg-azul-fuerte h-full w-0 transition-all duration-1000"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Faltantes -->
+                <div class="bg-white p-5 rounded-2xl border border-azul-muy-claro shadow-sm flex flex-col justify-between kpi-card">
+                    <p class="text-[10px] font-bold text-azul-claro uppercase tracking-widest mb-2">Conectados Faltantes</p>
+                    <div class="flex items-end justify-between mt-3">
+                        <h3 id="kpiFaltantes" class="text-4xl font-black text-azul-claro tracking-tight leading-none">--</h3>
+                        <div class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
+                            <i data-lucide="target" class="w-4 h-4"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -377,16 +388,24 @@
             const totalPlan = data.reduce((s, d) => s + d.plantilla, 0);
             const totalMeta = data.reduce((s, d) => s + d.meta, 0);
             
-            // Calculamos el porcentaje en base a la Meta en lugar de la Plantilla Total
+            // Cálculos
             const metaPct = totalMeta > 0 ? (totalAsis / totalMeta) * 100 : 0;
+            const faltantes = Math.max(0, totalMeta - totalAsis); // No permite números negativos si superan la meta
 
+            // Actualización de Tarjetas
             document.getElementById('kpiAsistentes').textContent = Math.round(totalAsis).toLocaleString('en-US');
             document.getElementById('kpiPlantilla').textContent = Math.round(totalPlan).toLocaleString('en-US');
+            
+            // Tarjeta de Porcentaje y Barra
             document.getElementById('kpiPorcentaje').textContent = Math.round(metaPct) + "%";
-
+            document.getElementById('kpiDetalleMeta').textContent = `${Math.round(totalAsis).toLocaleString('en-US')} de ${Math.round(totalMeta).toLocaleString('en-US')} colaboradores (Meta 30%)`;
+            
             const bar = document.getElementById('kpiProgressBar');
             bar.style.width = Math.min(metaPct, 100) + "%";
             bar.className = `h-full transition-all duration-1000 ${metaPct >= 95 ? 'bg-emerald-500' : (metaPct >= 80 ? 'bg-azul-fuerte' : 'bg-rose-500')}`;
+
+            // Tarjeta de Faltantes
+            document.getElementById('kpiFaltantes').textContent = Math.round(faltantes).toLocaleString('en-US');
         }
 
         function renderCharts(finalData, rawFiltered) {
@@ -507,15 +526,6 @@
         function updateLastSync() {
             const n = new Date();
             document.getElementById('lastUpdateLabel').textContent = `Sincronizado: ${n.getHours()}:${n.getMinutes().toString().padStart(2,'0')}`;
-        }
-
-        function exportToCSV() {
-            let csv = "Cadena,Meta,Conectados,Plantilla,Porcentaje\n";
-            rawData.forEach(d => { csv += `"${d.cadena}",${d.meta},${d.asistentes},${d.plantilla},${d.porcentaje}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'Detalle_Sesion_Etica.csv'; a.click();
         }
     </script>
 </body>
