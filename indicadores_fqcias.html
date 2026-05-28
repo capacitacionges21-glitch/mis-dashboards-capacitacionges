@@ -559,12 +559,12 @@
                 </div>
             </div>
 
-            <!-- BKU / PTE -->
+            <!-- BKU / PTE (TENDENCIA MENSUAL) -->
             <div id="export-chart-bku" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
                     <div class="flex items-center gap-3">
-                        <h3 class="text-xl font-bold text-slate-800 tracking-tight">BKU / PTE por Franquicia</h3>
+                        <h3 id="title-chart-bku" class="text-xl font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU / PTE</h3>
                         <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 90%</span>
                     </div>
                 </div>
@@ -573,12 +573,12 @@
                 </div>
             </div>
 
-            <!-- BKU / PTE ALTAS -->
+            <!-- BKU / PTE ALTAS (TENDENCIA MENSUAL) -->
             <div id="export-chart-altas" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full bg-indigo-500"></div>
                     <div class="flex items-center gap-3">
-                        <h3 class="text-xl font-bold text-slate-800 tracking-tight">BKU / PTE ALTAS por Franquicia</h3>
+                        <h3 id="title-chart-altas" class="text-xl font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU / PTE ALTAS</h3>
                         <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Métrica</span>
                     </div>
                 </div>
@@ -587,12 +587,12 @@
                 </div>
             </div>
 
-            <!-- ROTACIÓN -->
+            <!-- ROTACIÓN (TENDENCIA MENSUAL) -->
             <div id="export-chart-rotacion" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full bg-amber-500"></div>
                     <div class="flex items-center gap-3">
-                        <h3 class="text-xl font-bold text-slate-800 tracking-tight">Rotación por Franquicia</h3>
+                        <h3 id="title-chart-rotacion" class="text-xl font-bold text-slate-800 tracking-tight">Tendencia Mensual de Rotación</h3>
                         <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Métrica</span>
                     </div>
                 </div>
@@ -733,6 +733,8 @@
             'default': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' }
         };
 
+        const lineColors = ['#2F5597', '#F59E0B', '#10B981', '#6366F1', '#EF4444', '#8B5CF6', '#14B8A6', '#F43F5E', '#06B6D4', '#D946EF'];
+
         let RawData = [];
         let FilteredData = [];
         let ChartsObj = {};
@@ -751,7 +753,6 @@
             lucide.createIcons();
         };
 
-        // UI Toast Notification Helper
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -891,9 +892,13 @@
                 sucursales.forEach((sucursal, sIdx) => {
                     const distrito = distritos[sIdx % distritos.length];
                     const gerente = gerentes[sIdx % gerentes.length];
+                    
+                    const gerAut = 1;
+                    const subAut = 1 + (sIdx % 2);
                     const colAut = 12 + (sIdx % 3) * 4;
+
                     const gerP = (gerente === 'S/G') ? 0 : 1;
-                    const subP = 1 + (sIdx % 2);
+                    const subP = subAut;
                     const colP = Math.round(colAut * 0.9);
                     
                     const gerSrv = gerP;
@@ -913,10 +918,15 @@
                     row[3] = gerente;
                     row[4] = sourceName;
                     row[5] = sucursal;
-                    row[8] = colAut.toString();
+                    
+                    row[6] = gerAut.toString(); 
+                    row[7] = subAut.toString(); 
+                    row[8] = colAut.toString(); 
+
                     row[9] = gerP.toString();
                     row[10] = subP.toString();
                     row[11] = colP.toString();
+                    
                     row[12] = gerSrv.toString();
                     row[13] = subSrv.toString();
                     row[14] = srvPct + "%";
@@ -982,10 +992,16 @@
                     }
                 }
 
-                let colAut = parseCount(row[8]) || 0; 
-                let gerP = parseCount(row[9]);
-                let subP = parseCount(row[10]);
-                let colP = parseCount(row[11]);
+                let gerAut = parseCount(row[6]) || 0;
+                let subAut = parseCount(row[7]) || 0;
+                let colAut = parseCount(row[8]) || 0;
+                let totalPlantillaAutorizada = gerAut + subAut + colAut;
+
+                let gerP = parseCount(row[9]) || 0;
+                let subP = parseCount(row[10]) || 0;
+                let colP = parseCount(row[11]) || 0;
+                let totalPlantillaOcupada = gerP + subP + colP;
+
                 let gerSrv = parseCount(row[12]);
                 let subSrv = parseCount(row[13]);
                 let bkuCol = parseCount(row[15]);
@@ -994,8 +1010,6 @@
                 
                 let gerenteStr = row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente';
                 if (gerenteStr.toUpperCase() === 'S/G') gerenteStr = 'Sin Gerente';
-
-                let totalPlantillaOcupada = (gerP || 0) + (subP || 0) + (colP || 0);
 
                 if (isChurchsObj) {
                     srv = parsePct(row[14]); 
@@ -1069,8 +1083,9 @@
                     distrito: row[2], gerente: gerenteStr,
                     cadena: row[4], sucursal: row[5],
                     gerente_sucursal: row[5] + ' - ' + gerenteStr,
-                    colAut: colAut, altasCount: altasCount, pctAltas: pctAltas,
+                    gerAut: gerAut, subAut: subAut, colAut: colAut, totalPlantillaAutorizada: totalPlantillaAutorizada,
                     gerP: gerP, subP: subP, colP: colP, totalPlantillaOcupada: totalPlantillaOcupada,
+                    altasCount: altasCount, pctAltas: pctAltas,
                     gerSrv: gerSrv, subSrv: subSrv, bkuCol: bkuCol,
                     certGerNum: certGerNum, certSubNum: certSubNum,
                     srv: srv, m2: m2, m3: m3, promedio: promedio,
@@ -1123,10 +1138,16 @@
                                 }
                             }
 
-                            let colAut = parseCount(row[8]) || 0; 
-                            let gerP = parseCount(row[9]);
-                            let subP = parseCount(row[10]);
-                            let colP = parseCount(row[11]);
+                            let gerAut = parseCount(row[6]) || 0;
+                            let subAut = parseCount(row[7]) || 0;
+                            let colAut = parseCount(row[8]) || 0;
+                            let totalPlantillaAutorizada = gerAut + subAut + colAut;
+
+                            let gerP = parseCount(row[9]) || 0;
+                            let subP = parseCount(row[10]) || 0;
+                            let colP = parseCount(row[11]) || 0;
+                            let totalPlantillaOcupada = gerP + subP + colP;
+
                             let gerSrv = parseCount(row[12]);
                             let subSrv = parseCount(row[13]);
                             let bkuCol = parseCount(row[15]);
@@ -1135,8 +1156,6 @@
                             
                             let gerenteStr = row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente';
                             if (gerenteStr.toUpperCase() === 'S/G') gerenteStr = 'Sin Gerente';
-
-                            let totalPlantillaOcupada = (gerP || 0) + (subP || 0) + (colP || 0);
 
                             if (isChurchs) {
                                 srv = parsePct(row[14]); 
@@ -1216,7 +1235,6 @@
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, function(x){return x.v;}) : null;
 
-                            // Comprobar rigurosamente si la fila no tiene ningún dato (para evitar mostrar meses futuros sin info)
                             let rawBajas = isChurchs ? parseCount(row[25]) : parseCount(row[35]);
                             let rawAltas = parseCount(row[16]);
                             const hasAnyData = srv !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
@@ -1237,8 +1255,9 @@
                                 distrito: row[2] ? row[2].toString().trim() : 'S/D', gerente: gerenteStr,
                                 cadena: row[4] ? row[4].toString().trim() : sourceName, sucursal: row[5] ? row[5].toString().trim() : 'S/S',
                                 gerente_sucursal: (row[5] ? row[5].toString().trim() : 'S/S') + ' - ' + gerenteStr,
-                                colAut: colAut, altasCount: altasCount, pctAltas: pctAltas,
+                                gerAut: gerAut, subAut: subAut, colAut: colAut, totalPlantillaAutorizada: totalPlantillaAutorizada,
                                 gerP: gerP, subP: subP, colP: colP, totalPlantillaOcupada: totalPlantillaOcupada,
+                                altasCount: altasCount, pctAltas: pctAltas,
                                 gerSrv: gerSrv, subSrv: subSrv, bkuCol: bkuCol,
                                 certGerNum: certGerNum, certSubNum: certSubNum,
                                 srv: srv, m2: m2, m3: m3, promedio: promedio,
@@ -1608,11 +1627,11 @@
             FilteredData.forEach(function(d){ uniqueSucursales.add(d.sucursal); });
             const count = uniqueSucursales.size;
             
+            let sumGerAut = 0, sumSubAut = 0, sumColAut = 0, sumTotalPlantillaAutorizada = 0;
             let sumGerP = 0, sumSubP = 0, sumColP = 0;
             let sumGerSrv = 0, sumSubSrv = 0, sumBkuCol = 0, sumAltasCount = 0;
             let sumCertGer = 0, sumCertSub = 0;
             let sumTotalPlantillaOcupada = 0;
-            let sumColAut = 0;
             let sumSucGer = 0, sumSucSub = 0;
             let sumOcup = 0, countOcup = 0;
             let totalAvgBajas = 0;
@@ -1635,17 +1654,22 @@
                     if(d.rrhh && d.rrhh.sucesionSub > branchMaxSub) branchMaxSub = d.rrhh.sucesionSub;
                 });
                 
+                sumGerAut += getLatest('gerAut');
+                sumSubAut += getLatest('subAut');
+                sumColAut += getLatest('colAut');
+                sumTotalPlantillaAutorizada += getLatest('totalPlantillaAutorizada');
+
                 sumGerP += getLatest('gerP');
                 sumSubP += getLatest('subP');
                 sumColP += getLatest('colP');
-                sumColAut += getLatest('colAut');
+                sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
+
                 sumGerSrv += getLatest('gerSrv');
                 sumSubSrv += getLatest('subSrv');
                 sumBkuCol += getLatest('bkuCol');
                 sumAltasCount += getLatest('altasCount');
                 sumCertGer += getLatest('certGerNum');
                 sumCertSub += getLatest('certSubNum');
-                sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
 
                 let branchBajas = 0;
                 sub.forEach(function(d) {
@@ -1745,7 +1769,11 @@
             
             const detailOcup = document.getElementById('detail-ocup');
             if (detailOcup) {
-                detailOcup.innerHTML = sumTotalPlantillaOcupada + " Ocupados de " + sumColAut + " Autorizados<br>" + sumGerP + " Gtes. &bull; " + sumSubP + " Subs. &bull; " + sumColP + " Colab.";
+                detailOcup.innerHTML = 
+                    "Totales: " + sumTotalPlantillaOcupada + " ocup. / " + sumTotalPlantillaAutorizada + " aut.<br>" +
+                    "Gtes: " + sumGerP + "/" + sumGerAut + " &bull; " +
+                    "Subs: " + sumSubP + "/" + sumSubAut + " &bull; " +
+                    "Colab: " + sumColP + "/" + sumColAut;
             }
             
             const srvDetail = document.getElementById('detail-srv');
@@ -2267,6 +2295,8 @@
             });
         }
 
+        // ---------- NUEVOS GRÁFICOS DE TENDENCIA (LÍNEAS) ----------
+
         function renderBKUFranquiciaChart() {
             if (ChartsObj['chart-bku-franquicia']) ChartsObj['chart-bku-franquicia'].destroy();
             if (FilteredData.length === 0) return;
@@ -2274,54 +2304,71 @@
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
 
+            const metricName = document.getElementById('label-m2') ? document.getElementById('label-m2').innerText : 'BKU / PTE';
+            const titleEl = document.getElementById('title-chart-bku');
+            if (titleEl) titleEl.innerText = isHierarchyFiltered ? "Tendencia Mensual " + metricName + " por Sucursal" : "Tendencia Mensual " + metricName + " por Franquicia";
+
             const uniqueGroups = new Set();
-            FilteredData.forEach(function(d){ uniqueGroups.add(d[field]); });
+            const uniqueMonths = new Set();
+            FilteredData.forEach(function(d){ 
+                uniqueGroups.add(d[field]); 
+                uniqueMonths.add(d.mes);
+            });
             const groups = Array.from(uniqueGroups);
+            const activeMonths = Array.from(uniqueMonths).sort(function(a,b){ return MESES_NOM.indexOf(a) - MESES_NOM.indexOf(b); });
 
-            let labels = [];
-            let values = [];
-            let rawValues = [];
-
-            groups.forEach(function(g) {
-                const sub = FilteredData.filter(function(d){ return d[field] === g; });
-                let sumBku = 0;
-                let sumPlantilla = 0;
-                const uSucs = new Set();
-                sub.forEach(function(d){ uSucs.add(d.sucursal); });
-                Array.from(uSucs).forEach(function(suc) {
-                    const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
-                    const latest = branchSub[branchSub.length - 1];
-                    if (latest) {
-                        sumBku += latest.bkuCol || 0;
-                        sumPlantilla += latest.totalPlantillaOcupada || 0;
+            const datasets = groups.map(function(g, i) {
+                const dataVals = [];
+                const rawVals = [];
+                activeMonths.forEach(function(mes) {
+                    const sub = FilteredData.filter(function(d){ return d[field] === g && d.mes === mes; });
+                    let sumBku = 0;
+                    let sumPlantilla = 0;
+                    sub.forEach(function(d) {
+                        sumBku += (d.bkuCol || 0);
+                        sumPlantilla += (d.totalPlantillaOcupada || 0);
+                    });
+                    if (sumPlantilla > 0) {
+                        const pct = (sumBku / sumPlantilla) * 100;
+                        dataVals.push(pct);
+                        rawVals.push([sumBku + " Colaboradores certificados", "de " + sumPlantilla + " en plantilla ocupada"]);
+                    } else {
+                        dataVals.push(null);
+                        rawVals.push(["Sin datos operativos en este mes"]);
                     }
                 });
                 
-                let pct = 0;
-                if (sumPlantilla > 0) pct = Math.round((sumBku / sumPlantilla) * 100);
-                
-                labels.push(g);
-                values.push(pct);
-                rawValues.push([sumBku + " Colaboradores certificados", "de " + sumPlantilla + " en plantilla ocupada"]);
+                return {
+                    label: g,
+                    data: dataVals,
+                    rawData: rawVals,
+                    borderColor: lineColors[i % lineColors.length],
+                    backgroundColor: lineColors[i % lineColors.length],
+                    tension: 0.3,
+                    pointRadius: 4,
+                    borderWidth: 2,
+                    fill: false
+                };
             });
 
             const ctx = document.getElementById('chart-bku-franquicia').getContext('2d');
             ChartsObj['chart-bku-franquicia'] = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'BKU / PTE',
-                        data: values,
-                        rawData: rawValues,
-                        backgroundColor: activePalette.m2,
-                        borderRadius: 6
-                    }]
+                    labels: activeMonths,
+                    datasets: datasets
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
-                    plugins: { legend: { display: false }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw },
-                    scales: { y: { min: 0, max: 100, ticks: { callback: function(v){ return Math.round(v) + '%'; } } }, x: { grid: { display: false } } }
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15 } },
+                    plugins: { 
+                        legend: { display: true, position: 'bottom', labels: { padding: 15, font: { size: 10, weight: 'bold' }, boxWidth: 12, usePointStyle: true } }, 
+                        datalabels: { display: false }, 
+                        tooltip: genericTooltipWithRaw 
+                    },
+                    scales: { 
+                        y: { min: 0, max: 100, ticks: { callback: function(v){ return Math.round(v) + '%'; } }, border: { dash: [4,4] } }, 
+                        x: { grid: { display: false } } 
+                    }
                 }
             });
         }
@@ -2333,54 +2380,71 @@
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
 
+            const metricNameAltas = document.getElementById('label-altas') ? document.getElementById('label-altas').innerText : 'BKU / PTE ALTAS';
+            const titleElAltas = document.getElementById('title-chart-altas');
+            if (titleElAltas) titleElAltas.innerText = isHierarchyFiltered ? "Tendencia Mensual " + metricNameAltas + " por Sucursal" : "Tendencia Mensual " + metricNameAltas + " por Franquicia";
+
             const uniqueGroups = new Set();
-            FilteredData.forEach(function(d){ uniqueGroups.add(d[field]); });
+            const uniqueMonths = new Set();
+            FilteredData.forEach(function(d){ 
+                uniqueGroups.add(d[field]); 
+                uniqueMonths.add(d.mes);
+            });
             const groups = Array.from(uniqueGroups);
+            const activeMonths = Array.from(uniqueMonths).sort(function(a,b){ return MESES_NOM.indexOf(a) - MESES_NOM.indexOf(b); });
 
-            let labels = [];
-            let values = [];
-            let rawValues = [];
-
-            groups.forEach(function(g) {
-                const sub = FilteredData.filter(function(d){ return d[field] === g; });
-                let sumAltas = 0;
-                let sumPlantilla = 0;
-                const uSucs = new Set();
-                sub.forEach(function(d){ uSucs.add(d.sucursal); });
-                Array.from(uSucs).forEach(function(suc) {
-                    const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
-                    const latest = branchSub[branchSub.length - 1];
-                    if (latest) {
-                        sumAltas += latest.altasCount || 0;
-                        sumPlantilla += latest.totalPlantillaOcupada || 0;
+            const datasets = groups.map(function(g, i) {
+                const dataVals = [];
+                const rawVals = [];
+                activeMonths.forEach(function(mes) {
+                    const sub = FilteredData.filter(function(d){ return d[field] === g && d.mes === mes; });
+                    let sumAltas = 0;
+                    let sumPlantilla = 0;
+                    sub.forEach(function(d) {
+                        sumAltas += (d.altasCount || 0);
+                        sumPlantilla += (d.totalPlantillaOcupada || 0);
+                    });
+                    if (sumPlantilla > 0) {
+                        const pct = (sumAltas / sumPlantilla) * 100;
+                        dataVals.push(pct);
+                        rawVals.push([sumAltas + " colaboradores de alta", "de " + sumPlantilla + " en plantilla ocupada"]);
+                    } else {
+                        dataVals.push(null);
+                        rawVals.push(["Sin datos operativos en este mes"]);
                     }
                 });
                 
-                let pct = 0;
-                if (sumPlantilla > 0) pct = Math.round((sumAltas / sumPlantilla) * 100);
-                
-                labels.push(g);
-                values.push(pct);
-                rawValues.push([sumAltas + " colaboradores de alta", "de " + sumPlantilla + " en plantilla ocupada"]);
+                return {
+                    label: g,
+                    data: dataVals,
+                    rawData: rawVals,
+                    borderColor: lineColors[i % lineColors.length],
+                    backgroundColor: lineColors[i % lineColors.length],
+                    tension: 0.3,
+                    pointRadius: 4,
+                    borderWidth: 2,
+                    fill: false
+                };
             });
 
             const ctx = document.getElementById('chart-altas-franquicia').getContext('2d');
             ChartsObj['chart-altas-franquicia'] = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Altas',
-                        data: values,
-                        rawData: rawValues,
-                        backgroundColor: '#6366F1',
-                        borderRadius: 6
-                    }]
+                    labels: activeMonths,
+                    datasets: datasets
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
-                    plugins: { legend: { display: false }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw },
-                    scales: { y: { min: 0, max: 100, ticks: { callback: function(v){ return Math.round(v) + '%'; } } }, x: { grid: { display: false } } }
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15 } },
+                    plugins: { 
+                        legend: { display: true, position: 'bottom', labels: { padding: 15, font: { size: 10, weight: 'bold' }, boxWidth: 12, usePointStyle: true } }, 
+                        datalabels: { display: false }, 
+                        tooltip: genericTooltipWithRaw 
+                    },
+                    scales: { 
+                        y: { min: 0, max: 100, ticks: { callback: function(v){ return Math.round(v) + '%'; } }, border: { dash: [4,4] } }, 
+                        x: { grid: { display: false } } 
+                    }
                 }
             });
         }
@@ -2392,57 +2456,75 @@
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
 
+            const titleElRot = document.getElementById('title-chart-rotacion');
+            if (titleElRot) titleElRot.innerText = isHierarchyFiltered ? "Tendencia Mensual Rotación por Sucursal" : "Tendencia Mensual Rotación por Franquicia";
+
             const uniqueGroups = new Set();
-            FilteredData.forEach(function(d){ uniqueGroups.add(d[field]); });
+            const uniqueMonths = new Set();
+            FilteredData.forEach(function(d){ 
+                uniqueGroups.add(d[field]); 
+                uniqueMonths.add(d.mes);
+            });
             const groups = Array.from(uniqueGroups);
+            const activeMonths = Array.from(uniqueMonths).sort(function(a,b){ return MESES_NOM.indexOf(a) - MESES_NOM.indexOf(b); });
 
-            let labels = [];
-            let values = [];
-            let rawValues = [];
-
-            groups.forEach(function(g) {
-                const sub = FilteredData.filter(function(d){ return d[field] === g; });
-                let totalAvgBajas = 0;
-                let sumPlantilla = 0;
-                const uSucs = new Set();
-                sub.forEach(function(d){ uSucs.add(d.sucursal); });
-                Array.from(uSucs).forEach(function(suc) {
-                    const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
-                    let branchBajas = 0;
-                    branchSub.forEach(function(d) { branchBajas += (d.bajas || 0); });
-                    totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
-                    const latest = branchSub[branchSub.length - 1];
-                    if (latest) sumPlantilla += latest.totalPlantillaOcupada || 0;
+            const datasets = groups.map(function(g, i) {
+                const dataVals = [];
+                const rawVals = [];
+                activeMonths.forEach(function(mes) {
+                    const sub = FilteredData.filter(function(d){ return d[field] === g && d.mes === mes; });
+                    let sumBajas = 0;
+                    let sumPlantilla = 0;
+                    sub.forEach(function(d) {
+                        sumBajas += (d.bajas || 0);
+                        sumPlantilla += (d.totalPlantillaOcupada || 0);
+                    });
+                    if (sumPlantilla > 0) {
+                        const rot = (sumBajas / sumPlantilla) * 100;
+                        dataVals.push(rot);
+                        rawVals.push([Math.round(sumBajas) + " bajas totales", "de " + sumPlantilla + " en plantilla ocupada"]);
+                    } else {
+                        dataVals.push(null);
+                        rawVals.push(["Sin datos operativos en este mes"]);
+                    }
                 });
                 
-                let rot = 0;
-                if (sumPlantilla > 0) rot = Math.round((totalAvgBajas / sumPlantilla) * 100);
-                
-                labels.push(g);
-                values.push(rot);
-                rawValues.push([Math.round(totalAvgBajas) + " bajas promedio", "de " + sumPlantilla + " en plantilla ocupada"]);
+                return {
+                    label: g,
+                    data: dataVals,
+                    rawData: rawVals,
+                    borderColor: lineColors[i % lineColors.length],
+                    backgroundColor: lineColors[i % lineColors.length],
+                    tension: 0.3,
+                    pointRadius: 4,
+                    borderWidth: 2,
+                    fill: false
+                };
             });
 
             const ctx = document.getElementById('chart-rotacion-franquicia').getContext('2d');
             ChartsObj['chart-rotacion-franquicia'] = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Rotación',
-                        data: values,
-                        rawData: rawValues,
-                        backgroundColor: '#F59E0B',
-                        borderRadius: 6
-                    }]
+                    labels: activeMonths,
+                    datasets: datasets
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
-                    plugins: { legend: { display: false }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw },
-                    scales: { y: { min: 0, max: 100, ticks: { callback: function(v){ return Math.round(v) + '%'; } } }, x: { grid: { display: false } } }
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15 } },
+                    plugins: { 
+                        legend: { display: true, position: 'bottom', labels: { padding: 15, font: { size: 10, weight: 'bold' }, boxWidth: 12, usePointStyle: true } }, 
+                        datalabels: { display: false }, 
+                        tooltip: genericTooltipWithRaw 
+                    },
+                    scales: { 
+                        y: { min: 0, max: 100, ticks: { callback: function(v){ return Math.round(v) + '%'; } }, border: { dash: [4,4] } }, 
+                        x: { grid: { display: false } } 
+                    }
                 }
             });
         }
+
+        // ---------- FIN DE GRÁFICOS DE TENDENCIA ----------
 
         function renderGerenteChart() {
             if (ChartsObj['chart-gerente']) ChartsObj['chart-gerente'].destroy();
@@ -3531,9 +3613,9 @@
 
                 await addSlide('export-kpis', 'Indicadores Clave de Desempeño');
                 await addSlide('export-chart-zp', 'Incidencia Zero Protocol');
-                await addSlide('export-chart-bku', 'BKU / PTE por Franquicia');
-                await addSlide('export-chart-altas', 'BKU / PTE ALTAS por Franquicia');
-                await addSlide('export-chart-rotacion', 'Rotación por Franquicia');
+                await addSlide('export-chart-bku', 'Tendencia Mensual BKU / PTE');
+                await addSlide('export-chart-altas', 'Tendencia Mensual BKU / PTE ALTAS');
+                await addSlide('export-chart-rotacion', 'Tendencia Mensual de Rotación');
                 await addSlide('export-chart-gerente', 'Resultados por Gerente de Negocio');
                 await addSlide('export-chart-cadena', 'Comparativa por Franquicia');
                 await addSlide('export-chart-distrito', 'Ranking de Desempeño por Distrito');
