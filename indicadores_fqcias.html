@@ -600,6 +600,7 @@
                 </div>
             </div>
 
+            <!-- Comparativa por Franquicia / Unidades de Negocio (Ahora con SCROLL) -->
             <div id="export-chart-cadena" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
@@ -608,11 +609,15 @@
                         <span id="meta-badge-cadena" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chart-cadena"></canvas>
+                <!-- Contenedor scrolleable idéntico al de Distrito -->
+                <div class="scrollable-chart-container">
+                    <div id="chart-cadena-wrapper" style="min-width: 1000px; height: 450px;">
+                        <canvas id="chart-cadena"></canvas>
+                    </div>
                 </div>
             </div>
             
+            <!-- Ranking de Desempeño por Distrito -->
             <div id="export-chart-distrito" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m3)]"></div>
@@ -719,7 +724,6 @@
             'default': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' }
         };
 
-        // Paleta de azules unificada para gráficos de tendencia (Azul fuerte, Azul Medio, Azul Claro, etc.)
         const trendColors = ['#1F3864', '#2F5597', '#8FAADC', '#B4C6E7'];
 
         let RawData = [];
@@ -1410,18 +1414,9 @@
                 }
                 if (!matches) return false;
 
-                if (selectedTri !== 'Todos' || selectedMes !== 'Todos') {
-                    const rowTriIndex = ['T1', 'T2', 'T3', 'T4'].indexOf(d.trimestre);
-                    const rowMesIndex = MESES_NOM.indexOf(d.mes);
-                    
-                    if (selectedMes !== 'Todos') {
-                        const selMesIndex = MESES_NOM.indexOf(selectedMes);
-                        if (rowMesIndex > selMesIndex) return false;
-                    } else if (selectedTri !== 'Todos') {
-                        const selTriIndex = ['T1', 'T2', 'T3', 'T4'].indexOf(selectedTri);
-                        if (rowTriIndex > selTriIndex) return false;
-                    }
-                }
+                if (selectedTri !== 'Todos' && d.trimestre !== selectedTri) return false;
+                if (selectedMes !== 'Todos' && d.mes !== selectedMes) return false;
+
                 return true;
             });
             
@@ -2207,8 +2202,6 @@
             });
         }
 
-        // ---------- NUEVOS GRÁFICOS DE TENDENCIA (LÍNEAS / BARRAS DINÁMICAS) ----------
-
         function renderBKUFranquiciaChart() {
             if (ChartsObj['chart-bku-franquicia']) ChartsObj['chart-bku-franquicia'].destroy();
             if (FilteredData.length === 0) return;
@@ -2441,8 +2434,6 @@
                 }
             });
         }
-
-        // ---------- FIN DE GRÁFICOS DE TENDENCIA ----------
 
         function renderGerenteChart() {
             if (ChartsObj['chart-gerente']) ChartsObj['chart-gerente'].destroy();
@@ -2818,7 +2809,18 @@
                         m3Count: m3ValidCount, countOcup: countOcup
                     }
                 };
-            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; }).slice(0, 15);
+            }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; });
+
+            // --- Lógica del Scroll y del ancho ---
+            const wrapperEl = document.getElementById(id + '-wrapper');
+            const isSucursal = (field === 'sucursal');
+            
+            if (wrapperEl) {
+                // Asignamos 120px a cada elemento cuando son sucursales, así forzamos un scroll sano.
+                const minWidthPerGroup = isSucursal ? 120 : 250; 
+                const minChartWidth = Math.max(1000, stats.length * minWidthPerGroup);
+                wrapperEl.style.minWidth = minChartWidth + 'px';
+            }
 
             const ind = selections.indicador;
             const ds = [];
@@ -2867,6 +2869,7 @@
             }
 
             const ctx = document.getElementById(id).getContext('2d');
+            
             ChartsObj[id] = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: stats.map(function(d){ return d.label; }), datasets: ds },
@@ -2874,11 +2877,21 @@
                     responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
-                        datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw
+                        // Mantenemos ocultas las etiquetas de porcentaje (%) si hay muchas sucursales
+                        datalabels: isSucursal ? { display: false } : datalabelsZpConfig,
+                        tooltip: genericTooltipWithRaw
                     },
                     scales: {
                         y: { min: 0, max: 100, ticks: { callback: function(v) { return Math.round(v) + '%'; } }, border: { dash: [4,4] } },
-                        x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } }
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { 
+                                display: true, // Reactivamos el eje X para que se vea el nombre abajo
+                                maxRotation: isSucursal ? 45 : 0, 
+                                minRotation: isSucursal ? 45 : 0, 
+                                font: { size: 10 } 
+                            } 
+                        }
                     }
                 }
             });
