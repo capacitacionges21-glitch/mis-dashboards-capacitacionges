@@ -600,7 +600,7 @@
                 </div>
             </div>
 
-            <!-- Comparativa por Franquicia / Unidades de Negocio (Ahora con SCROLL) -->
+            <!-- Comparativa por Franquicia / Unidades de Negocio -->
             <div id="export-chart-cadena" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
@@ -1544,7 +1544,6 @@
 
             compareWrapper.classList.remove('lg:grid-cols-2');
 
-            // --- Lógica para ocultar ZP Chart y controlar jerarquías ---
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const zpContainer = document.getElementById('export-chart-zp');
             if (zpContainer) {
@@ -3443,10 +3442,30 @@
                     ocup: ocup,
                     rotacion: rotacion
                 };
-            }).filter(function(item){ return item[sortKey] !== null; }).sort(function(a,b){ return b[sortKey] - a[sortKey]; });
-            
-            const top5 = list.slice(0, 5);
-            const bottom5 = [].concat(list).reverse().slice(0, 5);
+            }).filter(function(item){ return item[sortKey] !== null; });
+
+            const isReverseMetric = (sortKey === 'rotacion');
+
+            // Ordenamiento inicial condicionado a si es rotación o no
+            list.sort(function(a, b) {
+                if (isReverseMetric) {
+                    return a[sortKey] - b[sortKey]; // Menor rotación es mejor
+                } else {
+                    return b[sortKey] - a[sortKey]; // Mayor % es mejor
+                }
+            });
+
+            // Filtramos solo los que llegan al 80% (o los que tienen <20% de rotación)
+            const top5 = list.filter(function(item) {
+                if (isReverseMetric) return item[sortKey] <= 20;
+                return item[sortKey] >= 80;
+            }).slice(0, 5);
+
+            // Filtramos solo los que NO llegan al 80% (o los que tienen >20% de rotación)
+            const bottom5 = [].concat(list).reverse().filter(function(item) {
+                if (isReverseMetric) return item[sortKey] > 20;
+                return item[sortKey] < 80;
+            }).slice(0, 5);
 
             const metricLabels = {
                 'avg': 'CUMP. GENERAL',
@@ -3460,8 +3479,14 @@
 
             const formatRankVal = function(v) { return v <= 0 ? '0%' : Math.round(v) + '%'; };
 
-            const renderList = function(data, containerId, colorClass) {
+            const renderList = function(data, containerId, colorClass, emptyMsg) {
                 const container = document.getElementById(containerId);
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-center flex flex-col items-center justify-center gap-2 mt-2"><i data-lucide="info" class="w-5 h-5 text-slate-400"></i><p class="text-slate-500 text-xs font-bold">' + emptyMsg + '</p></div>';
+                    return;
+                }
+
                 let htmlStr = '';
                 data.forEach(function(item, idx) {
                     htmlStr += '<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-slate-200 transition-all">' +
@@ -3481,8 +3506,11 @@
                 container.innerHTML = htmlStr;
             };
 
-            renderList(top5, 'top-rank-container', 'text-green-600');
-            renderList(bottom5, 'bottom-rank-container', 'text-red-500');
+            const emptyMsgTop = isReverseMetric ? 'Ninguna sucursal logró mantenerse por debajo del 20% de rotación.' : 'Ninguna sucursal alcanzó el 80% mínimo requerido.';
+            const emptyMsgBottom = isReverseMetric ? 'No hay sucursales con rotación crítica (superior al 20%).' : 'Ninguna sucursal se encuentra por debajo del 80%.';
+
+            renderList(top5, 'top-rank-container', 'text-green-600', emptyMsgTop);
+            renderList(bottom5, 'bottom-rank-container', 'text-red-500', emptyMsgBottom);
         }
 
         function hideLoader() {
