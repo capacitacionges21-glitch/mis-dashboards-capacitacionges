@@ -1554,12 +1554,17 @@
                 }
             }
             
-            // Lógica para ocultar los 3 gráficos de tendencias cuando se selecciona una Cadena
+            // Lógica para ocultar los 3 gráficos de tendencias cuando se selecciona SOLO una Cadena
             const bkuContainer = document.getElementById('export-chart-bku');
             const altasContainer = document.getElementById('export-chart-altas');
             const rotacionContainer = document.getElementById('export-chart-rotacion');
 
-            if (selections.cadena !== 'Todos') {
+            const hideTendencias = (selections.cadena !== 'Todos') && 
+                                   (selections.region === 'Todos') && 
+                                   (selections.distrito === 'Todos') && 
+                                   (selections.gerente_sucursal === 'Todos');
+
+            if (hideTendencias) {
                 if (bkuContainer) bkuContainer.classList.add('hidden');
                 if (altasContainer) altasContainer.classList.add('hidden');
                 if (rotacionContainer) rotacionContainer.classList.add('hidden');
