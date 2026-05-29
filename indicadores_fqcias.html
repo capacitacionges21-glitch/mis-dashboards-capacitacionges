@@ -286,7 +286,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m1)]">ServSafe</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 95%</span>
                     </div>
                     <h3 id="kpi-srv" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-srv" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -323,7 +323,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p id="label-altas" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-indigo-500">BKU / PTE ALTAS</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                     </div>
                     <h3 id="kpi-altas" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-altas" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -377,7 +377,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest text-[#1F3864]">Cert. Gerencial</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 95%</span>
                     </div>
                     <h3 id="kpi-cert" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-cert" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -1141,7 +1141,7 @@
 
                             let gerSrv = parseCount(row[12]);
                             let subSrv = parseCount(row[13]);
-                            let bkuCol = parseCount(row[15]);
+                            let bkuCol = parseCount(row[15]); // Usado sólo para info textual
                             let altasCount = parseCount(row[16]); 
                             let certGerNum = null, certSubNum = null;
                             
@@ -1150,7 +1150,7 @@
 
                             if (isChurchs) {
                                 srv = parsePct(row[14]); 
-                                m2 = parsePct(row[17]); 
+                                m2 = parsePct(row[17]); // Lectura DIRECTA DE COLUMNA R (índice 17)
                                 
                                 m3 = parsePct(row[18]); 
                                 if (m3 === null) m3 = parsePct(row[19]); 
@@ -1172,7 +1172,7 @@
                                 bajas = parseCount(row[25]) || 0;
                             } else {
                                 srv = parsePct(row[14]); 
-                                m2 = parsePct(row[17]); 
+                                m2 = parsePct(row[17]); // Lectura DIRECTA DE COLUMNA R (índice 17)
                                 
                                 m3 = parsePct(row[18]); 
                                 if (m3 === null) m3 = parsePct(row[24]); 
@@ -1553,6 +1553,21 @@
                     zpContainer.classList.remove('hidden');
                 }
             }
+            
+            // Lógica para ocultar los 3 gráficos de tendencias cuando se selecciona una Cadena
+            const bkuContainer = document.getElementById('export-chart-bku');
+            const altasContainer = document.getElementById('export-chart-altas');
+            const rotacionContainer = document.getElementById('export-chart-rotacion');
+
+            if (selections.cadena !== 'Todos') {
+                if (bkuContainer) bkuContainer.classList.add('hidden');
+                if (altasContainer) altasContainer.classList.add('hidden');
+                if (rotacionContainer) rotacionContainer.classList.add('hidden');
+            } else {
+                if (bkuContainer) bkuContainer.classList.remove('hidden');
+                if (altasContainer) altasContainer.classList.remove('hidden');
+                if (rotacionContainer) rotacionContainer.classList.remove('hidden');
+            }
 
             const uniqueSucursales = new Set();
             FilteredData.forEach(function(d){ uniqueSucursales.add(d.sucursal); });
@@ -1701,7 +1716,10 @@
             document.getElementById('kpi-sucursales').innerText = count;
             
             const srv = (sumGerP + sumSubP) > 0 ? ((sumGerSrv + sumSubSrv) / (sumGerP + sumSubP)) * 100 : null;
-            const m2 = sumTotalPlantillaOcupada > 0 ? (sumBkuCol / sumTotalPlantillaOcupada) * 100 : null;
+            
+            // CORRECCIÓN BKU/PTE: Promedio directo de la columna R (índice 17) mapeada a d.m2
+            const m2 = safeAvg(FilteredData, function(d){ return d.m2; });
+            
             const m3 = safeAvg(FilteredData, function(d){ return d.m3; });
 
             let pctAltasTotal = null;
@@ -2203,7 +2221,8 @@
 
         function renderBKUFranquiciaChart() {
             if (ChartsObj['chart-bku-franquicia']) ChartsObj['chart-bku-franquicia'].destroy();
-            if (FilteredData.length === 0) return;
+            const container = document.getElementById('export-chart-bku');
+            if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
@@ -2225,21 +2244,28 @@
             const datasets = groups.map(function(g, i) {
                 const dataVals = [];
                 const rawVals = [];
+                
                 activeMonths.forEach(function(mes) {
                     const sub = FilteredData.filter(function(d){ return d[field] === g && d.mes === mes; });
+                    const validM2 = sub.filter(function(d){ return d.m2 !== null && d.m2 !== undefined; });
+                    
                     let sumBku = 0;
                     let sumPlantilla = 0;
                     sub.forEach(function(d) {
                         sumBku += (d.bkuCol || 0);
                         sumPlantilla += (d.totalPlantillaOcupada || 0);
                     });
-                    if (sumPlantilla > 0) {
-                        const pct = (sumBku / sumPlantilla) * 100;
+
+                    if (validM2.length > 0) {
+                        const pct = validM2.reduce(function(acc, d){ return acc + d.m2; }, 0) / validM2.length;
                         dataVals.push(pct);
-                        rawVals.push([sumBku + " Colaboradores certificados", "de " + sumPlantilla + " en plantilla ocupada"]);
+                        rawVals.push([
+                            "Promedio BKU/PTE: " + Math.round(pct) + "%", 
+                            sumBku + " certificados de " + sumPlantilla + " ocupados"
+                        ]);
                     } else {
                         dataVals.push(null);
-                        rawVals.push(["Sin datos operativos en este mes"]);
+                        rawVals.push(["Sin datos de BKU/PTE en este mes"]);
                     }
                 });
                 
@@ -2281,7 +2307,8 @@
 
         function renderAltasFranquiciaChart() {
             if (ChartsObj['chart-altas-franquicia']) ChartsObj['chart-altas-franquicia'].destroy();
-            if (FilteredData.length === 0) return;
+            const container = document.getElementById('export-chart-altas');
+            if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
@@ -2359,7 +2386,8 @@
 
         function renderRotacionFranquiciaChart() {
             if (ChartsObj['chart-rotacion-franquicia']) ChartsObj['chart-rotacion-franquicia'].destroy();
-            if (FilteredData.length === 0) return;
+            const container = document.getElementById('export-chart-rotacion');
+            if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
@@ -2496,11 +2524,14 @@
                     if (d.rec26r2 !== null && d.rec26r2 !== undefined) { recSum += d.rec26r2; recCount++; }
                 });
                 
+                // Corrección BKU/PTE M2: usar directamente el promedio de d.m2
+                const validM2 = rows.filter(function(d){ return d.m2 !== null && d.m2 !== undefined; });
+                const m2 = validM2.length > 0 ? validM2.reduce(function(acc, d) { return acc + d.m2; }, 0) / validM2.length : null;
+
                 const validRev = rows.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
 
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
@@ -2550,7 +2581,7 @@
                 const dataVals = [m.srv, m.m2, m.m3, m.cert, m.ocup, m.rec, m.rotacion];
                 const rawDataVals = [
                     ["Gerentes: " + m.raw.gerSrv + " con ServSafe de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.subSrv + " con ServSafe de " + m.raw.subP + " en plantilla ocupada"],
-                    ["Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"],
+                    ["Promedio BKU/PTE: " + (m.m2 !== null ? Math.round(m.m2) + "%" : "S/D"), m.raw.bkuCol + " certificados de " + m.raw.totalPlantillaOcupada + " ocupados"],
                     ["Basado en el promedio de " + m.raw.validRev + " auditorías evaluadas"],
                     ["Gerentes: " + m.raw.certGerNum + " certificados de " + m.raw.gerP + " en plantilla ocupada", "Subgerentes: " + m.raw.certSubNum + " certificados de " + m.raw.subP + " en plantilla ocupada"],
                     ["Promedio de ocupación en el periodo seleccionado"],
@@ -2629,7 +2660,8 @@
                     metricKey = 'm2';
                     rawFormatter = function(m) { return [
                         "Sucursal: " + m.sucursal,
-                        "Colaboradores certificados: " + m.raw.bkuCol + " de " + m.raw.totalPlantillaOcupada + " en plantilla ocupada"
+                        "Promedio BKU/PTE: " + (m.m2 !== null ? Math.round(m.m2) + "%" : "S/D"),
+                        m.raw.bkuCol + " certificados de " + m.raw.totalPlantillaOcupada + " ocupados"
                     ];};
                 } else if (ind === 'm3') {
                     metricKey = 'm3';
@@ -2746,20 +2778,20 @@
                 let sumCertGer=0, sumCertSub=0;
                 let sumOcup=0, countOcup=0;
                 let m3Sum=0, m3ValidCount=0;
+                
+                let m2Sum = 0, m2ValidCount = 0; // CORRECCIÓN BKU/PTE
 
                 const uSucs = new Set();
                 sub.forEach(function(d){ uSucs.add(d.sucursal); });
                 Array.from(uSucs).forEach(function(suc) {
                     const branchSub = sub.filter(function(d){ return d.sucursal === suc; });
                     
-                    // Cálculo de bajas
                     let branchBajas = 0;
                     branchSub.forEach(function(d) {
                         branchBajas += (d.bajas || 0);
                     });
                     totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
 
-                    // Extracción de datos operativos del último mes activo de la sucursal
                     const latest = branchSub[branchSub.length - 1];
                     if (latest) {
                         sumPlantilla += latest.totalPlantillaOcupada || 0;
@@ -2776,7 +2808,14 @@
                         }
                     }
 
-                    // Para REV (M3), sacamos el promedio válido de la sucursal para no sesgar
+                    // Promedio de M2 (Lectura Directa)
+                    const validM2 = branchSub.filter(function(d){ return d.m2 !== null && d.m2 !== undefined; });
+                    if (validM2.length > 0) {
+                        m2Sum += validM2.reduce(function(acc, d) { return acc + d.m2; }, 0) / validM2.length;
+                        m2ValidCount++;
+                    }
+
+                    // Promedio de M3
                     const validRev = branchSub.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
                     if (validRev.length > 0) {
                         m3Sum += validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length;
@@ -2784,10 +2823,9 @@
                     }
                 });
                 
-                // Nuevas matemáticas precisas que respetan el volumen (Headcount)
                 const cert = (sumGerP + sumSubP) > 0 ? ((sumCertGer + sumCertSub) / (sumGerP + sumSubP)) * 100 : null;
                 const srv = (sumGerP + sumSubP) > 0 ? ((sumGerSrv + sumSubSrv) / (sumGerP + sumSubP)) * 100 : null;
-                const m2 = sumPlantilla > 0 ? (sumBku / sumPlantilla) * 100 : null;
+                const m2 = m2ValidCount > 0 ? (m2Sum / m2ValidCount) : null; // CORRECCIÓN BKU/PTE
                 const m3 = m3ValidCount > 0 ? (m3Sum / m3ValidCount) : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rot = sumPlantilla > 0 ? (totalAvgBajas / sumPlantilla) * 100 : null;
@@ -2810,12 +2848,10 @@
                 };
             }).filter(function(item){ return item.pro !== null; }).sort(function(a,b){ return b.pro - a.pro; });
 
-            // --- Lógica del Scroll y del ancho ---
             const wrapperEl = document.getElementById(id + '-wrapper');
             const isSucursal = (field === 'sucursal');
             
             if (wrapperEl) {
-                // Asignamos 120px a cada elemento cuando son sucursales, así forzamos un scroll sano.
                 const minWidthPerGroup = isSucursal ? 120 : 250; 
                 const minChartWidth = Math.max(1000, stats.length * minWidthPerGroup);
                 wrapperEl.style.minWidth = minChartWidth + 'px';
@@ -2834,7 +2870,7 @@
             if (ind === 'Todos' || ind === 'm2') {
                 ds.push({ 
                     label: document.getElementById('label-m2').innerText, data: stats.map(function(d){ return d.m2; }), 
-                    rawData: stats.map(d => [d.raw.bku + " Colaboradores certificados", "de " + d.plantilla + " en plantilla ocupada"]),
+                    rawData: stats.map(d => ["Promedio del Indicador: " + (d.m2 !== null ? Math.round(d.m2) + "%" : "S/D"), d.raw.bku + " certificados de " + d.plantilla + " ocupados"]),
                     backgroundColor: activePalette.m2, borderRadius: 6 
                 });
             }
@@ -2876,7 +2912,6 @@
                     responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } },
-                        // Mantenemos ocultas las etiquetas de porcentaje (%) si hay muchas sucursales
                         datalabels: isSucursal ? { display: false } : datalabelsZpConfig,
                         tooltip: genericTooltipWithRaw
                     },
@@ -2885,7 +2920,7 @@
                         x: { 
                             grid: { display: false }, 
                             ticks: { 
-                                display: true, // Reactivamos el eje X para que se vea el nombre abajo
+                                display: true, 
                                 maxRotation: isSucursal ? 45 : 0, 
                                 minRotation: isSucursal ? 45 : 0, 
                                 font: { size: 10 } 
@@ -2953,11 +2988,14 @@
                     if (d.rec26r2 !== null && d.rec26r2 !== undefined) { recSum += d.rec26r2; recCount++; }
                 });
                 
+                // CORRECCIÓN BKU/PTE M2: promedio directo 
+                const validM2 = sub.filter(function(d){ return d.m2 !== null && d.m2 !== undefined; });
+                const m2 = validM2.length > 0 ? validM2.reduce(function(acc, d) { return acc + d.m2; }, 0) / validM2.length : null;
+
                 const validRev = sub.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
 
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
                 const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
@@ -2984,7 +3022,7 @@
                     plantilla: totalPlantillaOcupada,
                     pro: pro,
                     rawSrv: [gerSrv + " Gtes y " + subSrv + " Subs certificados", "de " + (gerP + subP) + " en plantilla"],
-                    rawM2: [bkuCol + " Colaboradores certificados", "de " + totalPlantillaOcupada + " en plantilla ocupada"],
+                    rawM2: ["Promedio BKU/PTE: " + (m2 !== null ? Math.round(m2) + "%" : "S/D"), bkuCol + " certificados de " + totalPlantillaOcupada + " ocupados"],
                     rawM3: ["Basado en el promedio de", validRev.length + " auditorías evaluadas"],
                     rawCert: [certGerNum + " Gtes y " + certSubNum + " Subs certificados", "de " + (gerP + subP) + " en plantilla"],
                     rawOcup: ["Promedio de ocupación en", countOcup + " registros del periodo"],
@@ -3286,7 +3324,9 @@
 
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                
+                // CORRECCIÓN BKU/PTE M2
+                const m2 = getL(function(d){ return d.m2; });
                 
                 const validRev = rows.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
@@ -3408,11 +3448,12 @@
                 const certSubNum = getL(function(d){ return d.certSubNum; }) || 0;
                 const gerSrv = getL(function(d){ return d.gerSrv; }) || 0;
                 const subSrv = getL(function(d){ return d.subSrv; }) || 0;
-                const bkuCol = getL(function(d){ return d.bkuCol; }) || 0;
 
                 const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
                 const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const m2 = totalPlantillaOcupada > 0 ? (bkuCol / totalPlantillaOcupada) * 100 : null;
+                
+                // CORRECCIÓN BKU/PTE M2
+                const m2 = getL(function(d){ return d.m2; });
                 
                 const validRev = rows.filter(function(d){ return d.m3 !== null && d.m3 !== undefined; });
                 const m3 = validRev.length > 0 ? Math.round(validRev.reduce(function(acc, d) { return acc + d.m3; }, 0) / validRev.length) : null;
