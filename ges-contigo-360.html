@@ -96,7 +96,7 @@
         </div>
 
         <!-- KPIs Principales -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Tarjeta 1 -->
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
                 <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Asistentes</span>
@@ -109,31 +109,10 @@
 
             <!-- Tarjeta 2 -->
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Plantilla</span>
+                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Plantilla Total</span>
                 <div id="kpiPlantilla" class="text-4xl font-extrabold text-slate-900">0</div>
                 <div class="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
                     <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
-                </div>
-            </div>
-
-            <!-- Tarjeta 3 -->
-            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">% De Cumplimiento</span>
-                <div id="kpiCumplimiento" class="text-4xl font-extrabold text-slate-900">0.0%</div>
-                <div class="mt-4 flex items-center gap-2">
-                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div id="progressCumplimiento" class="h-full rounded-full transition-all duration-1000 bg-emerald-500" style="width: 0%"></div>
-                    </div>
-                    <div class="w-2 h-2 rounded-full bg-slate-200"></div>
-                </div>
-            </div>
-
-            <!-- Tarjeta 4 -->
-            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">% Faltante para Meta</span>
-                <div id="kpiRestante" class="text-4xl font-extrabold text-rose-600">0.0%</div>
-                <div class="absolute bottom-6 right-6 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
-                    <i data-lucide="target" class="w-4 h-4 text-rose-500"></i>
                 </div>
             </div>
         </div>
@@ -144,7 +123,7 @@
             <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                 <h3 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
                     <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#355C9D]"></i>
-                    % de Cumplimiento por Cadena
+                    Asistentes por Cadena
                 </h3>
                 <div class="chart-container">
                     <canvas id="barChart"></canvas>
@@ -169,11 +148,8 @@
                     <thead>
                         <tr class="text-[11px] uppercase tracking-wider text-slate-400 font-bold bg-white border-b border-slate-100">
                             <th class="px-6 py-5 whitespace-nowrap">Nombre de la Cadena</th>
-                            <th class="px-6 py-5 text-center whitespace-nowrap">Meta</th>
                             <th class="px-6 py-5 text-center whitespace-nowrap">Asistentes</th>
                             <th class="px-6 py-5 text-center whitespace-nowrap">Plantilla</th>
-                            <th class="px-6 py-5 text-center whitespace-nowrap">% Cumpl.</th>
-                            <th class="px-6 py-5 text-center whitespace-nowrap">% Faltante</th>
                         </tr>
                     </thead>
                     <tbody id="dataTableBody" class="divide-y divide-slate-100 text-sm">
@@ -232,26 +208,16 @@
                 if (!lines[i].trim()) continue;
                 
                 const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
-                if (cols.length < 6) continue;
+                if (cols.length < 5) continue;
 
                 data.push({
                     mes: cols[0],
                     cadena: cols[1],
-                    meta: parseFloat(cols[2]) || 0,
                     asistentes: parseFloat(cols[3]) || 0,
-                    plantilla: parseFloat(cols[4]) || 0,
-                    cumplimiento: parsePercent(cols[5])
+                    plantilla: parseFloat(cols[4]) || 0
                 });
             }
             rawData = data;
-        }
-
-        function parsePercent(val) {
-            if (!val) return 0;
-            let clean = val.toString().replace('%', '').replace(',', '.');
-            let num = parseFloat(clean);
-            if (num > 0 && num <= 1 && val.includes('.')) return num * 100;
-            return num || 0;
         }
 
         function populateFilters() {
@@ -286,34 +252,11 @@
         }
 
         function renderKPIs(data) {
-            const totalMeta = data.reduce((acc, curr) => acc + curr.meta, 0);
             const totalReconocimientos = data.reduce((acc, curr) => acc + curr.asistentes, 0);
             const totalPlantilla = data.reduce((acc, curr) => acc + curr.plantilla, 0);
-            
-            let avgCumplimiento = 0;
-            if (totalMeta > 0) {
-                avgCumplimiento = (totalReconocimientos / totalMeta) * 100;
-            } else if (data.length > 0) {
-                avgCumplimiento = data.reduce((acc, curr) => acc + curr.cumplimiento, 0) / data.length;
-            }
-
-            const restante = Math.max(0, 100 - avgCumplimiento);
 
             document.getElementById('kpiReconocimientos').innerText = formatNumber(totalReconocimientos);
             document.getElementById('kpiPlantilla').innerText = formatNumber(totalPlantilla);
-            document.getElementById('kpiCumplimiento').innerText = avgCumplimiento.toFixed(1) + '%';
-            document.getElementById('kpiRestante').innerText = restante.toFixed(1) + '%';
-            
-            const progressBar = document.getElementById('progressCumplimiento');
-            progressBar.style.width = Math.min(avgCumplimiento, 100) + '%';
-            
-            if (avgCumplimiento >= 100) {
-                progressBar.className = "h-full rounded-full transition-all duration-1000 bg-emerald-500";
-            } else if (avgCumplimiento >= 50) {
-                progressBar.className = "h-full rounded-full transition-all duration-1000 bg-amber-400";
-            } else {
-                progressBar.className = "h-full rounded-full transition-all duration-1000 bg-rose-500";
-            }
         }
 
         function renderCharts(data) {
@@ -322,16 +265,12 @@
 
             const cadenasMap = {};
             data.forEach(d => {
-                if (!cadenasMap[d.cadena]) cadenasMap[d.cadena] = { meta: 0, reco: 0 };
-                cadenasMap[d.cadena].meta += d.meta;
-                cadenasMap[d.cadena].reco += d.asistentes;
+                if (!cadenasMap[d.cadena]) cadenasMap[d.cadena] = 0;
+                cadenasMap[d.cadena] += d.asistentes;
             });
 
             const cadenasLabels = Object.keys(cadenasMap);
-            const cumplimientoValues = cadenasLabels.map(c => {
-                const item = cadenasMap[c];
-                return item.meta > 0 ? (item.reco / item.meta) * 100 : 0;
-            });
+            const asistentesValues = Object.values(cadenasMap);
 
             if (barChart) barChart.destroy();
             const ctxBar = document.getElementById('barChart').getContext('2d');
@@ -340,8 +279,8 @@
                 data: {
                     labels: cadenasLabels,
                     datasets: [{
-                        label: '% de Cumplimiento',
-                        data: cumplimientoValues,
+                        label: 'Asistentes',
+                        data: asistentesValues,
                         backgroundColor: '#355C9D', /* Color Azul Fuerte */
                         borderRadius: 4,
                         barThickness: 32
@@ -354,7 +293,6 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            max: Math.max(110, ...cumplimientoValues) + 10,
                             border: { display: false },
                             grid: { color: '#f1f5f9' },
                             ticks: { font: { weight: '500' } }
@@ -438,41 +376,31 @@
                 const map = {};
                 data.forEach(d => {
                     if (!map[d.cadena]) {
-                        map[d.cadena] = { cadena: d.cadena, meta: 0, reco: 0, plantilla: 0 };
+                        map[d.cadena] = { cadena: d.cadena, reco: 0, plantilla: 0 };
                     }
-                    map[d.cadena].meta += d.meta;
                     map[d.cadena].reco += d.asistentes;
                     map[d.cadena].plantilla += d.plantilla;
                 });
                 for (const key in map) {
-                    const row = map[key];
-                    row.cumplimiento = row.meta > 0 ? (row.reco / row.meta) * 100 : 0;
-                    tableData.push(row);
+                    tableData.push(map[key]);
                 }
             } else {
                 data.forEach(d => {
                     tableData.push({
                         cadena: d.cadena,
-                        meta: d.meta,
                         reco: d.asistentes,
-                        plantilla: d.plantilla,
-                        cumplimiento: d.meta > 0 ? (d.asistentes / d.meta) * 100 : 0
+                        plantilla: d.plantilla
                     });
                 });
             }
 
             tableData.forEach(d => {
-                const faltante = Math.max(0, 100 - d.cumplimiento);
-                
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition-colors font-semibold">
                         <td class="px-6 py-4 text-slate-800">${d.cadena}</td>
-                        <td class="px-6 py-4 text-center text-slate-400 font-medium">${formatNumber(d.meta)}</td>
                         <!-- Texto Azul Fuerte -->
                         <td class="px-6 py-4 text-center text-[#355C9D]">${formatNumber(d.reco)}</td>
                         <td class="px-6 py-4 text-center text-slate-500 font-medium">${formatNumber(d.plantilla)}</td>
-                        <td class="px-6 py-4 text-center text-emerald-600">${d.cumplimiento.toFixed(1)}%</td>
-                        <td class="px-6 py-4 text-center text-rose-600">${faltante.toFixed(1)}%</td>
                     </tr>
                 `;
             });
