@@ -183,7 +183,7 @@
 
         <!-- 1 y 2. Gráficas: Auditoria y Mystery -->
         <div id="container-auditoria-mystery" class="grid grid-cols-1 gap-6 mb-6">
-            <div class="card p-6">
+            <div class="card p-6" id="card-auditoria-line">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-6 bg-brand-blue rounded-full"></div>
                     <h3 class="font-bold text-brand-blue text-lg">Comparativo Mensual: Auditoría LA GAS</h3>
@@ -193,7 +193,7 @@
                 </div>
             </div>
             
-            <div class="card p-6">
+            <div class="card p-6" id="card-mystery-line">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-6 bg-brand-lightBlue rounded-full"></div>
                     <h3 class="font-bold text-brand-blue text-lg">Comparativo Mensual: Protocolo Mystery</h3>
@@ -220,8 +220,8 @@
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-3">
                     <div class="w-1 h-6 bg-brand-orange rounded-full"></div>
-                    <h3 class="font-bold text-brand-blue text-lg">Desempeño por Sucursal / Gerente</h3>
-                    <span class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded">CUMPLIMIENTO GENERAL</span>
+                    <h3 class="font-bold text-brand-blue text-lg">Desempeño por Sucursal</h3>
+                    <span id="sucursal-chart-badge" class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded">CUMPLIMIENTO GENERAL</span>
                 </div>
             </div>
             <div class="relative w-full h-[400px]">
@@ -282,7 +282,7 @@
             <div class="card p-6">
                 <div class="flex items-center gap-2 mb-4 text-emerald-600">
                     <i data-lucide="award" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-sm">Excelencia Operativa (Top 5)</h3>
+                    <h3 class="font-bold text-sm" id="top5-title">Excelencia Operativa (Top 5)</h3>
                 </div>
                 <div class="space-y-3" id="top5-container">
                     <!-- JS -->
@@ -293,7 +293,7 @@
             <div class="card p-6">
                 <div class="flex items-center gap-2 mb-4 text-red-500">
                     <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-sm">Foco de Atención (Bottom 5)</h3>
+                    <h3 class="font-bold text-sm" id="bottom5-title">Foco de Atención (Bottom 5)</h3>
                 </div>
                 <div class="space-y-3" id="bottom5-container">
                     <!-- JS -->
@@ -344,17 +344,17 @@
             },
             metas: {
                 'LA GAS Auditoria': 90,
-                'PROTOCOLO MYSTERY': 90, // Actualizado a 90%
+                'PROTOCOLO MYSTERY': 90, 
                 'CERTIFICACION GERENTES': 95,
                 'OCUPACION DE PLANTILLAS': 96,
-                'ROTACION(BAJAS)': 4.5, // % Max
+                'ROTACION(BAJAS)': 4.5, 
             }
         };
 
         const state = {
             rawData: [],
             filteredData: [],
-            filters: { trimestre: 'all', mes: 'all', region: 'all', distrito: 'all', cadena: 'all', sucursal: 'all' },
+            filters: { trimestre: 'all', mes: 'all', region: 'all', distrito: 'all', cadena: 'all', sucursal: 'all', indicador: 'all' },
             rankingChartInstance: null,
             auditoriaChartInstance: null,
             mysteryChartInstance: null,
@@ -384,13 +384,25 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     state.rawData = results.data.map(row => {
-                        const cleanedRow = { ...row };
+                        const cleanedRow = {};
+                        
+                        // Normalización de nombres de columnas exactos basados en la estructura real
+                        Object.keys(row).forEach(k => {
+                            if(!k) return;
+                            let cleanK = k.trim();
+                            // Normalizar variaciones de nombres para evitar errores de espacios
+                            if(cleanK === 'ROTACION (BAJAS)') cleanK = 'ROTACION(BAJAS)';
+                            if(cleanK === 'Gerentes Certificados') cleanK = 'Gerentes certificados';
+                            cleanedRow[cleanK] = row[k];
+                        });
+
                         const numericCols = [
-                            'Plantilla autorizada Gerentes', 'Plantilla autorizada Subgerentes', 'Plantilla Autorizada colaboradores',
-                            'Plantilla Gerentes Ocupada', 'Plantilla Subgerentes Ocupada', 'Plantilla colaboradores Ocupada',
-                            'PROTOCOLO MYSTERY', 'LA GAS Auditoria', 'CERTIFICACION GERENTES', 'OCUPACION DE PLANTILLAS', 'ROTACION(BAJAS)',
-                            'COLABORADORES EN SUCESION GERENTES', 'COLABORADORES EN SUCESION SUBGERENTES', 'COLABORADORES EN SUCESION RESPONSABLES',
-                            'IMAGEN Y LIMPIEZA', 'EQUIPOS Y MEDIOS DE PAGO', 'SERVICIO', 'OPERACIÓN', 'PROMOCIONES Y LSM'
+                            'Plantilla autorizada Gerentes', 'Plantilla autorizada Subgerentes', 'Plantilla autorizada Responsables', 'Plantilla Autorizada colaboradores',
+                            'Plantilla Gerentes Ocupada', 'Plantilla Subgerentes Ocupada', 'Plantilla Responsables Ocupada', 'Plantilla colaboradores Ocupada',
+                            'OCUPACION DE PLANTILLAS', 'Bajas', 'ROTACION(BAJAS)',
+                            'PROTOCOLO MYSTERY', 'IMAGEN Y LIMPIEZA', 'EQUIPOS Y MEDIOS DE PAGO', 'SERVICIO', 'OPERACIÓN', 'PROMOCIONES Y LSM',
+                            'LA GAS Auditoria', 'Gerentes certificados', 'CERTIFICACION GERENTES',
+                            'COLABORADORES EN SUCESION GERENTES', 'COLABORADORES EN SUCESION SUBGERENTES', 'COLABORADORES EN SUCESION RESPONSABLES'
                         ];
                         numericCols.forEach(col => {
                             if(cleanedRow[col] !== undefined && cleanedRow[col] !== null) {
@@ -453,8 +465,15 @@
         }
 
         /** FILTROS */
+        function sortMonths(months) {
+            const order = { 'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12 };
+            return months.sort((a, b) => (order[a.toLowerCase()] || 99) - (order[b.toLowerCase()] || 99));
+        }
+
         function getUniqueValues(key) {
-            return [...new Set(state.rawData.map(item => item[key]).filter(v => v))].sort();
+            const vals = [...new Set(state.rawData.map(item => item[key]).filter(v => v))];
+            if (key === 'Mes') return sortMonths(vals);
+            return vals.sort();
         }
 
         function populateSelect(elementId, values) {
@@ -478,7 +497,7 @@
                 populateSelect('filter-mes', getUniqueValues('Mes'));
             } else {
                 const meses = state.rawData.filter(d => d['Trimestre'] === tr).map(d => d['Mes']);
-                populateSelect('filter-mes', [...new Set(meses)].sort());
+                populateSelect('filter-mes', sortMonths([...new Set(meses)]));
             }
             applyFilters();
         }
@@ -515,7 +534,7 @@
         }
 
         function resetFilters() {
-            ['trimestre', 'mes', 'cadena', 'region'].forEach(f => document.getElementById(`filter-${f}`).value = 'all');
+            ['trimestre', 'mes', 'cadena', 'region', 'indicador'].forEach(f => document.getElementById(`filter-${f}`).value = 'all');
             
             populateSelect('filter-mes', getUniqueValues('Mes'));
             populateSelect('filter-distrito', getUniqueValues('Gerente de Distrito'));
@@ -523,7 +542,6 @@
             
             document.getElementById('filter-distrito').value = 'all';
             document.getElementById('filter-sucursal').value = 'all';
-            document.getElementById('filter-indicador').value = 'all';
             
             applyFilters();
         }
@@ -535,7 +553,8 @@
                 cadena: document.getElementById('filter-cadena').value,
                 region: document.getElementById('filter-region').value,
                 distrito: document.getElementById('filter-distrito').value,
-                sucursal: document.getElementById('filter-sucursal').value
+                sucursal: document.getElementById('filter-sucursal').value,
+                indicador: document.getElementById('filter-indicador').value
             };
 
             state.filteredData = state.rawData.filter(row => {
@@ -576,16 +595,34 @@
 
             return Object.values(groupedData).map(group => {
                 const records = group._records;
+                
                 const getAvg = (key) => {
                     const valid = records.filter(d => typeof d[key] === 'number');
                     return valid.length ? valid.reduce((acc, curr) => acc + curr[key], 0) / valid.length : null;
+                };
+                
+                const getSumRecords = (key) => {
+                    const valid = records.filter(d => typeof d[key] === 'number');
+                    return valid.length ? valid.reduce((acc, curr) => acc + curr[key], 0) : 0;
                 };
 
                 const aud = getAvg('LA GAS Auditoria');
                 const mys = getAvg('PROTOCOLO MYSTERY');
                 const cert = getAvg('CERTIFICACION GERENTES');
                 const ocup = getAvg('OCUPACION DE PLANTILLAS');
-                const rot = getAvg('ROTACION(BAJAS)');
+
+                // Cálculo exacto de Rotación (%) para la tabla según bajas de la sucursal y su plantilla
+                const branchUniqueMonths = new Set(records.map(d => d['Mes'])).size || 1;
+                let branchBajas = getSumRecords('Bajas');
+                
+                const branchPlantilla = getSumRecords('Plantilla Gerentes Ocupada') + 
+                                        getSumRecords('Plantilla Subgerentes Ocupada') + 
+                                        (getSumRecords('Plantilla Responsables Ocupada') || 0) + 
+                                        (getSumRecords('Plantilla colaboradores Ocupada') || 0);
+                
+                const bajasPromedio = branchBajas / branchUniqueMonths;
+                const plantillaPromedio = branchPlantilla / branchUniqueMonths;
+                const rot = plantillaPromedio > 0 ? (bajasPromedio / plantillaPromedio) * 100 : 0;
 
                 // Validación "La Gas" en los datos agrupados
                 const isLaGas = group['Negocio'].toLowerCase().includes('la gas');
@@ -619,7 +656,7 @@
         function renderAll() {
             renderKPIs();
             renderCharts();
-            renderAlerts(); // Se llama aquí, actualizando los contenedores reubicados
+            renderAlerts(); 
             renderTopBottom();
             renderTable();
             lucide.createIcons();
@@ -677,12 +714,13 @@
         function renderKPIs() {
             const container = document.getElementById('kpi-container');
             const data = state.filteredData;
+            const ind = state.filters.indicador;
             
             if(!data.length) { container.innerHTML = ''; return; }
             
             const hasLaGas = data.some(d => (d['Negocio'] || '').toLowerCase().includes('la gas'));
 
-            // Card 1: Sucursales
+            // Card 1: Sucursales (Siempre visible)
             const totalSuc = new Set(data.map(d => d['Negocio'])).size;
             let html = `
             <div class="bg-white border-gray-100 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
@@ -712,163 +750,162 @@
                 return { avg, subtext };
             };
 
-            // Solo mostrar tarjetas de LA GAS si existen sucursales de LA GAS en el filtro actual
-            if (hasLaGas) {
-                // Card 2: Auditoria LA GAS
+            // Auditoria
+            if (hasLaGas && (ind === 'all' || ind === 'LA GAS Auditoria')) {
                 const aud = getKpiStats('LA GAS Auditoria', CONFIG.metas['LA GAS Auditoria']);
                 html += buildCardHTML('Auditoria LA GAS', aud.avg, CONFIG.metas['LA GAS Auditoria'], aud.subtext, null);
-                
-                // Card 3: Protocolo Mystery
+            }
+            // Mystery
+            if (hasLaGas && (ind === 'all' || ind === 'PROTOCOLO MYSTERY')) {
                 const mys = getKpiStats('PROTOCOLO MYSTERY', CONFIG.metas['PROTOCOLO MYSTERY']);
                 html += buildCardHTML('Protocolo Mystery', mys.avg, CONFIG.metas['PROTOCOLO MYSTERY'], mys.subtext, null);
             }
 
-            // Helper para sumar columnas numéricas de forma segura y soportar variaciones de nombre
-            const getSum = (key) => data.reduce((acc, curr) => acc + (!isNaN(parseFloat(curr[key])) ? parseFloat(curr[key]) : 0), 0);
+            const uniqueMonths = new Set(data.map(d => d['Mes'])).size || 1;
+            const getSum = (key) => {
+                const rawSum = data.reduce((acc, curr) => acc + (!isNaN(parseFloat(curr[key])) ? parseFloat(curr[key]) : 0), 0);
+                return Math.round(rawSum / uniqueMonths);
+            };
 
-            // Card 4: Ocupacion Plantillas (Detalle por roles)
-            const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
-            const gerentesAut = getSum('Plantilla autorizada Gerentes');
-            const subgerentesOcu = getSum('Plantilla Subgerentes Ocupada');
-            const subgerentesAut = getSum('Plantilla autorizada Subgerentes');
-            const respOcu = getSum('Plantilla Responsables Ocupada') || 0;
-            const respAut = getSum('Plantilla autorizada Responsables') || 0;
-            const promOcu = getSum('Plantilla colaboradores Ocupada') || getSum('Plantilla Promotores Ocupada') || 0;
-            const promAut = getSum('Plantilla Autorizada colaboradores') || getSum('Plantilla autorizada Promotores') || 0;
+            // Ocupacion
+            if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
+                const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
+                const gerentesAut = getSum('Plantilla autorizada Gerentes');
+                const subgerentesOcu = getSum('Plantilla Subgerentes Ocupada');
+                const subgerentesAut = getSum('Plantilla autorizada Subgerentes');
+                const respOcu = getSum('Plantilla Responsables Ocupada') || 0;
+                const respAut = getSum('Plantilla autorizada Responsables') || 0;
+                const promOcu = getSum('Plantilla colaboradores Ocupada') || 0;
+                const promAut = getSum('Plantilla Autorizada colaboradores') || 0;
 
-            const ocuAvg = calcAvg(data, 'OCUPACION DE PLANTILLAS');
-            const ocuSubtext = `
-                <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-gray-500 mt-1 w-full">
-                    <span>Gerentes: <b class="text-gray-700">${gerentesOcu}/${gerentesAut}</b></span>
-                    <span>Subgerentes: <b class="text-gray-700">${subgerentesOcu}/${subgerentesAut}</b></span>
-                    <span>Responsables: <b class="text-gray-700">${respOcu}/${respAut}</b></span>
-                    <span>Promotores: <b class="text-gray-700">${promOcu}/${promAut}</b></span>
-                </div>
-            `;
-            html += buildCardHTML('Ocup. Plantillas', ocuAvg, CONFIG.metas['OCUPACION DE PLANTILLAS'], ocuSubtext, null);
-
-            // Segunda Fila - Certificacion (Detalle Gerentes y Certificados)
-            let gerentesCert = getSum('Gerentes certificados') || getSum('Gerentes Certificados');
-            if (gerentesCert === 0) {
-                // Cálculo estimado en caso de no existir la columna raw en el CSV
-                gerentesCert = Math.round(data.reduce((acc, curr) => {
-                    const cert = parseFloat(curr['CERTIFICACION GERENTES']) || 0;
-                    const hc = parseFloat(curr['Plantilla Gerentes Ocupada']) || 0;
-                    return acc + (hc * (cert / 100));
-                }, 0));
+                const ocuAvg = calcAvg(data, 'OCUPACION DE PLANTILLAS');
+                const ocuSubtext = `
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-gray-500 mt-1 w-full">
+                        <span>Gerentes: <b class="text-gray-700">${gerentesOcu}/${gerentesAut}</b></span>
+                        <span>Subgerentes: <b class="text-gray-700">${subgerentesOcu}/${subgerentesAut}</b></span>
+                        <span>Responsables: <b class="text-gray-700">${respOcu}/${respAut}</b></span>
+                        <span>Promotores: <b class="text-gray-700">${promOcu}/${promAut}</b></span>
+                    </div>
+                `;
+                html += buildCardHTML('Ocup. Plantillas', ocuAvg, CONFIG.metas['OCUPACION DE PLANTILLAS'], ocuSubtext, null);
             }
-            const cerAvg = calcAvg(data, 'CERTIFICACION GERENTES');
-            const cerSubtext = `
-                <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
-                    <span>Gerentes Ocupados: <b class="text-gray-700">${gerentesOcu}</b></span>
-                    <span>Gerentes Certificados: <b class="text-gray-700">${gerentesCert}</b></span>
-                </div>
-            `;
-            html += buildCardHTML('Cert. Gerencial', cerAvg, CONFIG.metas['CERTIFICACION GERENTES'], cerSubtext, null);
 
-            // Segunda Fila - Rotacion (Detalle Bajas vs Plantilla)
-            let totalBajas = getSum('Bajas') || getSum('BAJAS') || getSum('Rotación Bajas');
-            const plantillaTotal = gerentesOcu + subgerentesOcu + respOcu + promOcu;
-            if (totalBajas === 0) {
-               // Cálculo estimado a la inversa si la columna de bajas puras no existe
-               totalBajas = Math.round(data.reduce((acc, curr) => {
-                   const rot = parseFloat(curr['ROTACION(BAJAS)']) || 0;
-                   const hc = (parseFloat(curr['Plantilla Gerentes Ocupada']) || 0) + 
-                              (parseFloat(curr['Plantilla Subgerentes Ocupada']) || 0) + 
-                              (parseFloat(curr['Plantilla colaboradores Ocupada']) || parseFloat(curr['Plantilla Promotores Ocupada']) || 0) +
-                              (parseFloat(curr['Plantilla Responsables Ocupada']) || 0);
-                   return acc + (hc * (rot / 100));
-               }, 0));
-            }
-            const rotAvg = calcAvg(data, 'ROTACION(BAJAS)');
-            const rotSubtext = `
-                <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
-                    <span>Total Bajas: <b class="text-gray-700">${totalBajas}</b></span>
-                    <span>Plantilla Total: <b class="text-gray-700">${plantillaTotal}</b></span>
-                </div>
-            `;
-            html += buildCardHTML('Rotación', rotAvg, CONFIG.metas['ROTACION(BAJAS)'], rotSubtext, null, 'warning');
-
-            // RESTAURADO: KPI Colaboradores en Sucesión
-            const sucGerentes = getSum('COLABORADORES EN SUCESION GERENTES') || 0;
-            const sucSubgerentes = getSum('COLABORADORES EN SUCESION SUBGERENTES') || 0;
-            const sucResponsables = getSum('COLABORADORES EN SUCESION RESPONSABLES') || 0;
-            const totalSucesion = sucGerentes + sucSubgerentes + sucResponsables;
-
-            html += `
-            <div class="bg-white border-gray-100 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-3">
-                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">EN SUCESIÓN</h4>
-                    <i data-lucide="graduation-cap" class="w-4 h-4 text-brand-blue"></i>
-                </div>
-                <div class="mb-2">
-                    <span class="text-3xl font-extrabold text-gray-800 tracking-tight">${totalSucesion}</span>
-                </div>
-                <div class="text-[10px] font-medium text-gray-500 mt-auto flex flex-col gap-1">
-                    <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Gerente:</span> <b class="text-gray-700">${sucGerentes}</b></div>
-                    <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Subgerente:</span> <b class="text-gray-700">${sucSubgerentes}</b></div>
-                    <div class="flex justify-between"><span>Para Responsable:</span> <b class="text-gray-700">${sucResponsables}</b></div>
-                </div>
-            </div>`;
-
-            // RESTAURADO: Sucursales sin gerente
-            const sinGerente = data.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
-            const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
-            
-            html += `
-            <div class="bg-[#FFF7ED] border-orange-200 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-3">
-                    <h4 class="text-xs font-bold text-orange-600 uppercase tracking-wider">SIN GERENTE</h4>
-                    <span class="text-[10px] font-bold px-2 py-1 rounded bg-orange-100 text-orange-700">ALERTA</span>
-                </div>
-                <div class="flex items-end justify-between mb-2">
-                    <span class="text-3xl font-extrabold text-orange-600 tracking-tight">${sinGerente}</span>
-                    <i data-lucide="user-x" class="w-8 h-8 text-orange-400 mb-1"></i>
-                </div>
-                <div class="text-[10px] font-medium text-orange-600/80 mt-auto">${pctSinGerente}% de la red sin gerente asignado</div>
-            </div>`;
-
-            // NUEVO KPI: Desempeño Global (Última tarjeta)
-            let totalGlobal = 0;
-            let validGlobalCount = 0;
-            
-            data.forEach(d => {
-                let sumKpis = 0;
-                let countKpis = 0;
-                
-                ['LA GAS Auditoria', 'PROTOCOLO MYSTERY', 'CERTIFICACION GERENTES'].forEach(k => {
-                    if (typeof d[k] === 'number') {
-                        sumKpis += d[k];
-                        countKpis++;
-                    }
-                });
-                
-                if (countKpis > 0) {
-                    totalGlobal += (sumKpis / countKpis);
-                    validGlobalCount++;
+            // Certificacion
+            if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
+                const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
+                let gerentesCert = getSum('Gerentes certificados') || getSum('Gerentes Certificados');
+                if (gerentesCert === 0) {
+                    gerentesCert = Math.round(data.reduce((acc, curr) => {
+                        const cert = parseFloat(curr['CERTIFICACION GERENTES']) || 0;
+                        const hc = parseFloat(curr['Plantilla Gerentes Ocupada']) || 0;
+                        return acc + (hc * (cert / 100));
+                    }, 0) / uniqueMonths);
                 }
-            });
-            const globalAvg = validGlobalCount > 0 ? (totalGlobal / validGlobalCount) : 0;
-            
-            const globalSubtext = `
-                <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
-                    <span>Promedio general considerando:</span>
-                    <span><b class="text-gray-700">Auditoría, Mystery y Cert. Gerencial</b></span>
-                </div>
-            `;
-            html += buildCardHTML('Desempeño Global', globalAvg, 90, globalSubtext, 'activity');
+                const cerAvg = calcAvg(data, 'CERTIFICACION GERENTES');
+                const cerSubtext = `
+                    <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
+                        <span>Gerentes Ocupados: <b class="text-gray-700">${gerentesOcu}</b></span>
+                        <span>Gerentes Certificados: <b class="text-gray-700">${gerentesCert}</b></span>
+                    </div>
+                `;
+                html += buildCardHTML('Cert. Gerencial', cerAvg, CONFIG.metas['CERTIFICACION GERENTES'], cerSubtext, null);
+            }
+
+            // Si no hay filtro de indicador, mostramos los KPIs globales adicionales
+            if (ind === 'all') {
+                const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
+                const subgerentesOcu = getSum('Plantilla Subgerentes Ocupada');
+                const respOcu = getSum('Plantilla Responsables Ocupada') || 0;
+                const promOcu = getSum('Plantilla colaboradores Ocupada') || 0;
+
+                // Rotacion
+                let totalBajas = getSum('Bajas');
+                
+                const plantillaTotal = gerentesOcu + subgerentesOcu + respOcu + promOcu;
+                const rotAvg = plantillaTotal > 0 ? (totalBajas / plantillaTotal) * 100 : 0;
+                const textBajas = uniqueMonths > 1 ? 'Bajas (Prom. Mensual)' : 'Bajas del Mes';
+                const rotSubtext = `
+                    <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
+                        <span>${textBajas}: <b class="text-gray-700">${totalBajas}</b></span>
+                        <span>Plantilla Total: <b class="text-gray-700">${plantillaTotal}</b></span>
+                    </div>
+                `;
+                html += buildCardHTML('Rotación', rotAvg, CONFIG.metas['ROTACION(BAJAS)'], rotSubtext, null, 'warning');
+
+                // Sucesión
+                const sucGerentes = getSum('COLABORADORES EN SUCESION GERENTES') || 0;
+                const sucSubgerentes = getSum('COLABORADORES EN SUCESION SUBGERENTES') || 0;
+                const sucResponsables = getSum('COLABORADORES EN SUCESION RESPONSABLES') || 0;
+                const totalSucesion = sucGerentes + sucSubgerentes + sucResponsables;
+                html += `
+                <div class="bg-white border-gray-100 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">EN SUCESIÓN</h4>
+                        <i data-lucide="graduation-cap" class="w-4 h-4 text-brand-blue"></i>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-3xl font-extrabold text-gray-800 tracking-tight">${totalSucesion}</span>
+                    </div>
+                    <div class="text-[10px] font-medium text-gray-500 mt-auto flex flex-col gap-1">
+                        <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Gerente:</span> <b class="text-gray-700">${sucGerentes}</b></div>
+                        <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Subgerente:</span> <b class="text-gray-700">${sucSubgerentes}</b></div>
+                        <div class="flex justify-between"><span>Para Responsable:</span> <b class="text-gray-700">${sucResponsables}</b></div>
+                    </div>
+                </div>`;
+
+                // Sin Gerente
+                const sinGerente = data.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
+                const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
+                html += `
+                <div class="bg-[#FFF7ED] border-orange-200 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="text-xs font-bold text-orange-600 uppercase tracking-wider">SIN GERENTE</h4>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded bg-orange-100 text-orange-700">ALERTA</span>
+                    </div>
+                    <div class="flex items-end justify-between mb-2">
+                        <span class="text-3xl font-extrabold text-orange-600 tracking-tight">${sinGerente}</span>
+                        <i data-lucide="user-x" class="w-8 h-8 text-orange-400 mb-1"></i>
+                    </div>
+                    <div class="text-[10px] font-medium text-orange-600/80 mt-auto">${pctSinGerente}% de la red sin gerente asignado</div>
+                </div>`;
+
+                // Desempeño Global
+                let totalGlobal = 0;
+                let validGlobalCount = 0;
+                data.forEach(d => {
+                    let sumKpis = 0, countKpis = 0;
+                    ['LA GAS Auditoria', 'PROTOCOLO MYSTERY', 'CERTIFICACION GERENTES'].forEach(k => {
+                        if (typeof d[k] === 'number') { sumKpis += d[k]; countKpis++; }
+                    });
+                    if (countKpis > 0) { totalGlobal += (sumKpis / countKpis); validGlobalCount++; }
+                });
+                const globalAvg = validGlobalCount > 0 ? (totalGlobal / validGlobalCount) : 0;
+                const globalSubtext = `
+                    <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
+                        <span>Promedio general considerando:</span>
+                        <span><b class="text-gray-700">Auditoría, Mystery y Cert. Gerencial</b></span>
+                    </div>
+                `;
+                html += buildCardHTML('Desempeño Global', globalAvg, 90, globalSubtext, 'activity');
+            }
 
             container.innerHTML = html;
         }
 
-        // Renderizado de Alertas y Sucesión
         function renderAlerts() {
             const alertsContainer = document.getElementById('alerts-container');
             const alertsGrid = document.getElementById('alerts-grid');
             const sucesionContainer = document.getElementById('sucesion-container');
             const sucesionGrid = document.getElementById('sucesion-grid');
             
-            // Agrupamos por sucursal para que la lista no se repita por cada mes filtrado
+            // Solo mostramos alertas si NO hay filtro de indicador (o si quieren ver contexto general)
+            if (state.filters.indicador !== 'all') {
+                alertsContainer.parentElement.classList.add('hidden');
+                return;
+            } else {
+                alertsContainer.parentElement.classList.remove('hidden');
+            }
+
             const branchMap = {};
             state.filteredData.forEach(d => {
                 const b = d['Negocio'];
@@ -880,19 +917,15 @@
                     branchMap[b]['COLABORADORES EN SUCESION SUBGERENTES'] = parseFloat(d['COLABORADORES EN SUCESION SUBGERENTES']) || 0;
                     branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'] = parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0;
                 } else {
-                    // Tomamos el valor máximo que hubo en el periodo para sucesión
                     branchMap[b]['COLABORADORES EN SUCESION GERENTES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION GERENTES'], parseFloat(d['COLABORADORES EN SUCESION GERENTES']) || 0);
                     branchMap[b]['COLABORADORES EN SUCESION SUBGERENTES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION SUBGERENTES'], parseFloat(d['COLABORADORES EN SUCESION SUBGERENTES']) || 0);
                     branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'], parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0);
-                    
-                    // Si en algún momento del periodo no tuvo gerente, lo registramos como que faltó
                     branchMap[b]['Plantilla Gerentes Ocupada'] = Math.min(parseFloat(branchMap[b]['Plantilla Gerentes Ocupada']) || 0, parseFloat(d['Plantilla Gerentes Ocupada']) || 0);
                 }
             });
             
             const uniqueBranches = Object.values(branchMap);
 
-            // --- Alerta: Sucursales sin Gerente ---
             const sinGerenteList = uniqueBranches.filter(d => 
                 (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)
             );
@@ -922,7 +955,6 @@
                 });
             }
 
-            // --- Detalle: Colaboradores en Sucesión ---
             const sucesionList = uniqueBranches.filter(d => 
                 (d['COLABORADORES EN SUCESION GERENTES'] > 0 || d['COLABORADORES EN SUCESION SUBGERENTES'] > 0 || d['COLABORADORES EN SUCESION RESPONSABLES'] > 0)
             );
@@ -964,9 +996,12 @@
 
             const hasLaGas = state.filteredData.some(d => (d['Negocio'] || '').toLowerCase().includes('la gas'));
             const uniqueSucursales = new Set(state.filteredData.map(d => d['Negocio'])).size;
+            const ind = state.filters.indicador;
 
             // Manejar visibilidad de contenedores exclusivos de La Gas
             const containerAudMys = document.getElementById('container-auditoria-mystery');
+            const cardAudLine = document.getElementById('card-auditoria-line');
+            const cardMysLine = document.getElementById('card-mystery-line');
             const containerRadar = document.getElementById('container-radar');
             const containerRanking = document.getElementById('container-ranking');
 
@@ -975,7 +1010,20 @@
                 containerRadar.classList.add('hidden');
             } else {
                 containerAudMys.classList.remove('hidden');
-                containerRadar.classList.remove('hidden');
+                
+                if (ind === 'all') {
+                    cardAudLine.style.display = 'block';
+                    cardMysLine.style.display = 'block';
+                    containerRadar.classList.remove('hidden');
+                } else {
+                    cardAudLine.style.display = (ind === 'LA GAS Auditoria') ? 'block' : 'none';
+                    cardMysLine.style.display = (ind === 'PROTOCOLO MYSTERY') ? 'block' : 'none';
+                    containerRadar.classList.toggle('hidden', ind !== 'LA GAS Auditoria');
+                    
+                    if(cardAudLine.style.display === 'none' && cardMysLine.style.display === 'none') {
+                        containerAudMys.classList.add('hidden');
+                    }
+                }
             }
 
             // Ocultar gráfica de distrito si solo hay 1 sucursal filtrada
@@ -990,14 +1038,12 @@
 
                 const distritos = getUniqueValues('Gerente de Distrito');
                 
-                // Preparar datos para gráfica agrupada (Distritos)
                 const labels = [];
                 const dataAuditoria = [];
                 const dataMystery = [];
                 const dataOcupacion = [];
                 const dataCertificacion = [];
 
-                // Objeto para almacenar las estadísticas de cada barra de distrito
                 const statsDistrito = { auditoria: [], mystery: [], ocupacion: [], certificacion: [] };
 
                 distritos.forEach(dist => {
@@ -1005,7 +1051,6 @@
                     if(group.length) {
                         labels.push(dist.substring(0, 15) + (dist.length>15?'...':''));
                         
-                        // Helper para obtener promedio, total y desglose de metas por cada KPI
                         const getStats = (key, meta) => {
                             const valid = group.filter(d => typeof d[key] === 'number');
                             if(!valid.length) return { avg: null, total: 0, meta: 0, noMeta: 0 };
@@ -1036,12 +1081,18 @@
 
                 const datasetsRanking = [];
                 
-                if (hasLaGas) {
+                if (hasLaGas && (ind === 'all' || ind === 'LA GAS Auditoria')) {
                     datasetsRanking.push({ label: 'Auditoria LA GAS', data: dataAuditoria, backgroundColor: CONFIG.colors.chartAuditoria, borderRadius: 2 });
+                }
+                if (hasLaGas && (ind === 'all' || ind === 'PROTOCOLO MYSTERY')) {
                     datasetsRanking.push({ label: 'Protocolo Mystery', data: dataMystery, backgroundColor: CONFIG.colors.chartMystery, borderRadius: 2 });
                 }
-                datasetsRanking.push({ label: 'Ocupación', data: dataOcupacion, backgroundColor: CONFIG.colors.chartOcupacion, borderRadius: 2 });
-                datasetsRanking.push({ label: 'Certificación', data: dataCertificacion, backgroundColor: CONFIG.colors.chartCertificacion, borderRadius: 2 });
+                if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
+                    datasetsRanking.push({ label: 'Ocupación', data: dataOcupacion, backgroundColor: CONFIG.colors.chartOcupacion, borderRadius: 2 });
+                }
+                if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
+                    datasetsRanking.push({ label: 'Certificación', data: dataCertificacion, backgroundColor: CONFIG.colors.chartCertificacion, borderRadius: 2 });
+                }
 
                 const ctx = document.getElementById('rankingChart').getContext('2d');
                 if(state.rankingChartInstance) state.rankingChartInstance.destroy();
@@ -1092,194 +1143,202 @@
                 });
             }
 
-            // --- NUEVAS GRÁFICAS MENSULARES Y RADAR (Solo si es La Gas) ---
+            // --- NUEVAS GRÁFICAS MENSULARES Y RADAR (Solo si es La Gas y corresponde) ---
             if (hasLaGas) {
                 const MESES_COMPLETOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                 const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-                // Calcular estadísticas detalladas para Auditoría (Mensual)
-                const statsAuditoriaMes = MESES_COMPLETOS.map((mes) => {
-                    const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
-                    const valid = dataMes.filter(d => typeof d['LA GAS Auditoria'] === 'number');
-                    if (!valid.length) return null;
-                    return {
-                        avg: valid.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / valid.length,
-                        total: valid.length,
-                        meta: valid.filter(d => d['LA GAS Auditoria'] >= CONFIG.metas['LA GAS Auditoria']).length,
-                        noMeta: valid.filter(d => d['LA GAS Auditoria'] < CONFIG.metas['LA GAS Auditoria']).length
-                    };
-                });
-                const dataAuditoriaMes = statsAuditoriaMes.map(s => s ? s.avg : null);
+                if (ind === 'all' || ind === 'LA GAS Auditoria') {
+                    const statsAuditoriaMes = MESES_COMPLETOS.map((mes) => {
+                        const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
+                        const valid = dataMes.filter(d => typeof d['LA GAS Auditoria'] === 'number');
+                        if (!valid.length) return null;
+                        return {
+                            avg: valid.reduce((acc, curr) => acc + curr['LA GAS Auditoria'], 0) / valid.length,
+                            total: valid.length,
+                            meta: valid.filter(d => d['LA GAS Auditoria'] >= CONFIG.metas['LA GAS Auditoria']).length,
+                            noMeta: valid.filter(d => d['LA GAS Auditoria'] < CONFIG.metas['LA GAS Auditoria']).length
+                        };
+                    });
+                    const dataAuditoriaMes = statsAuditoriaMes.map(s => s ? s.avg : null);
 
-                // Calcular estadísticas detalladas para Protocolo Mystery (Mensual)
-                const statsMysteryMes = MESES_COMPLETOS.map((mes) => {
-                    const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
-                    const valid = dataMes.filter(d => typeof d['PROTOCOLO MYSTERY'] === 'number');
-                    if (!valid.length) return null;
-                    return {
-                        avg: valid.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / valid.length,
-                        total: valid.length,
-                        meta: valid.filter(d => d['PROTOCOLO MYSTERY'] >= CONFIG.metas['PROTOCOLO MYSTERY']).length,
-                        noMeta: valid.filter(d => d['PROTOCOLO MYSTERY'] < CONFIG.metas['PROTOCOLO MYSTERY']).length
-                    };
-                });
-                const dataMysteryMes = statsMysteryMes.map(s => s ? s.avg : null);
-                
-                // 1. Auditoría LA GAS (Mensual)
-                const ctxAud = document.getElementById('auditoriaChart').getContext('2d');
-                if(state.auditoriaChartInstance) state.auditoriaChartInstance.destroy();
-                state.auditoriaChartInstance = new Chart(ctxAud, {
-                    type: 'line',
-                    data: {
-                        labels: MESES_CORTOS,
-                        datasets: [{
-                            label: 'Auditoría LA GAS',
-                            data: dataAuditoriaMes,
-                            borderColor: '#1E3A8A', // Azul fuerte
-                            backgroundColor: 'transparent',
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#FFFFFF',
-                            pointBorderColor: '#1E3A8A',
-                            pointBorderWidth: 2,
-                            pointRadius: 4.5,
-                            pointHoverRadius: 6.5,
-                            tension: 0.4, // Curvatura suave
-                            spanGaps: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const stats = statsAuditoriaMes[context.dataIndex];
-                                        if (!stats) return '';
-                                        return [
-                                            `Promedio: ${Math.round(stats.avg)}%`,
-                                            `Total Evaluaciones: ${stats.total}`,
-                                            `Sucursales que llegaron a su meta: ${stats.meta}`,
-                                            `Sucursales que no llegaron a la meta: ${stats.noMeta}`
-                                        ];
+                    const ctxAud = document.getElementById('auditoriaChart').getContext('2d');
+                    if(state.auditoriaChartInstance) state.auditoriaChartInstance.destroy();
+                    state.auditoriaChartInstance = new Chart(ctxAud, {
+                        type: 'line',
+                        data: {
+                            labels: MESES_CORTOS,
+                            datasets: [{
+                                label: 'Auditoría LA GAS',
+                                data: dataAuditoriaMes,
+                                borderColor: '#1E3A8A', // Azul fuerte
+                                backgroundColor: 'transparent',
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#FFFFFF',
+                                pointBorderColor: '#1E3A8A',
+                                pointBorderWidth: 2,
+                                pointRadius: 4.5,
+                                pointHoverRadius: 6.5,
+                                tension: 0.4,
+                                spanGaps: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const stats = statsAuditoriaMes[context.dataIndex];
+                                            if (!stats) return '';
+                                            return [
+                                                `Promedio: ${Math.round(stats.avg)}%`,
+                                                `Total Evaluaciones: ${stats.total}`,
+                                                `Sucursales que llegaron a su meta: ${stats.meta}`,
+                                                `Sucursales que no llegaron a la meta: ${stats.noMeta}`
+                                            ];
+                                        }
                                     }
                                 }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
+                                x: { grid: { display: true, color: '#F1F5F9' }, ticks: { font: {size: 10} } }
                             }
-                        },
-                        scales: {
-                            y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
-                            x: { grid: { display: true, color: '#F1F5F9' }, ticks: { font: {size: 10} } } // Mostrar grid vertical
                         }
-                    }
-                });
+                    });
 
-                // 2. Protocolo Mystery (Mensual)
-                const ctxMys = document.getElementById('mysteryChart').getContext('2d');
-                if(state.mysteryChartInstance) state.mysteryChartInstance.destroy();
-                state.mysteryChartInstance = new Chart(ctxMys, {
-                    type: 'line',
-                    data: {
-                        labels: MESES_CORTOS,
-                        datasets: [{
-                            label: 'Protocolo Mystery',
-                            data: dataMysteryMes,
-                            borderColor: '#3B82F6', // Azul claro
-                            backgroundColor: 'transparent',
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#FFFFFF',
-                            pointBorderColor: '#3B82F6',
-                            pointBorderWidth: 2,
-                            pointRadius: 4.5,
-                            pointHoverRadius: 6.5,
-                            tension: 0.4, // Curvatura suave
-                            spanGaps: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const stats = statsMysteryMes[context.dataIndex];
-                                        if (!stats) return '';
-                                        return [
-                                            `Promedio: ${Math.round(stats.avg)}%`,
-                                            `Total Evaluaciones: ${stats.total}`,
-                                            `Sucursales que llegaron a su meta: ${stats.meta}`,
-                                            `Sucursales que no llegaron a la meta: ${stats.noMeta}`
-                                        ];
+                    // Radar solo para Auditoría
+                    const puntosLabels = ['IMAGEN Y LIMPIEZA', 'EQUIPOS Y MEDIOS DE PAGO', 'SERVICIO', 'OPERACIÓN', 'PROMOCIONES Y LSM'];
+                    const dataPuntosAuditoria = puntosLabels.map(punto => calcAvg(state.filteredData, punto));
+
+                    const ctxPuntos = document.getElementById('puntosAuditoriaChart').getContext('2d');
+                    if(state.puntosAuditoriaChartInstance) state.puntosAuditoriaChartInstance.destroy();
+                    state.puntosAuditoriaChartInstance = new Chart(ctxPuntos, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Imagen y Limpieza', 'Equipos/Pago', 'Servicio', 'Operación', 'Promociones/LSM'],
+                            datasets: [{
+                                label: 'Puntaje Promedio',
+                                data: dataPuntosAuditoria,
+                                backgroundColor: 'rgba(30, 58, 138, 0.2)',
+                                borderColor: '#1E3A8A',
+                                pointBackgroundColor: '#1E3A8A',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: '#1E3A8A'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Promedio: ${Math.round(context.raw)}%`;
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        scales: {
-                            y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
-                            x: { grid: { display: true, color: '#F1F5F9' }, ticks: { font: {size: 10} } } // Mostrar grid vertical
-                        }
-                    }
-                });
-
-                // 2.5 Gráfica Detalle Puntos Auditoría (Radar)
-                const puntosLabels = ['IMAGEN Y LIMPIEZA', 'EQUIPOS Y MEDIOS DE PAGO', 'SERVICIO', 'OPERACIÓN', 'PROMOCIONES Y LSM'];
-                const dataPuntosAuditoria = puntosLabels.map(punto => calcAvg(state.filteredData, punto));
-
-                const ctxPuntos = document.getElementById('puntosAuditoriaChart').getContext('2d');
-                if(state.puntosAuditoriaChartInstance) state.puntosAuditoriaChartInstance.destroy();
-                state.puntosAuditoriaChartInstance = new Chart(ctxPuntos, {
-                    type: 'radar',
-                    data: {
-                        labels: ['Imagen y Limpieza', 'Equipos/Pago', 'Servicio', 'Operación', 'Promociones/LSM'],
-                        datasets: [{
-                            label: 'Puntaje Promedio',
-                            data: dataPuntosAuditoria,
-                            backgroundColor: 'rgba(30, 58, 138, 0.2)', // brand-blue con opacidad
-                            borderColor: '#1E3A8A', // brand-blue
-                            pointBackgroundColor: '#1E3A8A',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: '#1E3A8A'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `Promedio: ${Math.round(context.raw)}%`;
-                                    }
+                            },
+                            scales: {
+                                r: {
+                                    angleLines: { color: '#F1F5F9' },
+                                    grid: { color: '#e2e8f0' },
+                                    pointLabels: { font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' }, color: '#334155' },
+                                    ticks: { min: 0, max: 100, stepSize: 20, backdropColor: 'transparent' }
                                 }
                             }
+                        }
+                    });
+                }
+
+                if (ind === 'all' || ind === 'PROTOCOLO MYSTERY') {
+                    const statsMysteryMes = MESES_COMPLETOS.map((mes) => {
+                        const dataMes = state.filteredData.filter(d => d['Mes'] && d['Mes'].toLowerCase() === mes.toLowerCase());
+                        const valid = dataMes.filter(d => typeof d['PROTOCOLO MYSTERY'] === 'number');
+                        if (!valid.length) return null;
+                        return {
+                            avg: valid.reduce((acc, curr) => acc + curr['PROTOCOLO MYSTERY'], 0) / valid.length,
+                            total: valid.length,
+                            meta: valid.filter(d => d['PROTOCOLO MYSTERY'] >= CONFIG.metas['PROTOCOLO MYSTERY']).length,
+                            noMeta: valid.filter(d => d['PROTOCOLO MYSTERY'] < CONFIG.metas['PROTOCOLO MYSTERY']).length
+                        };
+                    });
+                    const dataMysteryMes = statsMysteryMes.map(s => s ? s.avg : null);
+                    
+                    const ctxMys = document.getElementById('mysteryChart').getContext('2d');
+                    if(state.mysteryChartInstance) state.mysteryChartInstance.destroy();
+                    state.mysteryChartInstance = new Chart(ctxMys, {
+                        type: 'line',
+                        data: {
+                            labels: MESES_CORTOS,
+                            datasets: [{
+                                label: 'Protocolo Mystery',
+                                data: dataMysteryMes,
+                                borderColor: '#3B82F6', // Azul claro
+                                backgroundColor: 'transparent',
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#FFFFFF',
+                                pointBorderColor: '#3B82F6',
+                                pointBorderWidth: 2,
+                                pointRadius: 4.5,
+                                pointHoverRadius: 6.5,
+                                tension: 0.4,
+                                spanGaps: true
+                            }]
                         },
-                        scales: {
-                            r: {
-                                angleLines: { color: '#F1F5F9' },
-                                grid: { color: '#e2e8f0' },
-                                pointLabels: { font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' }, color: '#334155' },
-                                ticks: { min: 0, max: 100, stepSize: 20, backdropColor: 'transparent' }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const stats = statsMysteryMes[context.dataIndex];
+                                            if (!stats) return '';
+                                            return [
+                                                `Promedio: ${Math.round(stats.avg)}%`,
+                                                `Total Evaluaciones: ${stats.total}`,
+                                                `Sucursales que llegaron a su meta: ${stats.meta}`,
+                                                `Sucursales que no llegaron a la meta: ${stats.noMeta}`
+                                            ];
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, max: 100, ticks: { callback: v => Math.round(v) + '%', font: {size: 10} }, grid: { color: '#F1F5F9' } },
+                                x: { grid: { display: true, color: '#F1F5F9' }, ticks: { font: {size: 10} } }
                             }
                         }
-                    }
-                });
+                    });
+                }
             } else {
-                // Destruir las instancias si existen y no es La Gas
                 if(state.auditoriaChartInstance) state.auditoriaChartInstance.destroy();
                 if(state.mysteryChartInstance) state.mysteryChartInstance.destroy();
                 if(state.puntosAuditoriaChartInstance) state.puntosAuditoriaChartInstance.destroy();
             }
 
-            // 3. Desempeño por Sucursal / Gerente
-            // Obtenemos los datos agrupados por sucursal única
+            // 3. Desempeño por Sucursal / Gerente (Adaptado al indicador)
             const branchData = aggregateByBranch(state.filteredData);
             
-            // Ordenamos y limitamos a las 50 principales (si no hay filtro) para no encimar textos en el eje X
-            let sucursalesData = [...branchData].sort((a, b) => b.cumplimientoGeneral - a.cumplimientoGeneral);
+            // Configuramos qué llave vamos a evaluar
+            let metricKey = 'cumplimientoGeneral';
+            let metricLabel = 'CUMPLIMIENTO GENERAL';
+            
+            if (ind === 'LA GAS Auditoria') { metricKey = 'LA GAS Auditoria'; metricLabel = 'AUDITORÍA LA GAS'; }
+            else if (ind === 'PROTOCOLO MYSTERY') { metricKey = 'PROTOCOLO MYSTERY'; metricLabel = 'PROTOCOLO MYSTERY'; }
+            else if (ind === 'OCUPACION DE PLANTILLAS') { metricKey = 'OCUPACION DE PLANTILLAS'; metricLabel = 'OCUPACIÓN DE PLANTILLAS'; }
+            else if (ind === 'CERTIFICACION GERENTES') { metricKey = 'CERTIFICACION GERENTES'; metricLabel = 'CERTIFICACIÓN GERENCIAL'; }
+
+            document.getElementById('sucursal-chart-badge').innerText = metricLabel;
+            
+            let sucursalesData = [...branchData].filter(d => d[metricKey] !== null && d[metricKey] !== undefined && !isNaN(d[metricKey])).sort((a, b) => b[metricKey] - a[metricKey]);
             if (sucursalesData.length > 50) {
                 sucursalesData = sucursalesData.slice(0, 50);
             }
@@ -1288,17 +1347,22 @@
                 let text = d['Negocio'] || 'Sin Nombre';
                 return text.length > 15 ? text.substring(0, 15) + '...' : text;
             });
-            const dataSucursal = sucursalesData.map(d => d.cumplimientoGeneral);
+            const dataSucursal = sucursalesData.map(d => d[metricKey]);
 
-            // Calcular el detalle de meses por cada sucursal para el Tooltip
+            // Calcular el detalle de meses para el Tooltip
             const statsSucursal = sucursalesData.map(d => {
                 const records = state.filteredData.filter(r => r['Negocio'] === d['Negocio']);
-                const valid = records.filter(r => r.cumplimientoGeneral > 0);
+                const valid = records.filter(r => r[metricKey] > 0);
                 return {
-                    avg: d.cumplimientoGeneral,
+                    avg: d[metricKey],
                     total: valid.length,
-                    meta: valid.filter(r => r.cumplimientoGeneral >= 90).length,
-                    noMeta: valid.filter(r => r.cumplimientoGeneral < 90).length
+                    meta: valid.filter(r => r[metricKey] >= 90).length,
+                    noMeta: valid.filter(r => r[metricKey] < 90).length,
+                    auditoria: d['LA GAS Auditoria'],
+                    mystery: d['PROTOCOLO MYSTERY'],
+                    certificacion: d['CERTIFICACION GERENTES'],
+                    ocupacion: d['OCUPACION DE PLANTILLAS'],
+                    rotacion: d['ROTACION(BAJAS)']
                 };
             });
 
@@ -1309,7 +1373,7 @@
                 data: {
                     labels: labelsSucursal,
                     datasets: [{
-                        label: 'Cumplimiento General',
+                        label: metricLabel,
                         data: dataSucursal,
                         backgroundColor: CONFIG.colors.primary,
                         borderRadius: 3
@@ -1325,12 +1389,23 @@
                                 label: function(context) {
                                     const stats = statsSucursal[context.dataIndex];
                                     if (!stats) return '';
-                                    return [
-                                        `Cumplimiento General: ${Math.round(stats.avg)}%`,
-                                        `Meses Evaluados: ${stats.total}`,
-                                        `Meses que cumplieron la meta: ${stats.meta}`,
-                                        `Meses sin cumplir la meta: ${stats.noMeta}`
-                                    ];
+                                    
+                                    const formatVal = val => (val !== null && val !== undefined && !isNaN(val)) ? Math.round(val) + '%' : 'N/A';
+                                    
+                                    // Si no hay filtro específico, mostramos desglose, si no, mostramos solo ese indicador
+                                    if (ind === 'all') {
+                                        return [
+                                            `Cumplimiento General: ${Math.round(stats.avg)}%`,
+                                            `-----------------------------`,
+                                            `Auditoría LA GAS: ${formatVal(stats.auditoria)}`,
+                                            `Protocolo Mystery: ${formatVal(stats.mystery)}`,
+                                            `Cert. Gerencial: ${formatVal(stats.certificacion)}`,
+                                            `Ocup. Plantillas: ${formatVal(stats.ocupacion)}`,
+                                            `Rotación: ${formatVal(stats.rotacion)}`
+                                        ];
+                                    } else {
+                                        return `${metricLabel}: ${Math.round(context.raw)}%`;
+                                    }
                                 }
                             }
                         }
@@ -1344,10 +1419,18 @@
         }
 
         function renderTopBottom() {
-            // Usar datos agrupados por sucursal única
+            const ind = state.filters.indicador;
+            let metricKey = 'cumplimientoGeneral';
+            let metricLabel = 'Cump. General';
+            
+            if (ind === 'LA GAS Auditoria') { metricKey = 'LA GAS Auditoria'; metricLabel = 'Auditoría'; }
+            else if (ind === 'PROTOCOLO MYSTERY') { metricKey = 'PROTOCOLO MYSTERY'; metricLabel = 'Mystery'; }
+            else if (ind === 'OCUPACION DE PLANTILLAS') { metricKey = 'OCUPACION DE PLANTILLAS'; metricLabel = 'Ocupación'; }
+            else if (ind === 'CERTIFICACION GERENTES') { metricKey = 'CERTIFICACION GERENTES'; metricLabel = 'Certificación'; }
+
             const branchData = aggregateByBranch(state.filteredData);
-            const data = branchData.filter(d => d.cumplimientoGeneral > 0);
-            data.sort((a, b) => b.cumplimientoGeneral - a.cumplimientoGeneral);
+            const data = branchData.filter(d => d[metricKey] !== null && d[metricKey] !== undefined && !isNaN(d[metricKey]) && d[metricKey] > 0);
+            data.sort((a, b) => b[metricKey] - a[metricKey]);
 
             const top5 = data.slice(0, 5);
             const bottom5 = [...data].reverse().slice(0, 5);
@@ -1366,8 +1449,8 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-extrabold ${colorClass}">${item.cumplimientoGeneral.toFixed(0)}%</p>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">Cump. General</p>
+                            <p class="text-sm font-extrabold ${colorClass}">${Math.round(item[metricKey])}%</p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">${metricLabel}</p>
                         </div>
                     </div>`;
                 });
@@ -1383,37 +1466,61 @@
             tbody.innerHTML = '';
             
             const hasLaGas = state.filteredData.some(d => (d['Negocio'] || '').toLowerCase().includes('la gas'));
+            const ind = state.filters.indicador;
 
-            // Construcción dinámica de las cabeceras de la tabla
+            // Construcción dinámica de las cabeceras dependiendo del indicador seleccionado
             let headersHTML = `
                 <th scope="col" class="px-5 py-4">Región</th>
                 <th scope="col" class="px-5 py-4">Distrito</th>
+                <th scope="col" class="px-5 py-4 text-brand-blue">Gerente de Negocio</th>
                 <th scope="col" class="px-5 py-4">Cadena</th>
                 <th scope="col" class="px-5 py-4">Sucursal</th>
             `;
-            if (hasLaGas) {
-                headersHTML += `
-                <th scope="col" class="px-5 py-4 text-center">Auditoria</th>
-                <th scope="col" class="px-5 py-4 text-center">Mystery</th>
-                `;
+            if (hasLaGas && (ind === 'all' || ind === 'LA GAS Auditoria')) {
+                headersHTML += `<th scope="col" class="px-5 py-4 text-center">Auditoria</th>`;
             }
-            headersHTML += `
-                <th scope="col" class="px-5 py-4 text-center">Cert. Ger.</th>
-                <th scope="col" class="px-5 py-4 text-center">Ocup. Plan.</th>
+            if (hasLaGas && (ind === 'all' || ind === 'PROTOCOLO MYSTERY')) {
+                headersHTML += `<th scope="col" class="px-5 py-4 text-center">Mystery</th>`;
+            }
+            if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
+                headersHTML += `<th scope="col" class="px-5 py-4 text-center">Cert. Ger.</th>`;
+            }
+            if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
+                headersHTML += `<th scope="col" class="px-5 py-4 text-center">Ocup. Plan.</th>`;
+            }
+            if (ind === 'all') {
+                headersHTML += `
                 <th scope="col" class="px-5 py-4 text-center text-brand-orange bg-orange-50/50">Rotación</th>
                 <th scope="col" class="px-5 py-4 text-center text-brand-blue bg-blue-50/50">Cump. Gral</th>
-            `;
+                `;
+            }
             thead.innerHTML = headersHTML;
             
-            // Usar datos agrupados por sucursal única
             const branchData = aggregateByBranch(state.filteredData);
-            
             document.getElementById('table-count').innerText = `${branchData.length} SUCURSALES`;
 
-            const displayData = branchData.sort((a,b) => b.cumplimientoGeneral - a.cumplimientoGeneral);
+            // Ordenamos la tabla según la llave maestra del filtro
+            let metricKey = 'cumplimientoGeneral';
+            if (ind === 'LA GAS Auditoria') metricKey = 'LA GAS Auditoria';
+            else if (ind === 'PROTOCOLO MYSTERY') metricKey = 'PROTOCOLO MYSTERY';
+            else if (ind === 'OCUPACION DE PLANTILLAS') metricKey = 'OCUPACION DE PLANTILLAS';
+            else if (ind === 'CERTIFICACION GERENTES') metricKey = 'CERTIFICACION GERENTES';
+
+            const displayData = branchData.sort((a,b) => b[metricKey] - a[metricKey]);
+
+            // Función auxiliar para obtener el primer gerente de negocio válido
+            const getGerenteNegocio = (branchName) => {
+                const records = state.filteredData.filter(d => d['Negocio'] === branchName);
+                for (let i = 0; i < records.length; i++) {
+                    if (records[i]['Gerente de Negocio'] && records[i]['Gerente de Negocio'].toString().trim() !== '') {
+                        return records[i]['Gerente de Negocio'].toString().trim();
+                    }
+                }
+                return '-';
+            };
 
             displayData.forEach(row => {
-                const formatPct = (val) => val !== null && !isNaN(val) ? val.toFixed(0) + '%' : '-';
+                const formatPct = (val) => (val !== null && val !== undefined && !isNaN(val)) ? val.toFixed(0) + '%' : '-';
                 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-blue-50/30 transition-colors';
@@ -1421,23 +1528,29 @@
                 let trHTML = `
                     <td class="px-5 py-3 text-xs">${row['Gerente Regional'] || '-'}</td>
                     <td class="px-5 py-3 text-xs text-gray-500">${row['Gerente de Distrito'] || '-'}</td>
+                    <td class="px-5 py-3 text-xs font-bold text-gray-700">${getGerenteNegocio(row['Negocio'])}</td>
                     <td class="px-5 py-3 text-xs font-bold text-gray-400 uppercase">${row['Cadena'] || '-'}</td>
                     <td class="px-5 py-3 text-xs font-bold text-brand-blue">${row['Negocio'] || '-'}</td>
                 `;
                 
-                if (hasLaGas) {
+                if (hasLaGas && (ind === 'all' || ind === 'LA GAS Auditoria')) {
+                    trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['LA GAS Auditoria'])}</td>`;
+                }
+                if (hasLaGas && (ind === 'all' || ind === 'PROTOCOLO MYSTERY')) {
+                    trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['PROTOCOLO MYSTERY'])}</td>`;
+                }
+                if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
+                    trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['CERTIFICACION GERENTES'])}</td>`;
+                }
+                if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
+                    trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['OCUPACION DE PLANTILLAS'])}</td>`;
+                }
+                if (ind === 'all') {
                     trHTML += `
-                    <td class="px-5 py-3 text-xs text-center">${formatPct(row['LA GAS Auditoria'])}</td>
-                    <td class="px-5 py-3 text-xs text-center">${formatPct(row['PROTOCOLO MYSTERY'])}</td>
+                        <td class="px-5 py-3 text-xs text-center font-bold text-brand-orange bg-orange-50/30">${formatPct(row['ROTACION(BAJAS)'])}</td>
+                        <td class="px-5 py-3 text-xs text-center font-extrabold text-brand-blue bg-blue-50/30">${formatPct(row.cumplimientoGeneral)}</td>
                     `;
                 }
-
-                trHTML += `
-                    <td class="px-5 py-3 text-xs text-center">${formatPct(row['CERTIFICACION GERENTES'])}</td>
-                    <td class="px-5 py-3 text-xs text-center">${formatPct(row['OCUPACION DE PLANTILLAS'])}</td>
-                    <td class="px-5 py-3 text-xs text-center font-bold text-brand-orange bg-orange-50/30">${formatPct(row['ROTACION(BAJAS)'])}</td>
-                    <td class="px-5 py-3 text-xs text-center font-extrabold text-brand-blue bg-blue-50/30">${formatPct(row.cumplimientoGeneral)}</td>
-                `;
                 
                 tr.innerHTML = trHTML;
                 tbody.appendChild(tr);
