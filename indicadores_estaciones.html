@@ -383,6 +383,14 @@
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
+                    const fields = results.meta.fields || [];
+                    const colH = fields.length > 7 ? fields[7] : null;   // Plantilla autorizada Responsables (H)
+                    const colK = fields.length > 10 ? fields[10] : null; // Plantilla Responsables Ocupada (K)
+                    const colX = fields.length > 23 ? fields[23] : null; // Gerentes Certificados (X)
+                    const colY = fields.length > 24 ? fields[24] : null; // % CERTIFICACION GERENTES (Y)
+                    const colAC = fields.length > 28 ? fields[28] : null;// Bajas (AC)
+                    const colAD = fields.length > 29 ? fields[29] : null;// Rotación (AD)
+
                     state.rawData = results.data.map(row => {
                         const cleanedRow = {};
                         
@@ -393,8 +401,18 @@
                             // Normalizar variaciones de nombres para evitar errores de espacios
                             if(cleanK === 'ROTACION (BAJAS)') cleanK = 'ROTACION(BAJAS)';
                             if(cleanK === 'Gerentes Certificados') cleanK = 'Gerentes certificados';
+                            if(cleanK === '% CERTIFICACION GERENTES') cleanK = 'CERTIFICACION GERENTES';
+                            if(cleanK.toLowerCase() === 'bajas') cleanK = 'Bajas'; // Garantiza lectura de bajas
                             cleanedRow[cleanK] = row[k];
                         });
+
+                        // Forzamos columnas estratégicas por su índice exacto en el Excel en caso de que cambie el título
+                        if (colH && row[colH] !== undefined) cleanedRow['Plantilla autorizada Responsables'] = row[colH];
+                        if (colK && row[colK] !== undefined) cleanedRow['Plantilla Responsables Ocupada'] = row[colK];
+                        if (colX && row[colX] !== undefined) cleanedRow['Gerentes certificados'] = row[colX];
+                        if (colY && row[colY] !== undefined) cleanedRow['CERTIFICACION GERENTES'] = row[colY];
+                        if (colAC && row[colAC] !== undefined && cleanedRow['Bajas'] === undefined) cleanedRow['Bajas'] = row[colAC];
+                        if (colAD && row[colAD] !== undefined) cleanedRow['ROTACION(BAJAS)'] = row[colAD];
 
                         const numericCols = [
                             'Plantilla autorizada Gerentes', 'Plantilla autorizada Subgerentes', 'Plantilla autorizada Responsables', 'Plantilla Autorizada colaboradores',
@@ -600,29 +618,14 @@
                     const valid = records.filter(d => typeof d[key] === 'number');
                     return valid.length ? valid.reduce((acc, curr) => acc + curr[key], 0) / valid.length : null;
                 };
-                
-                const getSumRecords = (key) => {
-                    const valid = records.filter(d => typeof d[key] === 'number');
-                    return valid.length ? valid.reduce((acc, curr) => acc + curr[key], 0) : 0;
-                };
 
                 const aud = getAvg('LA GAS Auditoria');
                 const mys = getAvg('PROTOCOLO MYSTERY');
                 const cert = getAvg('CERTIFICACION GERENTES');
                 const ocup = getAvg('OCUPACION DE PLANTILLAS');
 
-                // Cálculo exacto de Rotación (%) para la tabla según bajas de la sucursal y su plantilla
-                const branchUniqueMonths = new Set(records.map(d => d['Mes'])).size || 1;
-                let branchBajas = getSumRecords('Bajas');
-                
-                const branchPlantilla = getSumRecords('Plantilla Gerentes Ocupada') + 
-                                        getSumRecords('Plantilla Subgerentes Ocupada') + 
-                                        (getSumRecords('Plantilla Responsables Ocupada') || 0) + 
-                                        (getSumRecords('Plantilla colaboradores Ocupada') || 0);
-                
-                const bajasPromedio = branchBajas / branchUniqueMonths;
-                const plantillaPromedio = branchPlantilla / branchUniqueMonths;
-                const rot = plantillaPromedio > 0 ? (bajasPromedio / plantillaPromedio) * 100 : 0;
+                // Tomamos directamente el porcentaje calculado de la columna AD
+                const rot = getAvg('ROTACION(BAJAS)');
 
                 // Validación "La Gas" en los datos agrupados
                 const isLaGas = group['Negocio'].toLowerCase().includes('la gas');
@@ -734,7 +737,7 @@
                 <div class="text-[10px] font-medium text-gray-500 mt-auto">Unidades operativas activas</div>
             </div>`;
 
-            // Helper para calcular métricas, total de evaluaciones y conteo de metas
+            // Helper para calcular métricas de Auditoria/Mystery
             const getKpiStats = (key, goal, isInverse = false) => {
                 const validData = data.filter(d => typeof d[key] === 'number');
                 const avg = validData.length ? validData.reduce((acc, curr) => acc + curr[key], 0) / validData.length : 0;
@@ -761,30 +764,33 @@
                 html += buildCardHTML('Protocolo Mystery', mys.avg, CONFIG.metas['PROTOCOLO MYSTERY'], mys.subtext, null);
             }
 
-            const uniqueMonths = new Set(data.map(d => d['Mes'])).size || 1;
-            const getSum = (key) => {
-                const rawSum = data.reduce((acc, curr) => acc + (!isNaN(parseFloat(curr[key])) ? parseFloat(curr[key]) : 0), 0);
-                return Math.round(rawSum / uniqueMonths);
+            // NUEVA FUNCIÓN: Promedio Mensual Inteligente
+            // Suma los valores y divide SOLO entre los meses que efectivamente reportaron ese dato.
+            const getMonthlyAvg = (key) => {
+                const validRecords = data.filter(d => typeof d[key] === 'number');
+                if (validRecords.length === 0) return 0; // Previene divisiones entre 0
+                
+                const rawSum = validRecords.reduce((acc, curr) => acc + curr[key], 0);
+                const uniqueMonthsWithData = new Set(validRecords.map(d => d['Mes'])).size || 1;
+                
+                return Math.round(rawSum / uniqueMonthsWithData);
             };
 
             // Ocupacion
             if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
-                const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
-                const gerentesAut = getSum('Plantilla autorizada Gerentes');
-                const subgerentesOcu = getSum('Plantilla Subgerentes Ocupada');
-                const subgerentesAut = getSum('Plantilla autorizada Subgerentes');
-                const respOcu = getSum('Plantilla Responsables Ocupada') || 0;
-                const respAut = getSum('Plantilla autorizada Responsables') || 0;
-                const promOcu = getSum('Plantilla colaboradores Ocupada') || 0;
-                const promAut = getSum('Plantilla Autorizada colaboradores') || 0;
+                const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
+                const gerentesAut = getMonthlyAvg('Plantilla autorizada Gerentes');
+                const respOcu = getMonthlyAvg('Plantilla Responsables Ocupada');
+                const respAut = getMonthlyAvg('Plantilla autorizada Responsables');
+                const promOcu = getMonthlyAvg('Plantilla colaboradores Ocupada');
+                const promAut = getMonthlyAvg('Plantilla Autorizada colaboradores');
 
                 const ocuAvg = calcAvg(data, 'OCUPACION DE PLANTILLAS');
                 const ocuSubtext = `
                     <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-gray-500 mt-1 w-full">
                         <span>Gerentes: <b class="text-gray-700">${gerentesOcu}/${gerentesAut}</b></span>
-                        <span>Subgerentes: <b class="text-gray-700">${subgerentesOcu}/${subgerentesAut}</b></span>
                         <span>Responsables: <b class="text-gray-700">${respOcu}/${respAut}</b></span>
-                        <span>Promotores: <b class="text-gray-700">${promOcu}/${promAut}</b></span>
+                        <span class="col-span-2">Promotores: <b class="text-gray-700">${promOcu}/${promAut}</b></span>
                     </div>
                 `;
                 html += buildCardHTML('Ocup. Plantillas', ocuAvg, CONFIG.metas['OCUPACION DE PLANTILLAS'], ocuSubtext, null);
@@ -792,16 +798,12 @@
 
             // Certificacion
             if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
-                const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
-                let gerentesCert = getSum('Gerentes certificados') || getSum('Gerentes Certificados');
-                if (gerentesCert === 0) {
-                    gerentesCert = Math.round(data.reduce((acc, curr) => {
-                        const cert = parseFloat(curr['CERTIFICACION GERENTES']) || 0;
-                        const hc = parseFloat(curr['Plantilla Gerentes Ocupada']) || 0;
-                        return acc + (hc * (cert / 100));
-                    }, 0) / uniqueMonths);
-                }
-                const cerAvg = calcAvg(data, 'CERTIFICACION GERENTES');
+                const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
+                const gerentesCert = getMonthlyAvg('Gerentes certificados');
+                
+                // Calculamos el % exacto dividiendo absolutos para que empate perfectamente con el subtexto
+                const cerAvg = gerentesOcu > 0 ? (gerentesCert / gerentesOcu) * 100 : 0;
+                
                 const cerSubtext = `
                     <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
                         <span>Gerentes Ocupados: <b class="text-gray-700">${gerentesOcu}</b></span>
@@ -813,17 +815,22 @@
 
             // Si no hay filtro de indicador, mostramos los KPIs globales adicionales
             if (ind === 'all') {
-                const gerentesOcu = getSum('Plantilla Gerentes Ocupada');
-                const subgerentesOcu = getSum('Plantilla Subgerentes Ocupada');
-                const respOcu = getSum('Plantilla Responsables Ocupada') || 0;
-                const promOcu = getSum('Plantilla colaboradores Ocupada') || 0;
+                const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
+                const respOcu = getMonthlyAvg('Plantilla Responsables Ocupada');
+                const promOcu = getMonthlyAvg('Plantilla colaboradores Ocupada');
 
                 // Rotacion
-                let totalBajas = getSum('Bajas');
+                let totalBajas = getMonthlyAvg('Bajas');
+                const plantillaTotal = gerentesOcu + respOcu + promOcu; // Se excluyen Subgerentes
                 
-                const plantillaTotal = gerentesOcu + subgerentesOcu + respOcu + promOcu;
-                const rotAvg = plantillaTotal > 0 ? (totalBajas / plantillaTotal) * 100 : 0;
-                const textBajas = uniqueMonths > 1 ? 'Bajas (Prom. Mensual)' : 'Bajas del Mes';
+                // Promedio directo de los porcentajes leídos de la columna AD
+                const rotAvg = calcAvg(data, 'ROTACION(BAJAS)');
+                
+                // Determinamos si es un promedio de meses o solo un mes para adecuar el texto
+                const validBajasRecords = data.filter(d => typeof d['Bajas'] === 'number');
+                const uniqueMonthsData = new Set(validBajasRecords.map(d => d['Mes'])).size || 1;
+                const textBajas = uniqueMonthsData > 1 ? 'Bajas (Prom. Mensual)' : 'Bajas del Mes';
+                
                 const rotSubtext = `
                     <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
                         <span>${textBajas}: <b class="text-gray-700">${totalBajas}</b></span>
@@ -832,11 +839,11 @@
                 `;
                 html += buildCardHTML('Rotación', rotAvg, CONFIG.metas['ROTACION(BAJAS)'], rotSubtext, null, 'warning');
 
-                // Sucesión
-                const sucGerentes = getSum('COLABORADORES EN SUCESION GERENTES') || 0;
-                const sucSubgerentes = getSum('COLABORADORES EN SUCESION SUBGERENTES') || 0;
-                const sucResponsables = getSum('COLABORADORES EN SUCESION RESPONSABLES') || 0;
-                const totalSucesion = sucGerentes + sucSubgerentes + sucResponsables;
+                // Sucesión (Sin contemplar Subgerentes)
+                const sucGerentes = getMonthlyAvg('COLABORADORES EN SUCESION GERENTES');
+                const sucResponsables = getMonthlyAvg('COLABORADORES EN SUCESION RESPONSABLES');
+                const totalSucesion = sucGerentes + sucResponsables;
+                
                 html += `
                 <div class="bg-white border-gray-100 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
                     <div class="flex justify-between items-start mb-3">
@@ -848,7 +855,6 @@
                     </div>
                     <div class="text-[10px] font-medium text-gray-500 mt-auto flex flex-col gap-1">
                         <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Gerente:</span> <b class="text-gray-700">${sucGerentes}</b></div>
-                        <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Subgerente:</span> <b class="text-gray-700">${sucSubgerentes}</b></div>
                         <div class="flex justify-between"><span>Para Responsable:</span> <b class="text-gray-700">${sucResponsables}</b></div>
                     </div>
                 </div>`;
@@ -914,11 +920,9 @@
                 if(!branchMap[b]) {
                     branchMap[b] = { ...d };
                     branchMap[b]['COLABORADORES EN SUCESION GERENTES'] = parseFloat(d['COLABORADORES EN SUCESION GERENTES']) || 0;
-                    branchMap[b]['COLABORADORES EN SUCESION SUBGERENTES'] = parseFloat(d['COLABORADORES EN SUCESION SUBGERENTES']) || 0;
                     branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'] = parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0;
                 } else {
                     branchMap[b]['COLABORADORES EN SUCESION GERENTES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION GERENTES'], parseFloat(d['COLABORADORES EN SUCESION GERENTES']) || 0);
-                    branchMap[b]['COLABORADORES EN SUCESION SUBGERENTES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION SUBGERENTES'], parseFloat(d['COLABORADORES EN SUCESION SUBGERENTES']) || 0);
                     branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'], parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0);
                     branchMap[b]['Plantilla Gerentes Ocupada'] = Math.min(parseFloat(branchMap[b]['Plantilla Gerentes Ocupada']) || 0, parseFloat(d['Plantilla Gerentes Ocupada']) || 0);
                 }
@@ -955,8 +959,9 @@
                 });
             }
 
+            // Excluimos subgerentes de la alerta
             const sucesionList = uniqueBranches.filter(d => 
-                (d['COLABORADORES EN SUCESION GERENTES'] > 0 || d['COLABORADORES EN SUCESION SUBGERENTES'] > 0 || d['COLABORADORES EN SUCESION RESPONSABLES'] > 0)
+                (d['COLABORADORES EN SUCESION GERENTES'] > 0 || d['COLABORADORES EN SUCESION RESPONSABLES'] > 0)
             );
 
             if(sucesionList.length === 0) {
@@ -967,7 +972,6 @@
 
                 sucesionList.forEach(branch => {
                     const sucGer = branch['COLABORADORES EN SUCESION GERENTES'];
-                    const sucSub = branch['COLABORADORES EN SUCESION SUBGERENTES'];
                     const sucRes = branch['COLABORADORES EN SUCESION RESPONSABLES'];
                     
                     sucesionGrid.innerHTML += `
@@ -982,7 +986,6 @@
                             <p class="text-[10px] font-bold text-brand-blue uppercase mb-2">${branch['Cadena'] || '-'}</p>
                             <div class="grid grid-cols-1 gap-1">
                                 ${sucGer > 0 ? `<div class="text-[9px] font-bold bg-blue-50 text-brand-blue px-2 py-1 rounded flex justify-between"><span>Para Gerente:</span> <span>${sucGer}</span></div>` : ''}
-                                ${sucSub > 0 ? `<div class="text-[9px] font-bold bg-blue-50 text-brand-blue px-2 py-1 rounded flex justify-between"><span>Para Subgerente:</span> <span>${sucSub}</span></div>` : ''}
                                 ${sucRes > 0 ? `<div class="text-[9px] font-bold bg-blue-50 text-brand-blue px-2 py-1 rounded flex justify-between"><span>Para Responsable:</span> <span>${sucRes}</span></div>` : ''}
                             </div>
                         </div>
