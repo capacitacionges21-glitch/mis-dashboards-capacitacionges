@@ -388,8 +388,8 @@
                     const colK = fields.length > 10 ? fields[10] : null; // Plantilla Responsables Ocupada (K)
                     const colX = fields.length > 23 ? fields[23] : null; // Gerentes Certificados (X)
                     const colY = fields.length > 24 ? fields[24] : null; // % CERTIFICACION GERENTES (Y)
-                    const colAC = fields.length > 28 ? fields[28] : null;// Bajas (AC)
-                    const colAD = fields.length > 29 ? fields[29] : null;// Rotación (AD)
+                    const colAD = fields.length > 29 ? fields[29] : null;// Bajas (AD - Índice 29 basado en tu última imagen)
+                    const colAE = fields.length > 30 ? fields[30] : null;// Rotación (AE - Índice 30)
 
                     state.rawData = results.data.map(row => {
                         const cleanedRow = {};
@@ -406,13 +406,15 @@
                             cleanedRow[cleanK] = row[k];
                         });
 
-                        // Forzamos columnas estratégicas por su índice exacto en el Excel en caso de que cambie el título
-                        if (colH && row[colH] !== undefined) cleanedRow['Plantilla autorizada Responsables'] = row[colH];
-                        if (colK && row[colK] !== undefined) cleanedRow['Plantilla Responsables Ocupada'] = row[colK];
-                        if (colX && row[colX] !== undefined) cleanedRow['Gerentes certificados'] = row[colX];
-                        if (colY && row[colY] !== undefined) cleanedRow['CERTIFICACION GERENTES'] = row[colY];
-                        if (colAC && row[colAC] !== undefined && cleanedRow['Bajas'] === undefined) cleanedRow['Bajas'] = row[colAC];
-                        if (colAD && row[colAD] !== undefined) cleanedRow['ROTACION(BAJAS)'] = row[colAD];
+                        // FUERZA A PRUEBA DE FALLOS: Asigna columnas estratégicas por índice exacto
+                        if (cleanedRow['Plantilla autorizada Responsables'] === undefined && colH !== null) cleanedRow['Plantilla autorizada Responsables'] = row[colH];
+                        if (cleanedRow['Plantilla Responsables Ocupada'] === undefined && colK !== null) cleanedRow['Plantilla Responsables Ocupada'] = row[colK];
+                        if (cleanedRow['Gerentes certificados'] === undefined && colX !== null) cleanedRow['Gerentes certificados'] = row[colX];
+                        if (cleanedRow['CERTIFICACION GERENTES'] === undefined && colY !== null) cleanedRow['CERTIFICACION GERENTES'] = row[colY];
+                        
+                        // Aquí es donde ocurría el problema: Forzamos la lectura de Bajas en la columna AD (29) y Rotación en AE (30)
+                        if (cleanedRow['Bajas'] === undefined && colAD !== null) cleanedRow['Bajas'] = row[colAD];
+                        if (cleanedRow['ROTACION(BAJAS)'] === undefined && colAE !== null) cleanedRow['ROTACION(BAJAS)'] = row[colAE];
 
                         const numericCols = [
                             'Plantilla autorizada Gerentes', 'Plantilla autorizada Subgerentes', 'Plantilla autorizada Responsables', 'Plantilla Autorizada colaboradores',
@@ -422,10 +424,11 @@
                             'LA GAS Auditoria', 'Gerentes certificados', 'CERTIFICACION GERENTES',
                             'COLABORADORES EN SUCESION GERENTES', 'COLABORADORES EN SUCESION SUBGERENTES', 'COLABORADORES EN SUCESION RESPONSABLES'
                         ];
+                        
                         numericCols.forEach(col => {
                             if(cleanedRow[col] !== undefined && cleanedRow[col] !== null) {
                                 let val = cleanedRow[col].toString().trim().replace(/%/g, '').replace(/,/g, '');
-                                cleanedRow[col] = val === '' || val === '-' ? null : (isNaN(parseFloat(val)) ? 0 : parseFloat(val));
+                                cleanedRow[col] = val === '' || val === '-' ? null : (isNaN(parseFloat(val)) ? null : parseFloat(val));
                             }
                         });
                         
@@ -461,7 +464,7 @@
                         }
 
                         kpisToEvaluate.forEach(k => {
-                            if(cleanedRow[k] !== null && !isNaN(cleanedRow[k])) {
+                            if(cleanedRow[k] !== null && cleanedRow[k] !== undefined && !isNaN(cleanedRow[k])) {
                                 sumKpis += cleanedRow[k];
                                 validKpis++;
                             }
@@ -593,6 +596,30 @@
             return valid.length ? valid.reduce((acc, curr) => acc + curr[key], 0) / valid.length : 0;
         }
 
+        // NUEVO HELPER MEJORADO: Obtiene solo el registro del último mes disponible por cada sucursal (ignorando meses futuros vacíos)
+        function getLatestRecordPerBranch(data) {
+            const order = { 'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12 };
+            
+            // FILTRO CLAVE: Ignorar registros (meses) que no tengan información numérica capturada
+            const validData = data.filter(d => typeof d['Plantilla autorizada Gerentes'] === 'number' || typeof d['OCUPACION DE PLANTILLAS'] === 'number');
+
+            // Ordenar de mes más reciente a mes más antiguo
+            const sortedData = [...validData].sort((a, b) => {
+                const m1 = a['Mes'] ? a['Mes'].toString().toLowerCase().trim() : '';
+                const m2 = b['Mes'] ? b['Mes'].toString().toLowerCase().trim() : '';
+                return (order[m2] || 0) - (order[m1] || 0);
+            });
+
+            const branchMap = {};
+            sortedData.forEach(d => {
+                const b = d['Negocio'];
+                if (!b) return;
+                // Al estar ordenado, el primer registro que leemos es el del mes más reciente con información real
+                if (!branchMap[b]) branchMap[b] = { ...d };
+            });
+            return Object.values(branchMap);
+        }
+
         // NUEVO HELPER: Agrupa los datos por sucursal única promediando sus valores de los meses filtrados
         function aggregateByBranch(data) {
             const groupedData = {};
@@ -624,7 +651,7 @@
                 const cert = getAvg('CERTIFICACION GERENTES');
                 const ocup = getAvg('OCUPACION DE PLANTILLAS');
 
-                // Tomamos directamente el porcentaje calculado de la columna AD
+                // Tomamos directamente el porcentaje calculado de la columna AD (Rotación se movió a AE en Excel)
                 const rot = getAvg('ROTACION(BAJAS)');
 
                 // Validación "La Gas" en los datos agrupados
@@ -764,16 +791,23 @@
                 html += buildCardHTML('Protocolo Mystery', mys.avg, CONFIG.metas['PROTOCOLO MYSTERY'], mys.subtext, null);
             }
 
-            // NUEVA FUNCIÓN: Promedio Mensual Inteligente
-            // Suma los valores y divide SOLO entre los meses que efectivamente reportaron ese dato.
+            // FUNCIÓN MEJORADA: Promedio Mensual Inteligente
             const getMonthlyAvg = (key) => {
                 const validRecords = data.filter(d => typeof d[key] === 'number');
-                if (validRecords.length === 0) return 0; // Previene divisiones entre 0
+                if (validRecords.length === 0) return 0;
                 
                 const rawSum = validRecords.reduce((acc, curr) => acc + curr[key], 0);
-                const uniqueMonthsWithData = new Set(validRecords.map(d => d['Mes'])).size || 1;
                 
-                return Math.round(rawSum / uniqueMonthsWithData);
+                // Cuidado al contar meses: solo contar si no vienen vacíos o llenos de espacios
+                const uniqueMonths = new Set();
+                validRecords.forEach(d => {
+                    if (d['Mes'] && d['Mes'].toString().trim() !== '') {
+                        uniqueMonths.add(d['Mes'].toString().toLowerCase().trim());
+                    }
+                });
+                
+                const numMonths = uniqueMonths.size || 1;
+                return Math.round(rawSum / numMonths);
             };
 
             // Ocupacion
@@ -801,7 +835,6 @@
                 const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
                 const gerentesCert = getMonthlyAvg('Gerentes certificados');
                 
-                // Calculamos el % exacto dividiendo absolutos para que empate perfectamente con el subtexto
                 const cerAvg = gerentesOcu > 0 ? (gerentesCert / gerentesOcu) * 100 : 0;
                 
                 const cerSubtext = `
@@ -819,16 +852,28 @@
                 const respOcu = getMonthlyAvg('Plantilla Responsables Ocupada');
                 const promOcu = getMonthlyAvg('Plantilla colaboradores Ocupada');
 
-                // Rotacion
-                let totalBajas = getMonthlyAvg('Bajas');
-                const plantillaTotal = gerentesOcu + respOcu + promOcu; // Se excluyen Subgerentes
+                // Plantilla Total (Se excluyen Subgerentes)
+                const plantillaTotal = gerentesOcu + respOcu + promOcu; 
                 
-                // Promedio directo de los porcentajes leídos de la columna AD
-                const rotAvg = calcAvg(data, 'ROTACION(BAJAS)');
-                
-                // Determinamos si es un promedio de meses o solo un mes para adecuar el texto
+                // CÁLCULO DE BAJAS BLINDADO (Columna AD)
                 const validBajasRecords = data.filter(d => typeof d['Bajas'] === 'number');
-                const uniqueMonthsData = new Set(validBajasRecords.map(d => d['Mes'])).size || 1;
+                const sumBajas = validBajasRecords.reduce((acc, curr) => acc + curr['Bajas'], 0);
+                
+                // Extraemos inteligentemente cuántos meses reales hay con datos de bajas
+                const uniqueMonthsBajasSet = new Set();
+                validBajasRecords.forEach(d => {
+                    if (d['Mes'] && d['Mes'].toString().trim() !== '') {
+                        uniqueMonthsBajasSet.add(d['Mes'].toString().toLowerCase().trim());
+                    }
+                });
+                const uniqueMonthsData = uniqueMonthsBajasSet.size || 1;
+                
+                // Si hay un solo mes (ej. filtrado Junio), mostramos la suma total real. Si hay varios, mostramos el promedio mensual.
+                let totalBajas = uniqueMonthsData > 1 ? Math.round(sumBajas / uniqueMonthsData) : sumBajas;
+                
+                // NUEVO: Forzamos el valor principal (grande) para que sea el cálculo matemático real en lugar del 0% del Excel
+                let rotAvg = plantillaTotal > 0 ? (totalBajas / plantillaTotal) * 100 : 0;
+                
                 const textBajas = uniqueMonthsData > 1 ? 'Bajas (Prom. Mensual)' : 'Bajas del Mes';
                 
                 const rotSubtext = `
@@ -859,9 +904,11 @@
                     </div>
                 </div>`;
 
-                // Sin Gerente
-                const sinGerente = data.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
+                // Sin Gerente - AHORA EVALÚA SOLO EL ESTADO MÁS RECIENTE
+                const latestData = getLatestRecordPerBranch(data);
+                const sinGerente = latestData.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
                 const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
+                
                 html += `
                 <div class="bg-[#FFF7ED] border-orange-200 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
                     <div class="flex justify-between items-start mb-3">
@@ -912,23 +959,8 @@
                 alertsContainer.parentElement.classList.remove('hidden');
             }
 
-            const branchMap = {};
-            state.filteredData.forEach(d => {
-                const b = d['Negocio'];
-                if(!b) return;
-                
-                if(!branchMap[b]) {
-                    branchMap[b] = { ...d };
-                    branchMap[b]['COLABORADORES EN SUCESION GERENTES'] = parseFloat(d['COLABORADORES EN SUCESION GERENTES']) || 0;
-                    branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'] = parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0;
-                } else {
-                    branchMap[b]['COLABORADORES EN SUCESION GERENTES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION GERENTES'], parseFloat(d['COLABORADORES EN SUCESION GERENTES']) || 0);
-                    branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'] = Math.max(branchMap[b]['COLABORADORES EN SUCESION RESPONSABLES'], parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0);
-                    branchMap[b]['Plantilla Gerentes Ocupada'] = Math.min(parseFloat(branchMap[b]['Plantilla Gerentes Ocupada']) || 0, parseFloat(d['Plantilla Gerentes Ocupada']) || 0);
-                }
-            });
-            
-            const uniqueBranches = Object.values(branchMap);
+            // AHORA extraemos el estado del MES MÁS RECIENTE para no arrastrar alertas viejas
+            const uniqueBranches = getLatestRecordPerBranch(state.filteredData);
 
             const sinGerenteList = uniqueBranches.filter(d => 
                 (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)
@@ -959,9 +991,9 @@
                 });
             }
 
-            // Excluimos subgerentes de la alerta
+            // Excluimos subgerentes de la alerta y lo basamos en el mes más reciente
             const sucesionList = uniqueBranches.filter(d => 
-                (d['COLABORADORES EN SUCESION GERENTES'] > 0 || d['COLABORADORES EN SUCESION RESPONSABLES'] > 0)
+                ((parseFloat(d['COLABORADORES EN SUCESION GERENTES']) || 0) > 0 || (parseFloat(d['COLABORADORES EN SUCESION RESPONSABLES']) || 0) > 0)
             );
 
             if(sucesionList.length === 0) {
@@ -971,8 +1003,8 @@
                 sucesionGrid.innerHTML = '';
 
                 sucesionList.forEach(branch => {
-                    const sucGer = branch['COLABORADORES EN SUCESION GERENTES'];
-                    const sucRes = branch['COLABORADORES EN SUCESION RESPONSABLES'];
+                    const sucGer = parseFloat(branch['COLABORADORES EN SUCESION GERENTES']) || 0;
+                    const sucRes = parseFloat(branch['COLABORADORES EN SUCESION RESPONSABLES']) || 0;
                     
                     sucesionGrid.innerHTML += `
                     <div class="bg-white border border-blue-100 rounded-lg p-3 flex gap-3 shadow-sm hover:shadow-md transition-shadow">
