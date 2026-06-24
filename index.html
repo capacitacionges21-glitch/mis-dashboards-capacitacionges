@@ -362,76 +362,84 @@ Indicadores de cumplimiento
 
 </footer>
 
+<!-- Modal de contraseña -->
+<div id="password-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm mx-4">
+    <h2 class="text-lg font-bold text-slate-800 mb-1">Acceso restringido</h2>
+    <p class="text-slate-500 text-sm mb-5">Ingresa la contraseña para continuar.</p>
+    <input
+      id="modal-password-input"
+      type="password"
+      placeholder="Contraseña"
+      class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300 mb-2"
+    />
+    <p id="modal-error" class="text-red-500 text-xs mb-4 hidden">Contraseña incorrecta. Intenta de nuevo.</p>
+    <div class="flex gap-3">
+      <button id="modal-cancel" class="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition">Cancelar</button>
+      <button id="modal-submit" class="flex-1 py-3 rounded-xl bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition">Ingresar</button>
+    </div>
+  </div>
+</div>
+
 <script>
+
+const modal = document.getElementById('password-modal')
+const modalInput = document.getElementById('modal-password-input')
+const modalError = document.getElementById('modal-error')
+const modalCancel = document.getElementById('modal-cancel')
+const modalSubmit = document.getElementById('modal-submit')
+let pendingHref = ''
+let pendingPassword = ''
+
+function openModal(href, password) {
+  pendingHref = href
+  pendingPassword = password
+  modalInput.value = ''
+  modalError.classList.add('hidden')
+  modal.classList.remove('hidden')
+  modal.classList.add('flex')
+  setTimeout(() => modalInput.focus(), 50)
+}
+
+function closeModal() {
+  modal.classList.add('hidden')
+  modal.classList.remove('flex')
+}
+
+modalCancel.addEventListener('click', closeModal)
+modal.addEventListener('click', e => { if (e.target === modal) closeModal() })
+
+function submitPassword() {
+  if (modalInput.value === pendingPassword) {
+    closeModal()
+    window.location = pendingHref
+  } else {
+    modalError.classList.remove('hidden')
+    modalInput.value = ''
+    modalInput.focus()
+  }
+}
+
+modalSubmit.addEventListener('click', submitPassword)
+modalInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword() })
 
 document
 .querySelectorAll(".dashboard")
 .forEach(card=>{
 
-const enabled =
-card.dataset.enabled !== "false"
+const enabled = card.dataset.enabled !== "false"
 
 if(!enabled){
-
-card.classList.add(
-"opacity-50",
-"grayscale",
-"cursor-not-allowed"
-)
-
-card.addEventListener(
-"click",
-e=>{
-
-e.preventDefault()
-
-alert(
-"Este dashboard está temporalmente deshabilitado"
-)
-
-}
-)
-
-return
-
+  card.classList.add("opacity-50","grayscale","cursor-not-allowed")
+  card.addEventListener("click", e => { e.preventDefault() })
+  return
 }
 
-if(
-card.classList.contains(
-"protected"
-)
-){
-
-card.addEventListener(
-"click",
-e=>{
-
-e.preventDefault()
-
-const pass =
-prompt(
-"Ingrese la contraseña para acceder:"
-)
-
-if(
-pass ===
-card.dataset.password
-){
-
-window.location =
-card.href
-
-}else{
-
-alert(
-"Contraseña incorrecta"
-)
-
-}
-
-}
-)
-
+if(card.classList.contains("protected")){
+  card.addEventListener("click", e => {
+    e.preventDefault()
+    openModal(card.href, card.dataset.password)
+  })
 }
 
 })
