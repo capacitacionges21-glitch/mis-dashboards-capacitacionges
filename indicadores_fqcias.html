@@ -449,7 +449,7 @@
                                     <h3 id="title-rev-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral REV / REC</h3>
                                     <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Indicadores Operativos</span>
                                 </div>
-                                <p id="subtitle-rev" class="text-xs text-slate-500 font-medium mt-1">Unidades Moteburger y Centura</p>
+                                <p id="subtitle-rev" class="text-xs text-slate-500 font-medium mt-1">BK Norte y BK Centro/Sur</p>
                             </div>
                         </div>
                         <select id="select-rev-type" onchange="updateRevChartType()" class="bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl p-2.5 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer shadow-sm">
@@ -656,6 +656,14 @@
             'Moteburger': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=98366889&single=true&output=csv',
             'Churchs': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=624506431&single=true&output=csv'
         };
+
+        const CHAIN_NAMES = {
+            'BK Centura': 'BK Norte',
+            'Centura': 'BK Norte',
+            'BK Moteburger': 'BK Centro/Sur',
+            'Moteburger': 'BK Centro/Sur',
+        };
+        function mapChainName(raw) { return CHAIN_NAMES[raw] || raw; }
 
         const MESES_NOM = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         
@@ -872,7 +880,7 @@
                             cleanRows.push({
                                 mes: mesStr, trimestre: tri, region: row[1] ? row[1].toString().trim() : 'S/R',
                                 distrito: row[2] ? row[2].toString().trim() : 'S/D', gerente: gerenteStr,
-                                cadena: row[4] ? row[4].toString().trim() : sourceName, sucursal: row[5] ? row[5].toString().trim() : 'S/S',
+                                cadena: mapChainName(row[4] ? row[4].toString().trim() : sourceName), sucursal: row[5] ? row[5].toString().trim() : 'S/S',
                                 gerente_sucursal: (row[5] ? row[5].toString().trim() : 'S/S') + ' - ' + gerenteStr,
                                 gerAut, subAut, colAut, totalPlantillaAutorizada, gerP, subP, colP, totalPlantillaOcupada,
                                 altasCount, pctAltas, gerSrv, subSrv, bkuCol, certGerNum, certSubNum,
@@ -1040,17 +1048,17 @@
             else {
                 cadenas.forEach(c => {
                     if (!c.includes('church') && !c.includes('pte')) isChurchs = false;
-                    if (!c.includes('mote')) isMoteburger = false;
-                    if (!c.includes('centura')) isCentura = false;
+                    if (!c.includes('centro')) isMoteburger = false;
+                    if (!c.includes('norte')) isCentura = false;
                 });
             }
 
             let labelM2 = "BKU / PTE", labelM3 = "REV / OER", labelAltas = "BKU / PTE ALTAS";
-            let subtitleRevRec = "Unidades Moteburger y Centura";
+            let subtitleRevRec = "BK Norte y BK Centro/Sur";
             
             if (isChurchs && cadenas.length > 0) { activePalette = PALETTES['churchs']; labelM2 = "PTE"; labelM3 = "OER / RAV"; labelAltas = "PTE ALTAS"; } 
-            else if (isMoteburger && cadenas.length > 0) { activePalette = PALETTES['moteburger']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "Unidades Moteburger"; } 
-            else if (isCentura && cadenas.length > 0) { activePalette = PALETTES['centura']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "Unidades Centura"; } 
+            else if (isMoteburger && cadenas.length > 0) { activePalette = PALETTES['moteburger']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Centro/Sur"; }
+            else if (isCentura && cadenas.length > 0) { activePalette = PALETTES['centura']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Norte"; } 
             else if ((isMoteburger || isCentura) && !isChurchs) { activePalette = PALETTES['default']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; } 
             else { activePalette = PALETTES['default']; labelM2 = "BKU / PTE"; labelM3 = "REV Std / OER"; labelAltas = "BKU / PTE ALTAS"; }
 
