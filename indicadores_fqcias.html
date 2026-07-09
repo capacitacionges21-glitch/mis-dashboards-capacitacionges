@@ -1177,12 +1177,11 @@
                     return valid.length ? valid[valid.length - 1][key] : 0;
                 };
 
-                let branchMaxGer = 0, branchMaxSub = 0;
-                sub.forEach(d => {
-                    if(d.rrhh && d.rrhh.sucesionGer > branchMaxGer) branchMaxGer = d.rrhh.sucesionGer;
-                    if(d.rrhh && d.rrhh.sucesionSub > branchMaxSub) branchMaxSub = d.rrhh.sucesionSub;
-                });
-                
+                const sucGerRows = sub.filter(d => d.rrhh && typeof d.rrhh.sucesionGer === 'number');
+                const sucSubRows = sub.filter(d => d.rrhh && typeof d.rrhh.sucesionSub === 'number');
+                const avgSucGer = sucGerRows.length > 0 ? sucGerRows.reduce((a, b) => a + (b.rrhh.sucesionGer || 0), 0) / sucGerRows.length : 0;
+                const avgSucSub = sucSubRows.length > 0 ? sucSubRows.reduce((a, b) => a + (b.rrhh.sucesionSub || 0), 0) / sucSubRows.length : 0;
+
                 sumGerAut += getLatest('gerAut'); sumSubAut += getLatest('subAut'); sumColAut += getLatest('colAut'); sumTotalPlantillaAutorizada += getLatest('totalPlantillaAutorizada');
                 sumGerP += getLatest('gerP'); sumSubP += getLatest('subP'); sumColP += getLatest('colP'); sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
                 sumGerSrv += getLatest('gerSrv'); sumSubSrv += getLatest('subSrv'); sumBkuCol += getLatest('bkuCol'); sumAltasCount += getLatest('altasCount'); sumCertGer += getLatest('certGerNum'); sumCertSub += getLatest('certSubNum');
@@ -1193,7 +1192,7 @@
 
                 const latestOcupObj = sub.filter(d => d.rrhh && d.rrhh.ocPlantilla !== null);
                 if (latestOcupObj.length > 0) { sumOcup += latestOcupObj[latestOcupObj.length - 1].rrhh.ocPlantilla; countOcup++; }
-                sumSucGer += branchMaxGer; sumSucSub += branchMaxSub; totalSuc += (branchMaxGer + branchMaxSub);
+                sumSucGer += Math.round(avgSucGer); sumSucSub += Math.round(avgSucSub); totalSuc += Math.round(avgSucGer + avgSucSub);
             });
 
             const c_std = FilteredData.filter(d => !d.cadena.toLowerCase().includes('church') && d.rev26r1 && d.rev26r1.std !== null).length + 
