@@ -820,11 +820,14 @@
                 const promAut = getMonthlyAvg('Plantilla Autorizada colaboradores');
 
                 const ocuAvg = calcAvg(data, 'OCUPACION DE PLANTILLAS');
+                const totalOcu = gerentesOcu + respOcu + promOcu;
+                const totalAut = gerentesAut + respAut + promAut;
                 const ocuSubtext = `
-                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-gray-500 mt-1 w-full">
-                        <span>Gerentes: <b class="text-gray-700">${gerentesOcu}/${gerentesAut}</b></span>
-                        <span>Responsables: <b class="text-gray-700">${respOcu}/${respAut}</b></span>
-                        <span class="col-span-2">Promotores: <b class="text-gray-700">${promOcu}/${promAut}</b></span>
+                    <div class="flex flex-col gap-1 text-[10px] text-gray-500 mt-1 w-full">
+                        <span>Totales: <b class="text-gray-700">${totalOcu} Ocup.</b> / <b class="text-gray-700">${totalAut} Aut.</b></span>
+                        <span class="text-[9px]">Gtes: <b class="text-gray-700">${gerentesOcu} Ocup. / ${gerentesAut} Aut.</b></span>
+                        <span class="text-[9px]">Resp: <b class="text-gray-700">${respOcu} Ocup. / ${respAut} Aut.</b></span>
+                        <span class="text-[9px]">Prom: <b class="text-gray-700">${promOcu} Ocup. / ${promAut} Aut.</b></span>
                     </div>
                 `;
                 html += buildCardHTML('Ocup. Plantillas', ocuAvg, CONFIG.metas['OCUPACION DE PLANTILLAS'], ocuSubtext, null);
