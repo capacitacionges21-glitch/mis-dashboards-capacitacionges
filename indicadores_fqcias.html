@@ -1099,15 +1099,19 @@
             const ind = selections.indicador;
             const showAll = (ind === 'Todos');
 
+            const MESES_SIN_REC = new Set(['Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']);
+            const TRIM_SIN_REC = new Set(['Q2','Q3','Q4']);
+            const showREC = !MESES_SIN_REC.has(selections.mes) && !TRIM_SIN_REC.has(selections.trimestre);
+
             tVis('card-srv', showAll || ind === 'srv'); tVis('card-m2', showAll || ind === 'm2');
             tVis('card-altas', showAll || ind === 'm2'); tVis('card-m3', showAll || ind === 'm3');
-            tVis('card-rec', hasMoteCenturaCheck && (showAll || ind === 'rec'));
+            tVis('card-rec', showREC && hasMoteCenturaCheck && (showAll || ind === 'rec'));
             tVis('card-cert', showAll || ind === 'cert'); tVis('card-ocup', showAll || ind === 'ocup');
             tVis('card-rotacion', showAll || ind === 'rotacion'); tVis('card-sucesion', showAll);
             tVis('card-zp', showAll); tVis('card-sg', showAll); tVis('card-global', showAll);
 
             tVis('container-oer-compare', hasChurchsCheck && (showAll || ind === 'm3'));
-            tVis('container-rev-compare', hasMoteCenturaCheck && (showAll || ind === 'm3' || ind === 'rec'));
+            tVis('container-rev-compare', hasMoteCenturaCheck && (showAll || ind === 'm3' || (showREC && ind === 'rec')));
 
             const compareWrapper = document.getElementById('compare-charts-wrapper');
             if (compareWrapper) compareWrapper.classList.remove('lg:grid-cols-2'); 
