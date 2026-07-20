@@ -654,7 +654,8 @@
         const SOURCES = {
             'Centura': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=250274755&single=true&output=csv',
             'Moteburger': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=98366889&single=true&output=csv',
-            'Churchs': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=624506431&single=true&output=csv'
+            'Churchs': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=624506431&single=true&output=csv',
+            'TiendasGes': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=500898991&single=true&output=csv'
         };
 
         const CHAIN_NAMES = {
@@ -668,10 +669,11 @@
         const MESES_NOM = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         
         const PALETTES = {
-            'churchs': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
+            'churchs':    { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
             'moteburger': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
-            'centura': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
-            'default': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' }
+            'centura':    { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
+            'tiendasges': { m1: '#166534', m2: '#4ADE80', m3: '#BBF7D0' },
+            'default':    { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' }
         };
 
         const trendColors = ['#1F3864', '#2F5597', '#8FAADC', '#B4C6E7'];
@@ -795,10 +797,12 @@
                     complete: results => {
                         clearTimeout(timeout);
                         const cleanRows = [];
-                        const rowsToProcess = results.data.slice(1).filter(row => row.length >= 20);
+                        const isTiendasGes = sourceName.toLowerCase().includes('tiendas');
+                        const minRowLength = isTiendasGes ? 10 : 20;
+                        const rowsToProcess = results.data.slice(1).filter(row => row.length >= minRowLength);
 
                         rowsToProcess.forEach(row => {
-                            const isChurchs = sourceName.toLowerCase().includes('church');
+                            const isChurchs = !isTiendasGes && sourceName.toLowerCase().includes('church');
                             let srv = null, m2 = null, m3 = null;
                             let rev26r1 = { std: null, re: null, extra: null, re2: null, ccv: null }, rev26r2 = { std: null, re: null, extra: null, re2: null, ccv: null };
                             let rec26r1 = null, rec26r2 = null, bajas = 0;
@@ -815,50 +819,73 @@
                                 if (typeof val === 'string' && val.toLowerCase().includes('zero protocol')) zpIncidences.push(label);
                             };
 
-                            let gerAut = parseCount(row[6]) || 0, subAut = parseCount(row[7]) || 0, colAut = parseCount(row[8]) || 0;
-                            let totalPlantillaAutorizada = gerAut + subAut + colAut;
-                            let gerP = parseCount(row[9]) || 0, subP = parseCount(row[10]) || 0, colP = parseCount(row[11]) || 0;
-                            let totalPlantillaOcupada = gerP + subP + colP;
-                            let gerSrv = parseCount(row[12]), subSrv = parseCount(row[13]), bkuCol = parseCount(row[15]), altasCount = parseCount(row[16]); 
+                            let gerAut, subAut, colAut, totalPlantillaAutorizada;
+                            let gerP, subP, colP, totalPlantillaOcupada;
+                            let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null;
                             let certGerNum = null, certSubNum = null;
                             let gerenteStr = row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente';
                             if (gerenteStr.toUpperCase() === 'S/G') gerenteStr = 'Sin Gerente';
 
-                            if (isChurchs) {
-                                srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]); 
-                                if (m3 === null) m3 = parsePct(row[19]); 
-                                checkZP(row[18], 'OER 2026'); checkZP(row[19], 'RAV 2026');
-                                rev26r1.std = parsePct(row[18]); rev26r2.std = parsePct(row[19]); 
-                                certGerNum = parseCount(row[20]); certSubNum = parseCount(row[21]);
-                                rrhh.ocPlantilla = parsePct(row[22]); 
-                                rrhh.sucesionGer = parseCount(row[23]) || 0; rrhh.sucesionSub = parseCount(row[24]) || 0;
-                                rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0); 
-                                bajas = parseCount(row[25]) || 0;
+                            if (isTiendasGes) {
+                                // Columnas A-P: G=gerAut, H=colAut (sin sub), I=gerP, J=colP, K=altas, L=TalGES%, M=certGer%, N=ocup%, O=suc, P=rot%
+                                gerAut = parseCount(row[6]) || 0; subAut = 0; colAut = parseCount(row[7]) || 0;
+                                totalPlantillaAutorizada = gerAut + colAut;
+                                gerP = parseCount(row[8]) || 0; subP = 0; colP = parseCount(row[9]) || 0;
+                                totalPlantillaOcupada = gerP + colP;
+                                altasCount = parseCount(row[10]);
+                                m2 = parsePct(row[11]); // Talento GES CERTIFICACION %
+                                certGerNum = parseCount(row[12]); // Conteo de gerentes certificados
+                                certSubNum = 0;
+                                rrhh.certGerencial = (certGerNum !== null && gerP > 0) ? (certGerNum / gerP) * 100 : null;
+                                rrhh.ocPlantilla = parsePct(row[13]);
+                                rrhh.sucesionGer = parseCount(row[14]) || 0; rrhh.sucesionSub = 0;
+                                rrhh.colSucesion = rrhh.sucesionGer;
+                                // Rotación viene como % directo: back-calculamos bajas para la tarjeta
+                                const rotPct = parsePct(row[15]);
+                                bajas = (rotPct !== null && totalPlantillaOcupada > 0) ? Math.round(rotPct * totalPlantillaOcupada / 100) : 0;
                             } else {
-                                srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]); 
-                                if (m3 === null) m3 = parsePct(row[24]); 
-                                checkZP(row[18], 'Std 26 R1'); checkZP(row[19], 'Re-Audit 26 R1'); checkZP(row[20], 'Extra 26 R1');
-                                checkZP(row[21], '2nd Re 26 R1'); checkZP(row[22], 'CCV 26 R1'); checkZP(row[23], 'REC 26 R1');
-                                checkZP(row[24], 'Std 26 R2'); checkZP(row[25], 'Re-Audit 26 R2'); checkZP(row[26], 'Extra 26 R2');
-                                checkZP(row[27], '2nd Re 26 R2'); checkZP(row[28], 'CCV 26 R2'); checkZP(row[29], 'REC 26 R2');
-                                rev26r1 = { std: parsePct(row[18]), re: parsePct(row[19]), extra: parsePct(row[20]), re2: parsePct(row[21]), ccv: parsePct(row[22]) };
-                                rec26r1 = parseRec(row[23]);
-                                rev26r2 = { std: parsePct(row[24]), re: parsePct(row[25]), extra: parsePct(row[26]), re2: parsePct(row[27]), ccv: parsePct(row[28]) };
-                                rec26r2 = parseRec(row[29]);
-                                certGerNum = parseCount(row[30]); certSubNum = parseCount(row[31]);
-                                rrhh.ocPlantilla = parsePct(row[32]);
-                                rrhh.sucesionGer = parseCount(row[33]) || 0; rrhh.sucesionSub = parseCount(row[34]) || 0;
-                                rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
-                                bajas = parseCount(row[35]) || 0;
-                            }
+                                gerAut = parseCount(row[6]) || 0; subAut = parseCount(row[7]) || 0; colAut = parseCount(row[8]) || 0;
+                                totalPlantillaAutorizada = gerAut + subAut + colAut;
+                                gerP = parseCount(row[9]) || 0; subP = parseCount(row[10]) || 0; colP = parseCount(row[11]) || 0;
+                                totalPlantillaOcupada = gerP + subP + colP;
+                                gerSrv = parseCount(row[12]); subSrv = parseCount(row[13]); bkuCol = parseCount(row[15]); altasCount = parseCount(row[16]);
 
-                            if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
-                                 rrhh.certGerencial = (((certGerNum || 0) + (certSubNum || 0)) / totalPlantillaOcupada) * 100;
-                            } else rrhh.certGerencial = null;
+                                if (isChurchs) {
+                                    srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]);
+                                    if (m3 === null) m3 = parsePct(row[19]);
+                                    checkZP(row[18], 'OER 2026'); checkZP(row[19], 'RAV 2026');
+                                    rev26r1.std = parsePct(row[18]); rev26r2.std = parsePct(row[19]);
+                                    certGerNum = parseCount(row[20]); certSubNum = parseCount(row[21]);
+                                    rrhh.ocPlantilla = parsePct(row[22]);
+                                    rrhh.sucesionGer = parseCount(row[23]) || 0; rrhh.sucesionSub = parseCount(row[24]) || 0;
+                                    rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
+                                    bajas = parseCount(row[25]) || 0;
+                                } else {
+                                    srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]);
+                                    if (m3 === null) m3 = parsePct(row[24]);
+                                    checkZP(row[18], 'Std 26 R1'); checkZP(row[19], 'Re-Audit 26 R1'); checkZP(row[20], 'Extra 26 R1');
+                                    checkZP(row[21], '2nd Re 26 R1'); checkZP(row[22], 'CCV 26 R1'); checkZP(row[23], 'REC 26 R1');
+                                    checkZP(row[24], 'Std 26 R2'); checkZP(row[25], 'Re-Audit 26 R2'); checkZP(row[26], 'Extra 26 R2');
+                                    checkZP(row[27], '2nd Re 26 R2'); checkZP(row[28], 'CCV 26 R2'); checkZP(row[29], 'REC 26 R2');
+                                    rev26r1 = { std: parsePct(row[18]), re: parsePct(row[19]), extra: parsePct(row[20]), re2: parsePct(row[21]), ccv: parsePct(row[22]) };
+                                    rec26r1 = parseRec(row[23]);
+                                    rev26r2 = { std: parsePct(row[24]), re: parsePct(row[25]), extra: parsePct(row[26]), re2: parsePct(row[27]), ccv: parsePct(row[28]) };
+                                    rec26r2 = parseRec(row[29]);
+                                    certGerNum = parseCount(row[30]); certSubNum = parseCount(row[31]);
+                                    rrhh.ocPlantilla = parsePct(row[32]);
+                                    rrhh.sucesionGer = parseCount(row[33]) || 0; rrhh.sucesionSub = parseCount(row[34]) || 0;
+                                    rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
+                                    bajas = parseCount(row[35]) || 0;
+                                }
+
+                                if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
+                                    rrhh.certGerencial = (((certGerNum || 0) + (certSubNum || 0)) / totalPlantillaOcupada) * 100;
+                                } else rrhh.certGerencial = null;
+                            }
 
                             let pctAltas = null;
                             if(totalPlantillaOcupada > 0 && altasCount !== null && !isNaN(altasCount)) pctAltas = (altasCount / totalPlantillaOcupada) * 100;
-                            
+
                             const activeMetrics = [];
                             if (srv !== null) activeMetrics.push({v: srv});
                             if (m2 !== null) activeMetrics.push({v: m2});
@@ -866,8 +893,8 @@
                             if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, x=>x.v) : null;
-                            let rawBajas = isChurchs ? parseCount(row[25]) : parseCount(row[35]);
-                            let rawAltas = parseCount(row[16]);
+                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[25]) : parseCount(row[35]));
+                            let rawAltas = isTiendasGes ? parseCount(row[10]) : parseCount(row[16]);
                             const hasAnyData = srv !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
                             
                             if (!hasAnyData) return; 
@@ -1043,23 +1070,25 @@
             FilteredData.forEach(d => uniqueCadenas.add(d.cadena.toLowerCase()));
             const cadenas = Array.from(uniqueCadenas);
             
-            let isChurchs = true, isMoteburger = true, isCentura = true;
-            if (cadenas.length === 0) { isChurchs = false; isMoteburger = false; isCentura = false; } 
+            let isChurchs = true, isMoteburger = true, isCentura = true, isTiendasGes = true;
+            if (cadenas.length === 0) { isChurchs = false; isMoteburger = false; isCentura = false; isTiendasGes = false; }
             else {
                 cadenas.forEach(c => {
                     if (!c.includes('church') && !c.includes('pte')) isChurchs = false;
                     if (!c.includes('centro')) isMoteburger = false;
                     if (!c.includes('norte')) isCentura = false;
+                    if (!c.includes('tiendas')) isTiendasGes = false;
                 });
             }
 
             let labelM2 = "BKU / PTE", labelM3 = "REV / OER", labelAltas = "BKU / PTE ALTAS";
             let subtitleRevRec = "BK Norte y BK Centro/Sur";
-            
-            if (isChurchs && cadenas.length > 0) { activePalette = PALETTES['churchs']; labelM2 = "PTE"; labelM3 = "OER / RAV"; labelAltas = "PTE ALTAS"; } 
+
+            if (isTiendasGes && cadenas.length > 0) { activePalette = PALETTES['tiendasges']; labelM2 = "Talento GES"; labelM3 = "N/A"; labelAltas = "Talento GES ALTAS"; subtitleRevRec = "Tiendas GES"; }
+            else if (isChurchs && cadenas.length > 0) { activePalette = PALETTES['churchs']; labelM2 = "PTE"; labelM3 = "OER / RAV"; labelAltas = "PTE ALTAS"; }
             else if (isMoteburger && cadenas.length > 0) { activePalette = PALETTES['moteburger']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Centro/Sur"; }
-            else if (isCentura && cadenas.length > 0) { activePalette = PALETTES['centura']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Norte"; } 
-            else if ((isMoteburger || isCentura) && !isChurchs) { activePalette = PALETTES['default']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; } 
+            else if (isCentura && cadenas.length > 0) { activePalette = PALETTES['centura']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Norte"; }
+            else if ((isMoteburger || isCentura) && !isChurchs) { activePalette = PALETTES['default']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; }
             else { activePalette = PALETTES['default']; labelM2 = "BKU / PTE"; labelM3 = "REV Std / OER"; labelAltas = "BKU / PTE ALTAS"; }
 
             const root = document.documentElement;
@@ -1087,10 +1116,11 @@
             const subRev = document.getElementById('subtitle-rev');
             if (subRev) subRev.innerText = subtitleRevRec;
 
-            let hasChurchsCheck = false, hasMoteCenturaCheck = false;
+            let hasChurchsCheck = false, hasMoteCenturaCheck = false, hasTiendasGesCheck = false;
             FilteredData.forEach(d => {
                 const cad = d.cadena.toLowerCase();
                 if (cad.includes('church') || cad.includes('pte')) hasChurchsCheck = true;
+                else if (cad.includes('tiendas')) hasTiendasGesCheck = true;
                 else hasMoteCenturaCheck = true;
             });
 
@@ -1103,12 +1133,15 @@
             const TRIM_SIN_REC = new Set(['Q2','Q3','Q4']);
             const showREC = !MESES_SIN_REC.has(selections.mes) && !TRIM_SIN_REC.has(selections.trimestre);
 
-            tVis('card-srv', showAll || ind === 'srv'); tVis('card-m2', showAll || ind === 'm2');
-            tVis('card-altas', showAll || ind === 'm2'); tVis('card-m3', showAll || ind === 'm3');
-            tVis('card-rec', showREC && hasMoteCenturaCheck && (showAll || ind === 'rec'));
+            // card-srv y card-m3 no aplican para Tiendas GES (sin ServSafe ni REV)
+            tVis('card-srv', !isTiendasGes && (showAll || ind === 'srv'));
+            tVis('card-m2', showAll || ind === 'm2');
+            tVis('card-altas', showAll || ind === 'm2');
+            tVis('card-m3', !isTiendasGes && (showAll || ind === 'm3'));
+            tVis('card-rec', !isTiendasGes && showREC && hasMoteCenturaCheck && (showAll || ind === 'rec'));
             tVis('card-cert', showAll || ind === 'cert'); tVis('card-ocup', showAll || ind === 'ocup');
             tVis('card-rotacion', showAll || ind === 'rotacion'); tVis('card-sucesion', showAll);
-            tVis('card-zp', showAll); tVis('card-sg', showAll); tVis('card-global', showAll);
+            tVis('card-zp', !isTiendasGes && showAll); tVis('card-sg', showAll); tVis('card-global', showAll);
 
             tVis('container-oer-compare', hasChurchsCheck && (showAll || ind === 'm3'));
             tVis('container-rev-compare', hasMoteCenturaCheck && (showAll || ind === 'm3' || (showREC && ind === 'rec')));
