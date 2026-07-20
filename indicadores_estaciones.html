@@ -344,10 +344,12 @@
             },
             metas: {
                 'LA GAS Auditoria': 90,
-                'PROTOCOLO MYSTERY': 90, 
+                'PROTOCOLO MYSTERY': 90,
                 'CERTIFICACION GERENTES': 95,
+                'CERTIFICACION RESPONSABLES': 80,
+                'Talento GES CERTIFICACION': 80,
                 'OCUPACION DE PLANTILLAS': 96,
-                'ROTACION(BAJAS)': 4.5, 
+                'ROTACION(BAJAS)': 4.5,
             }
         };
 
@@ -384,12 +386,15 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     const fields = results.meta.fields || [];
-                    const colH = fields.length > 7 ? fields[7] : null;   // Plantilla autorizada Responsables (H)
-                    const colK = fields.length > 10 ? fields[10] : null; // Plantilla Responsables Ocupada (K)
-                    const colX = fields.length > 23 ? fields[23] : null; // Gerentes Certificados (X)
-                    const colY = fields.length > 24 ? fields[24] : null; // % CERTIFICACION GERENTES (Y)
-                    const colAD = fields.length > 29 ? fields[29] : null;// Bajas (AD - Índice 29 basado en tu última imagen)
-                    const colAE = fields.length > 30 ? fields[30] : null;// Rotación (AE - Índice 30)
+                    // Nueva estructura (jul-2026): se agregaron Subgerentes (H/L), Talento GES (O/P), mystery col. (Q), Cert Resp (Z)
+                    const colI  = fields.length > 8  ? fields[8]  : null; // Plantilla aut. Responsables de Turno (I)
+                    const colM  = fields.length > 12 ? fields[12] : null; // Plantilla Responsables de Turno Ocupada (M)
+                    const colO  = fields.length > 14 ? fields[14] : null; // Talento GES ALTAS (O)
+                    const colP  = fields.length > 15 ? fields[15] : null; // Talento GES CERTIFICACION (P)
+                    const colQ  = fields.length > 16 ? fields[16] : null; // Colaborador mystery (Q)
+                    const colY  = fields.length > 24 ? fields[24] : null; // CERTIFICACION GERENTES % (Y)
+                    const colZ  = fields.length > 25 ? fields[25] : null; // CERTIFICACION RESPONSABLES % (Z)
+                    const colAE = fields.length > 30 ? fields[30] : null; // ROTACION(BAJAS) % (AE)
 
                     state.rawData = results.data.map(row => {
                         const cleanedRow = {};
@@ -398,30 +403,28 @@
                         Object.keys(row).forEach(k => {
                             if(!k) return;
                             let cleanK = k.trim();
-                            // Normalizar variaciones de nombres para evitar errores de espacios
                             if(cleanK === 'ROTACION (BAJAS)') cleanK = 'ROTACION(BAJAS)';
-                            if(cleanK === 'Gerentes Certificados') cleanK = 'Gerentes certificados';
-                            if(cleanK === '% CERTIFICACION GERENTES') cleanK = 'CERTIFICACION GERENTES';
-                            if(cleanK.toLowerCase() === 'bajas') cleanK = 'Bajas'; // Garantiza lectura de bajas
+                            if(cleanK.includes('Colaborador que recib')) cleanK = 'Colaborador mystery';
                             cleanedRow[cleanK] = row[k];
                         });
 
-                        // FUERZA A PRUEBA DE FALLOS: Asigna columnas estratégicas por índice exacto
-                        if (cleanedRow['Plantilla autorizada Responsables'] === undefined && colH !== null) cleanedRow['Plantilla autorizada Responsables'] = row[colH];
-                        if (cleanedRow['Plantilla Responsables Ocupada'] === undefined && colK !== null) cleanedRow['Plantilla Responsables Ocupada'] = row[colK];
-                        if (cleanedRow['Gerentes certificados'] === undefined && colX !== null) cleanedRow['Gerentes certificados'] = row[colX];
-                        if (cleanedRow['CERTIFICACION GERENTES'] === undefined && colY !== null) cleanedRow['CERTIFICACION GERENTES'] = row[colY];
-                        
-                        // Aquí es donde ocurría el problema: Forzamos la lectura de Bajas en la columna AD (29) y Rotación en AE (30)
-                        if (cleanedRow['Bajas'] === undefined && colAD !== null) cleanedRow['Bajas'] = row[colAD];
-                        if (cleanedRow['ROTACION(BAJAS)'] === undefined && colAE !== null) cleanedRow['ROTACION(BAJAS)'] = row[colAE];
+                        // Respaldo por índice para columnas cuyo nombre puede variar
+                        if (cleanedRow['Plantilla autorizada Responsables'] === undefined && colI  !== null) cleanedRow['Plantilla autorizada Responsables'] = row[colI];
+                        if (cleanedRow['Plantilla Responsables Ocupada']    === undefined && colM  !== null) cleanedRow['Plantilla Responsables Ocupada']    = row[colM];
+                        if (cleanedRow['Talento GES ALTAS']                 === undefined && colO  !== null) cleanedRow['Talento GES ALTAS']                 = row[colO];
+                        if (cleanedRow['Talento GES CERTIFICACION']         === undefined && colP  !== null) cleanedRow['Talento GES CERTIFICACION']         = row[colP];
+                        if (cleanedRow['Colaborador mystery']               === undefined && colQ  !== null) cleanedRow['Colaborador mystery']               = row[colQ];
+                        if (cleanedRow['CERTIFICACION GERENTES']            === undefined && colY  !== null) cleanedRow['CERTIFICACION GERENTES']            = row[colY];
+                        if (cleanedRow['CERTIFICACION RESPONSABLES']        === undefined && colZ  !== null) cleanedRow['CERTIFICACION RESPONSABLES']        = row[colZ];
+                        if (cleanedRow['ROTACION(BAJAS)']                   === undefined && colAE !== null) cleanedRow['ROTACION(BAJAS)']                   = row[colAE];
 
                         const numericCols = [
                             'Plantilla autorizada Gerentes', 'Plantilla autorizada Subgerentes', 'Plantilla autorizada Responsables', 'Plantilla Autorizada colaboradores',
                             'Plantilla Gerentes Ocupada', 'Plantilla Subgerentes Ocupada', 'Plantilla Responsables Ocupada', 'Plantilla colaboradores Ocupada',
-                            'OCUPACION DE PLANTILLAS', 'Bajas', 'ROTACION(BAJAS)',
+                            'Talento GES ALTAS', 'Talento GES CERTIFICACION', 'Colaborador mystery',
+                            'OCUPACION DE PLANTILLAS', 'ROTACION(BAJAS)',
                             'PROTOCOLO MYSTERY', 'IMAGEN Y LIMPIEZA', 'EQUIPOS Y MEDIOS DE PAGO', 'SERVICIO', 'OPERACIÓN', 'PROMOCIONES Y LSM',
-                            'LA GAS Auditoria', 'Gerentes certificados', 'CERTIFICACION GERENTES',
+                            'LA GAS Auditoria', 'CERTIFICACION GERENTES', 'CERTIFICACION RESPONSABLES',
                             'COLABORADORES EN SUCESION GERENTES', 'COLABORADORES EN SUCESION SUBGERENTES', 'COLABORADORES EN SUCESION RESPONSABLES'
                         ];
                         
@@ -675,6 +678,10 @@
                     'LA GAS Auditoria': aud,
                     'PROTOCOLO MYSTERY': mys,
                     'CERTIFICACION GERENTES': cert,
+                    'CERTIFICACION RESPONSABLES': getAvg('CERTIFICACION RESPONSABLES'),
+                    'Talento GES CERTIFICACION': getAvg('Talento GES CERTIFICACION'),
+                    'Talento GES ALTAS': getAvg('Talento GES ALTAS'),
+                    'Colaborador mystery': getAvg('Colaborador mystery'),
                     'OCUPACION DE PLANTILLAS': ocup,
                     'ROTACION(BAJAS)': rot,
                     cumplimientoGeneral: cump
@@ -814,18 +821,21 @@
             if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
                 const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
                 const gerentesAut = getMonthlyAvg('Plantilla autorizada Gerentes');
+                const subGerOcu   = getMonthlyAvg('Plantilla Subgerentes Ocupada');
+                const subGerAut   = getMonthlyAvg('Plantilla autorizada Subgerentes');
                 const respOcu = getMonthlyAvg('Plantilla Responsables Ocupada');
                 const respAut = getMonthlyAvg('Plantilla autorizada Responsables');
                 const promOcu = getMonthlyAvg('Plantilla colaboradores Ocupada');
                 const promAut = getMonthlyAvg('Plantilla Autorizada colaboradores');
 
                 const ocuAvg = calcAvg(data, 'OCUPACION DE PLANTILLAS');
-                const totalOcu = gerentesOcu + respOcu + promOcu;
-                const totalAut = gerentesAut + respAut + promAut;
+                const totalOcu = gerentesOcu + subGerOcu + respOcu + promOcu;
+                const totalAut = gerentesAut + subGerAut + respAut + promAut;
                 const ocuSubtext = `
                     <div class="flex flex-col gap-1 text-[10px] text-gray-500 mt-1 w-full">
                         <span>Totales: <b class="text-gray-700">${totalOcu} Ocup.</b> / <b class="text-gray-700">${totalAut} Aut.</b></span>
                         <span class="text-[9px]">Gtes: <b class="text-gray-700">${gerentesOcu} Ocup. / ${gerentesAut} Aut.</b></span>
+                        <span class="text-[9px]">Subgtes: <b class="text-gray-700">${subGerOcu} Ocup. / ${subGerAut} Aut.</b></span>
                         <span class="text-[9px]">Resp: <b class="text-gray-700">${respOcu} Ocup. / ${respAut} Aut.</b></span>
                         <span class="text-[9px]">Prom: <b class="text-gray-700">${promOcu} Ocup. / ${promAut} Aut.</b></span>
                     </div>
@@ -833,56 +843,47 @@
                 html += buildCardHTML('Ocup. Plantillas', ocuAvg, CONFIG.metas['OCUPACION DE PLANTILLAS'], ocuSubtext, null);
             }
 
-            // Certificacion
+            // Certificacion Gerentes + Responsables
             if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
-                const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
-                const gerentesCert = getMonthlyAvg('Gerentes certificados');
-                
-                const cerAvg = gerentesOcu > 0 ? (gerentesCert / gerentesOcu) * 100 : 0;
-                
+                const cerAvg     = calcAvg(data, 'CERTIFICACION GERENTES');
+                const cerRespAvg = calcAvg(data, 'CERTIFICACION RESPONSABLES');
                 const cerSubtext = `
                     <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
-                        <span>Gerentes Ocupados: <b class="text-gray-700">${gerentesOcu}</b></span>
-                        <span>Gerentes Certificados: <b class="text-gray-700">${gerentesCert}</b></span>
+                        <span>Gerentes: <b class="text-gray-700">${cerAvg.toFixed(1)}%</b></span>
+                        <span>Responsables: <b class="text-gray-700">${cerRespAvg.toFixed(1)}%</b></span>
                     </div>
                 `;
                 html += buildCardHTML('Cert. Gerencial', cerAvg, CONFIG.metas['CERTIFICACION GERENTES'], cerSubtext, null);
             }
 
+            // Talento GES (plataforma e-learning)
+            if (ind === 'all' || ind === 'Talento GES CERTIFICACION') {
+                const talCert  = calcAvg(data, 'Talento GES CERTIFICACION');
+                const talAltas = getMonthlyAvg('Talento GES ALTAS');
+                const talSubtext = `
+                    <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
+                        <span>Certificados en plataforma</span>
+                        <span>Altas al período: <b class="text-gray-700">${talAltas}</b></span>
+                    </div>
+                `;
+                html += buildCardHTML('Talento GES', talCert, CONFIG.metas['Talento GES CERTIFICACION'], talSubtext, 'graduation-cap');
+            }
+
             // Si no hay filtro de indicador, mostramos los KPIs globales adicionales
             if (ind === 'all') {
                 const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
-                const respOcu = getMonthlyAvg('Plantilla Responsables Ocupada');
-                const promOcu = getMonthlyAvg('Plantilla colaboradores Ocupada');
+                const subGerOcuG  = getMonthlyAvg('Plantilla Subgerentes Ocupada');
+                const respOcu     = getMonthlyAvg('Plantilla Responsables Ocupada');
+                const promOcu     = getMonthlyAvg('Plantilla colaboradores Ocupada');
 
-                // Plantilla Total (Se excluyen Subgerentes)
-                const plantillaTotal = gerentesOcu + respOcu + promOcu; 
-                
-                // CÁLCULO DE BAJAS BLINDADO (Columna AD)
-                const validBajasRecords = data.filter(d => typeof d['Bajas'] === 'number');
-                const sumBajas = validBajasRecords.reduce((acc, curr) => acc + curr['Bajas'], 0);
-                
-                // Extraemos inteligentemente cuántos meses reales hay con datos de bajas
-                const uniqueMonthsBajasSet = new Set();
-                validBajasRecords.forEach(d => {
-                    if (d['Mes'] && d['Mes'].toString().trim() !== '') {
-                        uniqueMonthsBajasSet.add(d['Mes'].toString().toLowerCase().trim());
-                    }
-                });
-                const uniqueMonthsData = uniqueMonthsBajasSet.size || 1;
-                
-                // Si hay un solo mes (ej. filtrado Junio), mostramos la suma total real. Si hay varios, mostramos el promedio mensual.
-                let totalBajas = uniqueMonthsData > 1 ? Math.round(sumBajas / uniqueMonthsData) : sumBajas;
-                
-                // NUEVO: Forzamos el valor principal (grande) para que sea el cálculo matemático real en lugar del 0% del Excel
-                let rotAvg = plantillaTotal > 0 ? (totalBajas / plantillaTotal) * 100 : 0;
-                
-                const textBajas = uniqueMonthsData > 1 ? 'Bajas (Prom. Mensual)' : 'Bajas del Mes';
-                
+                const plantillaTotal = gerentesOcu + subGerOcuG + respOcu + promOcu;
+
+                // Rotación: el % viene directamente de la columna AE (ROTACION BAJAS)
+                const rotAvg = calcAvg(data, 'ROTACION(BAJAS)');
                 const rotSubtext = `
                     <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
-                        <span>${textBajas}: <b class="text-gray-700">${totalBajas}</b></span>
-                        <span>Plantilla Total: <b class="text-gray-700">${plantillaTotal}</b></span>
+                        <span>Rotación promedio del período</span>
+                        <span>Plantilla referencia: <b class="text-gray-700">${plantillaTotal}</b> col.</span>
                     </div>
                 `;
                 html += buildCardHTML('Rotación', rotAvg, CONFIG.metas['ROTACION(BAJAS)'], rotSubtext, null, 'warning');
@@ -1522,6 +1523,10 @@
             }
             if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
                 headersHTML += `<th scope="col" class="px-5 py-4 text-center">Cert. Ger.</th>`;
+                headersHTML += `<th scope="col" class="px-5 py-4 text-center">Cert. Resp.</th>`;
+            }
+            if (ind === 'all' || ind === 'Talento GES CERTIFICACION') {
+                headersHTML += `<th scope="col" class="px-5 py-4 text-center">Talento GES</th>`;
             }
             if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
                 headersHTML += `<th scope="col" class="px-5 py-4 text-center">Ocup. Plan.</th>`;
@@ -1579,6 +1584,10 @@
                 }
                 if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
                     trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['CERTIFICACION GERENTES'])}</td>`;
+                    trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['CERTIFICACION RESPONSABLES'])}</td>`;
+                }
+                if (ind === 'all' || ind === 'Talento GES CERTIFICACION') {
+                    trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['Talento GES CERTIFICACION'])}</td>`;
                 }
                 if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
                     trHTML += `<td class="px-5 py-3 text-xs text-center">${formatPct(row['OCUPACION DE PLANTILLAS'])}</td>`;
