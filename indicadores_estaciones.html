@@ -850,14 +850,11 @@
                 const gerOcuDen     = getMonthlyAvg('Plantilla Gerentes Ocupada');
                 const subOcuDen     = getMonthlyAvg('Plantilla Subgerentes Ocupada');
 
-                // Cada grupo se divide entre SU propio denominador para no inflar el %
+                // Y/K para gerentes, Z/L para subgerentes — cada grupo sobre su propio denominador
                 const cerGerPct  = gerOcuDen > 0 ? (certGerTotal / gerOcuDen) * 100 : 0;
                 const cerSubPct  = subOcuDen > 0 ? (certSubTotal / subOcuDen) * 100 : 0;
 
-                // Valor principal: promedio ponderado solo de los grupos con posiciones ocupadas
-                const totalCert = certGerTotal + (subOcuDen > 0 ? certSubTotal : 0);
-                const totalOcu  = gerOcuDen    + subOcuDen;
-                const cerAvg    = totalOcu > 0 ? (totalCert / totalOcu) * 100 : cerGerPct;
+                const cerAvg = cerGerPct; // Valor principal: gerentes certificados / gerentes ocupados
 
                 const cerSubtext = `
                     <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
