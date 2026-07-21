@@ -844,13 +844,22 @@
             }
 
             // Certificacion Gerentes + Responsables
+            // Y=certGer y Z=certResp son CONTEOS; K=gerOcu y L=subOcu son los denominadores
             if (ind === 'all' || ind === 'CERTIFICACION GERENTES') {
-                const cerAvg     = calcAvg(data, 'CERTIFICACION GERENTES');
-                const cerRespAvg = calcAvg(data, 'CERTIFICACION RESPONSABLES');
+                const certGerTotal  = getMonthlyAvg('CERTIFICACION GERENTES');
+                const certRespTotal = getMonthlyAvg('CERTIFICACION RESPONSABLES');
+                const gerOcuDen     = getMonthlyAvg('Plantilla Gerentes Ocupada');
+                const subOcuDen     = getMonthlyAvg('Plantilla Subgerentes Ocupada');
+
+                const denomTotal = gerOcuDen + subOcuDen;
+                const cerAvg     = denomTotal > 0 ? ((certGerTotal + certRespTotal) / denomTotal) * 100 : 0;
+                const cerGerPct  = gerOcuDen  > 0 ? (certGerTotal  / gerOcuDen)  * 100 : 0;
+                const cerRespPct = subOcuDen  > 0 ? (certRespTotal / subOcuDen)  * 100 : 0;
+
                 const cerSubtext = `
                     <div class="flex flex-col gap-0.5 text-[10px] text-gray-500 mt-1">
-                        <span>Gerentes: <b class="text-gray-700">${cerAvg.toFixed(1)}%</b></span>
-                        <span>Responsables: <b class="text-gray-700">${cerRespAvg.toFixed(1)}%</b></span>
+                        <span>Gerentes: <b class="text-gray-700">${cerGerPct.toFixed(1)}%</b> (${Math.round(certGerTotal)}/${Math.round(gerOcuDen)})</span>
+                        <span>Resp./Sub.: <b class="text-gray-700">${cerRespPct.toFixed(1)}%</b> (${Math.round(certRespTotal)}/${Math.round(subOcuDen)})</span>
                     </div>
                 `;
                 html += buildCardHTML('Cert. Gerencial', cerAvg, CONFIG.metas['CERTIFICACION GERENTES'], cerSubtext, null);
