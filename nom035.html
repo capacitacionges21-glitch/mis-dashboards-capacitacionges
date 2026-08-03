@@ -365,7 +365,7 @@
                             };
                         });
 
-                        rawData = tempRawData.filter(item => !(item.acuse === 0 && item.politica === 0 && item.plan === 0));
+                        rawData = tempRawData.filter(item => item.sucursal && item.sucursal.trim() !== '' && item.sucursal !== 'N/A');
 
                         initializeFilters();
                         updateDashboard();
