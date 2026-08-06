@@ -160,6 +160,7 @@
                     <select id="filter-indicador" onchange="updateIndicadorFilter()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer">
                         <option value="Todos">Todos</option>
                         <option value="srv">ServSafe</option>
+                        <option value="cofepris">Cofepris</option>
                         <option id="opt-m2" value="m2">BKU / PTE</option>
                         <option id="opt-m3" value="m3">REV / OER</option>
                         <option value="cert">Cert. Gerencial</option>
@@ -251,6 +252,24 @@
                 <div class="mt-4">
                     <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                         <div id="bar-srv" class="h-full transition-all duration-1000 bg-[var(--color-m1)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="card-cofepris" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest text-amber-600">Cofepris</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                    </div>
+                    <h3 id="kpi-cofepris" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
+                    <div id="detail-cofepris" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        Cumplimiento regulatorio Cofepris<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-cofepris" class="h-full transition-all duration-1000 bg-amber-500" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
@@ -821,7 +840,7 @@
 
                             let gerAut, subAut, colAut, totalPlantillaAutorizada;
                             let gerP, subP, colP, totalPlantillaOcupada;
-                            let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null;
+                            let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null, cofepris = null;
                             let certGerNum = null, certSubNum = null;
                             let gerenteStr = row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente';
                             if (gerenteStr.toUpperCase() === 'S/G') gerenteStr = 'Sin Gerente';
@@ -848,34 +867,36 @@
                                 totalPlantillaAutorizada = gerAut + subAut + colAut;
                                 gerP = parseCount(row[9]) || 0; subP = parseCount(row[10]) || 0; colP = parseCount(row[11]) || 0;
                                 totalPlantillaOcupada = gerP + subP + colP;
-                                gerSrv = parseCount(row[12]); subSrv = parseCount(row[13]); bkuCol = parseCount(row[15]); altasCount = parseCount(row[16]);
+                                gerSrv = parseCount(row[12]); subSrv = parseCount(row[13]);
+                                // row[15] = Cofepris % (columna P, insertada después de ServSafe %)
+                                cofepris = parsePct(row[15]); bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
 
                                 if (isChurchs) {
-                                    srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]);
-                                    if (m3 === null) m3 = parsePct(row[19]);
-                                    checkZP(row[18], 'OER 2026'); checkZP(row[19], 'RAV 2026');
-                                    rev26r1.std = parsePct(row[18]); rev26r2.std = parsePct(row[19]);
-                                    certGerNum = parseCount(row[20]); certSubNum = parseCount(row[21]);
-                                    rrhh.ocPlantilla = parsePct(row[22]);
-                                    rrhh.sucesionGer = parseCount(row[23]) || 0; rrhh.sucesionSub = parseCount(row[24]) || 0;
+                                    srv = parsePct(row[14]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
+                                    if (m3 === null) m3 = parsePct(row[20]);
+                                    checkZP(row[19], 'OER 2026'); checkZP(row[20], 'RAV 2026');
+                                    rev26r1.std = parsePct(row[19]); rev26r2.std = parsePct(row[20]);
+                                    certGerNum = parseCount(row[21]); certSubNum = parseCount(row[22]);
+                                    rrhh.ocPlantilla = parsePct(row[23]);
+                                    rrhh.sucesionGer = parseCount(row[24]) || 0; rrhh.sucesionSub = parseCount(row[25]) || 0;
                                     rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
-                                    bajas = parseCount(row[25]) || 0;
+                                    bajas = parseCount(row[26]) || 0;
                                 } else {
-                                    srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]);
-                                    if (m3 === null) m3 = parsePct(row[24]);
-                                    checkZP(row[18], 'Std 26 R1'); checkZP(row[19], 'Re-Audit 26 R1'); checkZP(row[20], 'Extra 26 R1');
-                                    checkZP(row[21], '2nd Re 26 R1'); checkZP(row[22], 'CCV 26 R1'); checkZP(row[23], 'REC 26 R1');
-                                    checkZP(row[24], 'Std 26 R2'); checkZP(row[25], 'Re-Audit 26 R2'); checkZP(row[26], 'Extra 26 R2');
-                                    checkZP(row[27], '2nd Re 26 R2'); checkZP(row[28], 'CCV 26 R2'); checkZP(row[29], 'REC 26 R2');
-                                    rev26r1 = { std: parsePct(row[18]), re: parsePct(row[19]), extra: parsePct(row[20]), re2: parsePct(row[21]), ccv: parsePct(row[22]) };
-                                    rec26r1 = parseRec(row[23]);
-                                    rev26r2 = { std: parsePct(row[24]), re: parsePct(row[25]), extra: parsePct(row[26]), re2: parsePct(row[27]), ccv: parsePct(row[28]) };
-                                    rec26r2 = parseRec(row[29]);
-                                    certGerNum = parseCount(row[30]); certSubNum = parseCount(row[31]);
-                                    rrhh.ocPlantilla = parsePct(row[32]);
-                                    rrhh.sucesionGer = parseCount(row[33]) || 0; rrhh.sucesionSub = parseCount(row[34]) || 0;
+                                    srv = parsePct(row[14]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
+                                    if (m3 === null) m3 = parsePct(row[25]);
+                                    checkZP(row[19], 'Std 26 R1'); checkZP(row[20], 'Re-Audit 26 R1'); checkZP(row[21], 'Extra 26 R1');
+                                    checkZP(row[22], '2nd Re 26 R1'); checkZP(row[23], 'CCV 26 R1'); checkZP(row[24], 'REC 26 R1');
+                                    checkZP(row[25], 'Std 26 R2'); checkZP(row[26], 'Re-Audit 26 R2'); checkZP(row[27], 'Extra 26 R2');
+                                    checkZP(row[28], '2nd Re 26 R2'); checkZP(row[29], 'CCV 26 R2'); checkZP(row[30], 'REC 26 R2');
+                                    rev26r1 = { std: parsePct(row[19]), re: parsePct(row[20]), extra: parsePct(row[21]), re2: parsePct(row[22]), ccv: parsePct(row[23]) };
+                                    rec26r1 = parseRec(row[24]);
+                                    rev26r2 = { std: parsePct(row[25]), re: parsePct(row[26]), extra: parsePct(row[27]), re2: parsePct(row[28]), ccv: parsePct(row[29]) };
+                                    rec26r2 = parseRec(row[30]);
+                                    certGerNum = parseCount(row[31]); certSubNum = parseCount(row[32]);
+                                    rrhh.ocPlantilla = parsePct(row[33]);
+                                    rrhh.sucesionGer = parseCount(row[34]) || 0; rrhh.sucesionSub = parseCount(row[35]) || 0;
                                     rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
-                                    bajas = parseCount(row[35]) || 0;
+                                    bajas = parseCount(row[36]) || 0;
                                 }
 
                                 if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
@@ -888,14 +909,15 @@
 
                             const activeMetrics = [];
                             if (srv !== null) activeMetrics.push({v: srv});
+                            if (cofepris !== null) activeMetrics.push({v: cofepris});
                             if (m2 !== null) activeMetrics.push({v: m2});
                             if (m3 !== null) activeMetrics.push({v: m3});
                             if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, x=>x.v) : null;
-                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[25]) : parseCount(row[35]));
-                            let rawAltas = isTiendasGes ? parseCount(row[10]) : parseCount(row[16]);
-                            const hasAnyData = srv !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
+                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[26]) : parseCount(row[36]));
+                            let rawAltas = isTiendasGes ? parseCount(row[10]) : parseCount(row[17]);
+                            const hasAnyData = srv !== null || cofepris !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
                             
                             if (!hasAnyData) return; 
 
@@ -910,7 +932,7 @@
                                 cadena: mapChainName(row[4] ? row[4].toString().trim() : sourceName), sucursal: row[5] ? row[5].toString().trim() : 'S/S',
                                 gerente_sucursal: (row[5] ? row[5].toString().trim() : 'S/S') + ' - ' + gerenteStr,
                                 gerAut, subAut, colAut, totalPlantillaAutorizada, gerP, subP, colP, totalPlantillaOcupada,
-                                altasCount, pctAltas, gerSrv, subSrv, bkuCol, certGerNum, certSubNum,
+                                altasCount, pctAltas, gerSrv, subSrv, bkuCol, cofepris, certGerNum, certSubNum,
                                 srv, m2, m3, promedio, rev26r1, rev26r2, rec26r1, rec26r2, bajas,
                                 rrhh, hasZeroProtocol: isZeroProtocol, zpIncidences
                             });
@@ -1135,6 +1157,7 @@
 
             // card-srv y card-m3 no aplican para Tiendas GES (sin ServSafe ni REV)
             tVis('card-srv', !isTiendasGes && (showAll || ind === 'srv'));
+            tVis('card-cofepris', !isTiendasGes && (showAll || ind === 'cofepris'));
             tVis('card-m2', showAll || ind === 'm2');
             tVis('card-altas', showAll || ind === 'm2');
             tVis('card-m3', !isTiendasGes && (showAll || ind === 'm3'));
@@ -1255,6 +1278,8 @@
             const widthKPI = val => val !== null ? (val <= 0 ? '0%' : Math.round(val) + '%') : '0%';
 
             document.getElementById('kpi-srv').innerText = displayKPI(srv); document.getElementById('bar-srv').style.width = widthKPI(srv);
+            const cofeprisAvg = safeAvg(FilteredData, d => d.cofepris);
+            if (document.getElementById('kpi-cofepris')) { document.getElementById('kpi-cofepris').innerText = displayKPI(cofeprisAvg); document.getElementById('bar-cofepris').style.width = widthKPI(cofeprisAvg); }
             document.getElementById('kpi-m2').innerText = displayKPI(m2); document.getElementById('bar-m2').style.width = widthKPI(m2);
             if(document.getElementById('kpi-altas')) { document.getElementById('kpi-altas').innerText = displayKPI(pctAltasTotal); document.getElementById('bar-altas').style.width = widthKPI(pctAltasTotal); }
             document.getElementById('kpi-m3').innerText = displayKPI(m3); document.getElementById('bar-m3').style.width = widthKPI(m3);
