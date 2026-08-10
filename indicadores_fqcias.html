@@ -821,7 +821,8 @@
                         const rowsToProcess = results.data.slice(1).filter(row => row.length >= minRowLength);
 
                         rowsToProcess.forEach(row => {
-                            const isChurchs = !isTiendasGes && sourceName.toLowerCase().includes('church');
+                            const isChurchs  = !isTiendasGes && sourceName.toLowerCase().includes('church');
+                            const isMoteNorte = !isTiendasGes && !isChurchs && sourceName.toLowerCase().includes('centura');
                             let srv = null, m2 = null, m3 = null;
                             let rev26r1 = { std: null, re: null, extra: null, re2: null, ccv: null }, rev26r2 = { std: null, re: null, extra: null, re2: null, ccv: null };
                             let rec26r1 = null, rec26r2 = null, bajas = 0;
@@ -868,10 +869,10 @@
                                 gerP = parseCount(row[9]) || 0; subP = parseCount(row[10]) || 0; colP = parseCount(row[11]) || 0;
                                 totalPlantillaOcupada = gerP + subP + colP;
                                 gerSrv = parseCount(row[12]); subSrv = parseCount(row[13]);
-                                // row[15] = Cofepris % (columna P, insertada después de ServSafe %)
-                                cofepris = parsePct(row[15]); bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
 
                                 if (isChurchs) {
+                                    // Church's: Cofepris en col P (row[15]), luego PTE
+                                    cofepris = parsePct(row[15]); bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
                                     srv = parsePct(row[14]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
                                     if (m3 === null) m3 = parsePct(row[20]);
                                     checkZP(row[19], 'OER 2026'); checkZP(row[20], 'RAV 2026');
@@ -881,7 +882,27 @@
                                     rrhh.sucesionGer = parseCount(row[24]) || 0; rrhh.sucesionSub = parseCount(row[25]) || 0;
                                     rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
                                     bajas = parseCount(row[26]) || 0;
+                                } else if (isMoteNorte) {
+                                    // Mote Norte (Centura): SIN Cofepris — índices originales
+                                    bkuCol = parseCount(row[15]); altasCount = parseCount(row[16]);
+                                    srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]);
+                                    if (m3 === null) m3 = parsePct(row[24]);
+                                    checkZP(row[18], 'Std 26 R1'); checkZP(row[19], 'Re-Audit 26 R1'); checkZP(row[20], 'Extra 26 R1');
+                                    checkZP(row[21], '2nd Re 26 R1'); checkZP(row[22], 'CCV 26 R1'); checkZP(row[23], 'REC 26 R1');
+                                    checkZP(row[24], 'Std 26 R2'); checkZP(row[25], 'Re-Audit 26 R2'); checkZP(row[26], 'Extra 26 R2');
+                                    checkZP(row[27], '2nd Re 26 R2'); checkZP(row[28], 'CCV 26 R2'); checkZP(row[29], 'REC 26 R2');
+                                    rev26r1 = { std: parsePct(row[18]), re: parsePct(row[19]), extra: parsePct(row[20]), re2: parsePct(row[21]), ccv: parsePct(row[22]) };
+                                    rec26r1 = parseRec(row[23]);
+                                    rev26r2 = { std: parsePct(row[24]), re: parsePct(row[25]), extra: parsePct(row[26]), re2: parsePct(row[27]), ccv: parsePct(row[28]) };
+                                    rec26r2 = parseRec(row[29]);
+                                    certGerNum = parseCount(row[30]); certSubNum = parseCount(row[31]);
+                                    rrhh.ocPlantilla = parsePct(row[32]);
+                                    rrhh.sucesionGer = parseCount(row[33]) || 0; rrhh.sucesionSub = parseCount(row[34]) || 0;
+                                    rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
+                                    bajas = parseCount(row[35]) || 0;
                                 } else {
+                                    // Mote Centro/Sur (Moteburger): Cofepris en col P (row[15])
+                                    cofepris = parsePct(row[15]); bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
                                     srv = parsePct(row[14]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
                                     if (m3 === null) m3 = parsePct(row[25]);
                                     checkZP(row[19], 'Std 26 R1'); checkZP(row[20], 'Re-Audit 26 R1'); checkZP(row[21], 'Extra 26 R1');
@@ -915,8 +936,8 @@
                             if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, x=>x.v) : null;
-                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[26]) : parseCount(row[36]));
-                            let rawAltas = isTiendasGes ? parseCount(row[10]) : parseCount(row[17]);
+                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[26]) : (isMoteNorte ? parseCount(row[35]) : parseCount(row[36])));
+                            let rawAltas = isTiendasGes ? parseCount(row[10]) : (isMoteNorte ? parseCount(row[16]) : parseCount(row[17]));
                             const hasAnyData = srv !== null || cofepris !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
                             
                             if (!hasAnyData) return; 
