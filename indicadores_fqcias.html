@@ -1196,7 +1196,7 @@
             const hideTendencias = (selections.cadena !== 'Todos') && (selections.region === 'Todos') && (selections.distrito === 'Todos') && (selections.gerente_sucursal === 'Todos');
             tVis('export-chart-bku', !hideTendencias && (showAll || ind === 'm2'));
             tVis('export-chart-altas', !hideTendencias && (showAll || ind === 'm2'));
-            tVis('export-chart-rotacion', !hideTendencias && (showAll || ind === 'rotacion'));
+            tVis('export-chart-rotacion', false); // inhabilitado hasta nuevo aviso
 
             const uniqueSucursales = new Set();
             FilteredData.forEach(d => uniqueSucursales.add(d.sucursal));
@@ -1206,7 +1206,7 @@
             tVis('export-rankings', !isSingleSucursal);
             tVis('zero-protocol-wrapper', showAll);
             tVis('sin-gerente-wrapper', showAll);
-            tVis('sucesion-wrapper', showAll);
+            tVis('sucesion-wrapper', false); // inhabilitado hasta nuevo aviso
         }
 
         function updateMetaBadges() {
