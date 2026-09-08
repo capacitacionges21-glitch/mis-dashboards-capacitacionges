@@ -1179,7 +1179,7 @@
             tVis('card-m2', showAll || ind === 'm2');
             tVis('card-altas', showAll || ind === 'm2');
             tVis('card-m3', !isTiendasGes && (showAll || ind === 'm3'));
-            tVis('card-rec', !isTiendasGes && showREC && hasMoteCenturaCheck && (showAll || ind === 'rec'));
+            tVis('card-rec', false); // inhabilitado hasta nuevo aviso
             tVis('card-cert', showAll || ind === 'cert');
             tVis('card-ocup', false); tVis('card-rotacion', false); tVis('card-sucesion', false);
             tVis('card-zp', !isTiendasGes && showAll); tVis('card-sg', showAll); tVis('card-global', showAll);
