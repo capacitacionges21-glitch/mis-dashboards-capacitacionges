@@ -275,7 +275,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p id="label-m2" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m2)]">BKU / PTE</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 90%</span>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                     </div>
                     <h3 id="kpi-m2" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-bku" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -517,7 +517,7 @@
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
                     <div class="flex items-center gap-3">
                         <h3 id="title-chart-bku" class="text-xl font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU / PTE</h3>
-                        <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 90%</span>
+                        <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 100%</span>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -1211,9 +1211,9 @@
 
         function updateMetaBadges() {
             const ind = selections.indicador;
-            let metaText = "Meta Promedio 90%", metaClass = "bg-slate-100 text-slate-600"; 
-            if (ind === 'srv' || ind === 'cert' || ind === 'rec') { metaText = "Meta 100%"; metaClass = "bg-green-100 text-green-700"; } 
-            else if (ind === 'rotacion') { metaText = "Métrica"; metaClass = "bg-amber-100 text-amber-700"; } 
+            let metaText = "Meta Promedio 90%", metaClass = "bg-slate-100 text-slate-600";
+            if (ind === 'srv' || ind === 'cert' || ind === 'rec' || ind === 'm2') { metaText = "Meta 100%"; metaClass = "bg-green-100 text-green-700"; }
+            else if (ind === 'rotacion') { metaText = "Métrica"; metaClass = "bg-amber-100 text-amber-700"; }
             else if (ind !== 'Todos') metaText = "Meta 90%";
             ['meta-badge-gerente', 'meta-badge-cadena', 'meta-badge-distrito'].forEach(id => {
                 const el = document.getElementById(id);
