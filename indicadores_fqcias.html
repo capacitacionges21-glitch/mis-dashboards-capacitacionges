@@ -564,6 +564,97 @@
                 </div>
             </div>
 
+            <!-- ===== BKU SEMANAL ===== -->
+            <div id="bku-semanal-section" class="space-y-6">
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 rounded-2xl" style="background:rgba(143,170,220,0.15)">
+                                <i data-lucide="calendar-check-2" class="w-6 h-6" style="color:#8FAADC"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">BKU Semanal</h2>
+                                <p class="text-slate-400 text-sm font-medium">Seguimiento semanal — BK Norte y BK Centro/Sur</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3 items-center" data-html2canvas-ignore="true">
+                            <span id="bku-sem-cadena-badge" class="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-xl" style="background:var(--color-m2-light);color:var(--color-m2);border:1px solid var(--color-m2)">Todas las cadenas</span>
+                            <select id="bku-sem-semana" onchange="updateBkuSemanal()" class="text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                                <option value="Ultima">Semana más reciente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-xs font-black uppercase tracking-widest" style="color:#8FAADC">BKU Promedio</p>
+                                <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                            </div>
+                            <h3 id="bku-sem-kpi-avg" class="text-4xl font-black text-slate-800 mt-1">—</h3>
+                            <p id="bku-sem-kpi-label" class="text-[9.5px] text-slate-400 font-bold mt-2">Sin datos</p>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div id="bku-sem-bar" class="h-full transition-all duration-1000" style="width:0%;background:#8FAADC"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Negocios con dato</p>
+                            <h3 id="bku-sem-kpi-cob" class="text-4xl font-black text-slate-800 mt-1">—</h3>
+                            <p id="bku-sem-kpi-cob-label" class="text-[9.5px] text-slate-400 font-bold mt-2">de total en filtro</p>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div id="bku-sem-bar-cob" class="h-full transition-all duration-1000 bg-slate-400" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Semana activa</p>
+                            <h3 id="bku-sem-kpi-semana" class="text-3xl font-black text-slate-800 mt-1">—</h3>
+                            <p id="bku-sem-kpi-fecha" class="text-[9.5px] text-slate-400 font-bold mt-2">&nbsp;</p>
+                        </div>
+                        <div class="mt-4 flex gap-1">
+                            <span id="bku-sem-badge-norte" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 uppercase">BK Norte</span>
+                            <span id="bku-sem-badge-centro" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 uppercase">BK Centro/Sur</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
+                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Evolución Semanal BKU</h3>
+                        </div>
+                        <div class="chart-container" style="min-height:320px">
+                            <canvas id="chart-bku-sem-tendencia"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
+                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">BKU por Negocio</h3>
+                            <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
+                        </div>
+                        <div class="scrollable-chart-container">
+                            <div id="bku-sem-bar-wrapper" style="min-width:600px;height:320px">
+                                <canvas id="chart-bku-sem-negocios"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ===== / BKU SEMANAL ===== -->
+
             <div id="export-chart-cadena" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
@@ -663,97 +754,6 @@
         </div>
 
     </div>
-
-    <!-- ===== BKU SEMANAL ===== -->
-    <div id="bku-semanal-section" class="max-w-[1600px] mx-auto space-y-6 mt-8 pb-8">
-
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 rounded-2xl" style="background:rgba(143,170,220,0.15)">
-                        <i data-lucide="calendar-check-2" class="w-6 h-6" style="color:#8FAADC"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">BKU Semanal</h2>
-                        <p class="text-slate-400 text-sm font-medium">Seguimiento semanal — BK Norte y BK Centro/Sur</p>
-                    </div>
-                </div>
-                <div class="flex flex-wrap gap-3 items-center" data-html2canvas-ignore="true">
-                    <span id="bku-sem-cadena-badge" class="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-xl" style="background:var(--color-m2-light);color:var(--color-m2);border:1px solid var(--color-m2)">Todas las cadenas</span>
-                    <select id="bku-sem-semana" onchange="updateBkuSemanal()" class="text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300">
-                        <option value="Ultima">Semana más reciente</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <p class="text-xs font-black uppercase tracking-widest" style="color:#8FAADC">BKU Promedio</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
-                    </div>
-                    <h3 id="bku-sem-kpi-avg" class="text-4xl font-black text-slate-800 mt-1">—</h3>
-                    <p id="bku-sem-kpi-label" class="text-[9.5px] text-slate-400 font-bold mt-2">Sin datos</p>
-                </div>
-                <div class="mt-4">
-                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div id="bku-sem-bar" class="h-full transition-all duration-1000" style="width:0%;background:#8FAADC"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                <div>
-                    <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Negocios con dato</p>
-                    <h3 id="bku-sem-kpi-cob" class="text-4xl font-black text-slate-800 mt-1">—</h3>
-                    <p id="bku-sem-kpi-cob-label" class="text-[9.5px] text-slate-400 font-bold mt-2">de total en filtro</p>
-                </div>
-                <div class="mt-4">
-                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div id="bku-sem-bar-cob" class="h-full transition-all duration-1000 bg-slate-400" style="width:0%"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                <div>
-                    <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Semana activa</p>
-                    <h3 id="bku-sem-kpi-semana" class="text-3xl font-black text-slate-800 mt-1">—</h3>
-                    <p id="bku-sem-kpi-fecha" class="text-[9.5px] text-slate-400 font-bold mt-2">&nbsp;</p>
-                </div>
-                <div class="mt-4 flex gap-1">
-                    <span id="bku-sem-badge-norte" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 uppercase">BK Norte</span>
-                    <span id="bku-sem-badge-centro" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 uppercase">BK Centro/Sur</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
-                    <h3 class="text-lg font-bold text-slate-800 tracking-tight">Evolución Semanal BKU</h3>
-                </div>
-                <div class="chart-container" style="min-height:320px">
-                    <canvas id="chart-bku-sem-tendencia"></canvas>
-                </div>
-            </div>
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
-                    <h3 class="text-lg font-bold text-slate-800 tracking-tight">BKU por Negocio</h3>
-                    <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
-                </div>
-                <div class="scrollable-chart-container">
-                    <div id="bku-sem-bar-wrapper" style="min-width:600px;height:320px">
-                        <canvas id="chart-bku-sem-negocios"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <!-- ===== / BKU SEMANAL ===== -->
 
     <div id="toast-container" class="fixed bottom-5 right-5 z-[200] space-y-3 pointer-events-none"></div>
 
