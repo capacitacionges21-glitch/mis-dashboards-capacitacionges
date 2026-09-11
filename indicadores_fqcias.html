@@ -2206,13 +2206,23 @@
             const badge = document.getElementById('bku-sem-cadena-badge');
             if (badge) badge.textContent = cadenaFil === 'Todos' ? 'Todas las cadenas' : cadenaFil;
 
+            // Vincular filtros de Región / Distrito / Gerente por nombre de negocio
+            const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const negociosPermitidos = hayFiltroExtra
+                ? new Set(FilteredData.map(d => d.sucursal.toLowerCase().trim()))
+                : null;
+
             // Determinar semana activa
             const todasSemanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
             const semanaActiva = semanaFil === 'Ultima' ? todasSemanas[todasSemanas.length - 1] : semanaFil;
 
-            // Filtrar por semana y cadena
+            // Filtrar por semana, cadena y (si aplica) por nombre de negocio
             const filtSemana = bkuSemanalRaw.filter(d => d.semana === semanaActiva);
-            const filtFull = cadenaFil === 'Todos' ? filtSemana : filtSemana.filter(d => d.cadena === cadenaFil);
+            const filtFull = filtSemana.filter(d => {
+                if (cadenaFil !== 'Todos' && d.cadena !== cadenaFil) return false;
+                if (negociosPermitidos && !negociosPermitidos.has(d.negocio.toLowerCase().trim())) return false;
+                return true;
+            });
 
             const conDato = filtFull.filter(d => d.bku !== null);
             const avg = conDato.length > 0 ? conDato.reduce((s, d) => s + d.bku, 0) / conDato.length : null;
@@ -2251,7 +2261,7 @@
 
             document.getElementById('bku-sem-chart-subtitle').innerText = semanaActiva || '';
 
-            renderBkuSemTendencia(cadenaFil);
+            renderBkuSemTendencia(cadenaFil, negociosPermitidos);
             renderBkuSemNegocios(filtFull, semanaActiva);
         }
 
@@ -2259,7 +2269,7 @@
             return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || name;
         }
 
-        function renderBkuSemTendencia(cadenaFil) {
+        function renderBkuSemTendencia(cadenaFil, negociosPermitidos) {
             const semanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
             const cadenas = cadenaFil === 'Todos' ? ['BK Norte', 'BK Centro/Sur'] : [cadenaFil];
             const c1 = getCssVar('--color-m1') || '#2F5597';
@@ -2268,7 +2278,11 @@
 
             const datasets = cadenas.map(cad => {
                 const data = semanas.map(sem => {
-                    const rows = bkuSemanalRaw.filter(d => d.semana === sem && d.cadena === cad && d.bku !== null);
+                    const rows = bkuSemanalRaw.filter(d => {
+                        if (d.semana !== sem || d.cadena !== cad || d.bku === null) return false;
+                        if (negociosPermitidos && !negociosPermitidos.has(d.negocio.toLowerCase().trim())) return false;
+                        return true;
+                    });
                     if (rows.length === 0) return null;
                     return rows.reduce((s, d) => s + d.bku, 0) / rows.length;
                 });
