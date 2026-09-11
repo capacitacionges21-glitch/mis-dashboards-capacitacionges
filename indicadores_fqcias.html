@@ -1846,7 +1846,11 @@
                 const active = []; if (srv !== null) active.push({v:srv}); if (m2 !== null) active.push({v:m2}); if (m3 !== null) active.push({v:m3});
                 
                 return { label: g, srv, m2, m3, cert, ocup, rotacion: rot, pro: active.length > 0 ? safeAvg(active, x => x.v) : null, avgBajas: Math.round(totalAvgBajas), plantilla: sumPlantilla, raw: { gerP: sumGerP, subP: sumSubP, gerSrv: sumGerSrv, subSrv: sumSubSrv, bku: sumBku, certGer: sumCertGer, certSub: sumCertSub, m3Count: m3ValidCount, countOcup } };
-            }).filter(item => item.pro !== null).sort((a,b) => b.pro - a.pro);
+            }).filter(item => item.pro !== null).sort((a,b) => {
+                const ind = selections.indicador;
+                const v = item => ind === 'm2' ? (item.m2 ?? -Infinity) : ind === 'srv' ? (item.srv ?? -Infinity) : ind === 'm3' ? (item.m3 ?? -Infinity) : ind === 'cert' ? (item.cert ?? -Infinity) : ind === 'ocup' ? (item.ocup ?? -Infinity) : ind === 'rotacion' ? (item.rotacion ?? -Infinity) : (item.pro ?? -Infinity);
+                return v(b) - v(a);
+            });
 
             const wrapperEl = document.getElementById(id + '-wrapper'), isSucursal = (field === 'sucursal');
             if (wrapperEl) wrapperEl.style.minWidth = Math.max(1000, stats.length * (isSucursal ? 120 : 250)) + 'px';
@@ -1896,7 +1900,11 @@
                     label: distrito, srv: srv !== null ? Math.round(srv) : null, m2: m2 !== null ? Math.round(m2) : null, m3: m3 !== null ? Math.round(m3) : null, cert: cert !== null ? Math.round(cert) : null, ocup: ocup !== null ? Math.round(ocup) : null, rec: rec !== null ? Math.round(rec) : null, rotacion: rotacion !== null ? Math.round(rotacion) : null, avgBajas: Math.round(totalAvgBajas), plantilla: totalPlantillaOcupada, pro: active.length > 0 ? Math.round(active.reduce((a, b) => a + b.v, 0) / active.length) : null,
                     rawSrv: [`${gerSrv} Gtes y ${subSrv} Subs certificados`, `de ${gerP + subP} en plantilla`], rawM2: [`Promedio BKU/PTE: ${m2 !== null ? Math.round(m2) + "%" : "S/D"}`, `${bkuCol} certificados de ${totalPlantillaOcupada} ocupados`], rawM3: ["Basado en el promedio de", `${validRev.length} auditorías evaluadas`], rawCert: [`${certGerNum} Gtes y ${certSubNum} Subs certificados`, `de ${gerP + subP} en plantilla`], rawOcup: ["Promedio de ocupación en", `${countOcup} registros del periodo`], rawRec: [`Basado en ${recCount} visitas registradas`], rawRotacion: [`${Math.round(totalAvgBajas)} bajas promedio de`, `${totalPlantillaOcupada} en plantilla ocupada`]
                 };
-            }).filter(item => item.pro !== null).sort((a,b) => { let valA = a.cert !== null ? a.cert : -1, valB = b.cert !== null ? b.cert : -1; if (valB === valA) return (b.pro || 0) - (a.pro || 0); return valB - valA; });
+            }).filter(item => item.pro !== null).sort((a,b) => {
+                const ind = selections.indicador;
+                const v = item => ind === 'm2' ? (item.m2 ?? -Infinity) : ind === 'srv' ? (item.srv ?? -Infinity) : ind === 'm3' ? (item.m3 ?? -Infinity) : ind === 'cert' ? (item.cert ?? -Infinity) : ind === 'ocup' ? (item.ocup ?? -Infinity) : ind === 'rec' ? (item.rec ?? -Infinity) : ind === 'rotacion' ? (item.rotacion ?? -Infinity) : (item.pro ?? -Infinity);
+                return v(b) - v(a);
+            });
 
             document.getElementById('chart-distrito-wrapper').style.minWidth = Math.max(1000, stats.length * 150) + 'px';
             const ds = [], ind = selections.indicador;
