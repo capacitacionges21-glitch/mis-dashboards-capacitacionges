@@ -1299,6 +1299,7 @@
             FilteredData.forEach(d => uniqueSucursales.add(d.sucursal));
             const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1;
 
+            tVis('export-chart-cadena', !(ind === 'm2' && isHierarchyFiltered));
             tVis('export-chart-distrito', !isSingleSucursal);
             tVis('export-rankings', !isSingleSucursal);
             tVis('zero-protocol-wrapper', showAll);
