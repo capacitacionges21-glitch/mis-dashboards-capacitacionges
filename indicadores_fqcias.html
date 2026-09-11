@@ -664,6 +664,101 @@
 
     </div>
 
+    <!-- ===== BKU SEMANAL ===== -->
+    <div id="bku-semanal-section" class="max-w-[1600px] mx-auto space-y-6 mt-8 pb-8">
+
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 rounded-2xl" style="background:rgba(143,170,220,0.15)">
+                        <i data-lucide="calendar-check-2" class="w-6 h-6" style="color:#8FAADC"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">BKU Semanal</h2>
+                        <p class="text-slate-400 text-sm font-medium">Seguimiento semanal — BK Norte y BK Centro/Sur</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3 items-center" data-html2canvas-ignore="true">
+                    <select id="bku-sem-cadena" onchange="updateBkuSemanal()" class="text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                        <option value="Todos">Todas las cadenas</option>
+                        <option value="BK Norte">BK Norte</option>
+                        <option value="BK Centro/Sur">BK Centro/Sur</option>
+                    </select>
+                    <select id="bku-sem-semana" onchange="updateBkuSemanal()" class="text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                        <option value="Ultima">Semana más reciente</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest" style="color:#8FAADC">BKU Promedio</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                    </div>
+                    <h3 id="bku-sem-kpi-avg" class="text-4xl font-black text-slate-800 mt-1">—</h3>
+                    <p id="bku-sem-kpi-label" class="text-[9.5px] text-slate-400 font-bold mt-2">Sin datos</p>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bku-sem-bar" class="h-full transition-all duration-1000" style="width:0%;background:#8FAADC"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Negocios con dato</p>
+                    <h3 id="bku-sem-kpi-cob" class="text-4xl font-black text-slate-800 mt-1">—</h3>
+                    <p id="bku-sem-kpi-cob-label" class="text-[9.5px] text-slate-400 font-bold mt-2">de total en filtro</p>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bku-sem-bar-cob" class="h-full transition-all duration-1000 bg-slate-400" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Semana activa</p>
+                    <h3 id="bku-sem-kpi-semana" class="text-3xl font-black text-slate-800 mt-1">—</h3>
+                    <p id="bku-sem-kpi-fecha" class="text-[9.5px] text-slate-400 font-bold mt-2">&nbsp;</p>
+                </div>
+                <div class="mt-4 flex gap-1">
+                    <span id="bku-sem-badge-norte" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 uppercase">BK Norte</span>
+                    <span id="bku-sem-badge-centro" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 uppercase">BK Centro/Sur</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
+                    <h3 class="text-lg font-bold text-slate-800 tracking-tight">Evolución Semanal BKU</h3>
+                </div>
+                <div class="chart-container" style="min-height:320px">
+                    <canvas id="chart-bku-sem-tendencia"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
+                    <h3 class="text-lg font-bold text-slate-800 tracking-tight">BKU por Negocio</h3>
+                    <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
+                </div>
+                <div class="scrollable-chart-container">
+                    <div id="bku-sem-bar-wrapper" style="min-width:600px;height:320px">
+                        <canvas id="chart-bku-sem-negocios"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- ===== / BKU SEMANAL ===== -->
+
     <div id="toast-container" class="fixed bottom-5 right-5 z-[200] space-y-3 pointer-events-none"></div>
 
     <script>
@@ -673,6 +768,8 @@
             'Churchs': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=624506431&single=true&output=csv',
             'TiendasGes': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=500898991&single=true&output=csv'
         };
+
+        const BKU_SEMANAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=710760441&single=true&output=csv';
 
         const CHAIN_NAMES = {
             'BK Centura': 'BK Norte',
@@ -697,6 +794,8 @@
         let RawData = [];
         let FilteredData = [];
         let ChartsObj = {};
+        let bkuSemanalRaw = [];
+        let bkuSemanalCharts = {};
         let activePalette = PALETTES['default'];
         let currentRevType = 'std'; 
         
@@ -706,6 +805,7 @@
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
             initCustomDropdowns(); 
             await fetchAllData();
+            fetchBkuSemanal();
             lucide.createIcons();
         };
 
@@ -2048,6 +2148,193 @@
                 pdf.save(filename.replace(/\s+/g, '_')); showToast("Reporte PDF descargado con éxito.", "success");
             } catch (error) { console.error("Error al generar PDF:", error); showToast("Error al exportar reporte PDF.", "error"); } finally { btn.innerHTML = originalContent; lucide.createIcons(); }
         }
+
+        // ===== BKU SEMANAL =====
+
+        function fetchBkuSemanal() {
+            Papa.parse(BKU_SEMANAL_URL, {
+                download: true, header: false, skipEmptyLines: true,
+                complete: results => {
+                    bkuSemanalRaw = [];
+                    results.data.slice(1).forEach(row => {
+                        if (row.length < 6) return;
+                        const mes = (row[0] || '').toString().trim();
+                        const semana = (row[1] || '').toString().trim().toUpperCase();
+                        const fecha = (row[2] || '').toString().trim();
+                        const cadena = (row[3] || '').toString().trim();
+                        const negocio = (row[4] || '').toString().trim();
+                        const bkuRaw = (row[5] || '').toString().trim();
+                        const bku = bkuRaw === '' ? null : parseFloat(bkuRaw.replace('%', '').replace(',', '.'));
+                        if (!semana || !cadena || !negocio) return;
+                        bkuSemanalRaw.push({ mes, semana, fecha, cadena, negocio, bku: isNaN(bku) ? null : bku });
+                    });
+                    populateBkuSemanaFilter();
+                    updateBkuSemanal();
+                },
+                error: () => showToast("Error cargando BKU Semanal.", "error")
+            });
+        }
+
+        function populateBkuSemanaFilter() {
+            const sel = document.getElementById('bku-sem-semana');
+            const semanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
+            sel.innerHTML = '<option value="Ultima">Semana más reciente</option>';
+            semanas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s; opt.textContent = s;
+                sel.appendChild(opt);
+            });
+        }
+
+        function updateBkuSemanal() {
+            const cadenaFil = document.getElementById('bku-sem-cadena').value;
+            const semanaFil = document.getElementById('bku-sem-semana').value;
+
+            // Determinar semana activa
+            const todasSemanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
+            const semanaActiva = semanaFil === 'Ultima' ? todasSemanas[todasSemanas.length - 1] : semanaFil;
+
+            // Filtrar por semana y cadena
+            const filtSemana = bkuSemanalRaw.filter(d => d.semana === semanaActiva);
+            const filtFull = cadenaFil === 'Todos' ? filtSemana : filtSemana.filter(d => d.cadena === cadenaFil);
+
+            const conDato = filtFull.filter(d => d.bku !== null);
+            const avg = conDato.length > 0 ? conDato.reduce((s, d) => s + d.bku, 0) / conDato.length : null;
+
+            // KPI promedio
+            const kpiAvg = document.getElementById('bku-sem-kpi-avg');
+            const kpiBar = document.getElementById('bku-sem-bar');
+            if (avg !== null) {
+                kpiAvg.innerText = avg.toFixed(1) + '%';
+                kpiBar.style.width = Math.min(avg, 100) + '%';
+                kpiBar.style.background = avg >= 100 ? '#22c55e' : avg >= 80 ? '#8FAADC' : '#f97316';
+            } else {
+                kpiAvg.innerText = '—';
+                kpiBar.style.width = '0%';
+            }
+            document.getElementById('bku-sem-kpi-label').innerText = semanaActiva ? semanaActiva : 'Sin datos';
+
+            // KPI cobertura
+            const cobPct = filtFull.length > 0 ? (conDato.length / filtFull.length) * 100 : 0;
+            document.getElementById('bku-sem-kpi-cob').innerText = conDato.length + ' / ' + filtFull.length;
+            document.getElementById('bku-sem-kpi-cob-label').innerText = 'negocios con dato capturado';
+            document.getElementById('bku-sem-bar-cob').style.width = cobPct.toFixed(0) + '%';
+
+            // KPI semana
+            document.getElementById('bku-sem-kpi-semana').innerText = semanaActiva || '—';
+            const fechaEj = filtSemana.length > 0 ? filtSemana[0].fecha : '';
+            document.getElementById('bku-sem-kpi-fecha').innerText = fechaEj ? 'Inicio: ' + fechaEj : '';
+
+            // Badges cadena
+            const hasNorte = filtFull.some(d => d.cadena === 'BK Norte');
+            const hasCentro = filtFull.some(d => d.cadena === 'BK Centro/Sur');
+            document.getElementById('bku-sem-badge-norte').classList.toggle('hidden', !hasNorte);
+            document.getElementById('bku-sem-badge-centro').classList.toggle('hidden', !hasCentro);
+
+            document.getElementById('bku-sem-chart-subtitle').innerText = semanaActiva || '';
+
+            renderBkuSemTendencia(cadenaFil);
+            renderBkuSemNegocios(filtFull, semanaActiva);
+        }
+
+        function renderBkuSemTendencia(cadenaFil) {
+            const semanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
+            const cadenas = cadenaFil === 'Todos' ? ['BK Norte', 'BK Centro/Sur'] : [cadenaFil];
+            const colors = { 'BK Norte': '#2F5597', 'BK Centro/Sur': '#8FAADC' };
+
+            const datasets = cadenas.map(cad => {
+                const data = semanas.map(sem => {
+                    const rows = bkuSemanalRaw.filter(d => d.semana === sem && d.cadena === cad && d.bku !== null);
+                    if (rows.length === 0) return null;
+                    return rows.reduce((s, d) => s + d.bku, 0) / rows.length;
+                });
+                return {
+                    label: cad,
+                    data,
+                    borderColor: colors[cad],
+                    backgroundColor: colors[cad] + '22',
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: colors[cad],
+                    tension: 0.3,
+                    fill: true,
+                    spanGaps: true
+                };
+            });
+
+            if (bkuSemanalCharts.tendencia) bkuSemanalCharts.tendencia.destroy();
+            const ctx = document.getElementById('chart-bku-sem-tendencia').getContext('2d');
+            bkuSemanalCharts.tendencia = new Chart(ctx, {
+                type: 'line',
+                data: { labels: semanas, datasets },
+                plugins: [ChartDataLabels],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }, padding: 16 } },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato') }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 10 } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderBkuSemNegocios(filtFull, semanaActiva) {
+            const sorted = [...filtFull].sort((a, b) => (b.bku ?? -1) - (a.bku ?? -1));
+            const labels = sorted.map(d => d.negocio);
+            const values = sorted.map(d => d.bku);
+            const bgColors = values.map(v => v === null ? '#e2e8f0' : v >= 100 ? '#22c55e' : v >= 80 ? '#8FAADC' : '#f97316');
+
+            const minW = Math.max(600, labels.length * 30);
+            document.getElementById('bku-sem-bar-wrapper').style.width = minW + 'px';
+
+            if (bkuSemanalCharts.negocios) bkuSemanalCharts.negocios.destroy();
+            const ctx = document.getElementById('chart-bku-sem-negocios').getContext('2d');
+            bkuSemanalCharts.negocios = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'BKU %',
+                        data: values,
+                        backgroundColor: bgColors,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                plugins: [ChartDataLabels],
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'x',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end', align: 'top',
+                            formatter: v => v !== null ? v.toFixed(0) + '%' : 'N/D',
+                            font: { weight: '700', size: 9 }, color: '#475569'
+                        },
+                        tooltip: { callbacks: { label: ctx => ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato' } }
+                    },
+                    scales: {
+                        y: {
+                            min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 10 } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ===== / BKU SEMANAL =====
     </script>
 </body>
 </html>
