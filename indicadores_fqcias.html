@@ -2213,9 +2213,25 @@
                 ? new Set(FilteredData.map(d => d.sucursal.toLowerCase().trim()))
                 : null;
 
-            // Determinar semana activa
+            // Determinar semana activa: la más reciente cuya fecha de inicio ya ocurrió
             const todasSemanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
-            const semanaActiva = semanaFil === 'Ultima' ? todasSemanas[todasSemanas.length - 1] : semanaFil;
+            let semanaActiva;
+            if (semanaFil === 'Ultima') {
+                const hoy = new Date(); hoy.setHours(23, 59, 59);
+                const semFechaMap = {};
+                bkuSemanalRaw.forEach(d => {
+                    if (d.fecha && !semFechaMap[d.semana]) {
+                        const p = d.fecha.split('/');
+                        if (p.length === 3) semFechaMap[d.semana] = new Date(p[2], p[1]-1, p[0]);
+                    }
+                });
+                const semanasValidas = Object.entries(semFechaMap)
+                    .filter(([, f]) => f <= hoy)
+                    .sort((a, b) => b[1] - a[1]);
+                semanaActiva = semanasValidas.length > 0 ? semanasValidas[0][0] : todasSemanas[0];
+            } else {
+                semanaActiva = semanaFil;
+            }
 
             // Filtrar por semana, cadena y (si aplica) por nombre de negocio
             const filtSemana = bkuSemanalRaw.filter(d => d.semana === semanaActiva);
