@@ -454,50 +454,6 @@
         </div>
 
         <div class="grid grid-cols-1 gap-8 mt-8">
-            
-            <div id="compare-charts-wrapper" class="grid grid-cols-1 gap-8">
-                <div id="container-rev-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
-                    <div class="flex items-center justify-between mb-8">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
-                            <div>
-                                <div class="flex items-center gap-3">
-                                    <h3 id="title-rev-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral REV / REC</h3>
-                                    <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Indicadores Operativos</span>
-                                </div>
-                                <p id="subtitle-rev" class="text-xs text-slate-500 font-medium mt-1">BK Norte y BK Centro/Sur</p>
-                            </div>
-                        </div>
-                        <select id="select-rev-type" onchange="updateRevChartType()" class="bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl p-2.5 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer shadow-sm">
-                            <option value="std">Standard</option>
-                            <option value="re">Re-Audit</option>
-                            <option value="extra">Extra REV</option>
-                            <option value="re2">2nd Re-Audit</option>
-                            <option value="ccv">CCV</option>
-                            <option value="rec">REC (Critical Visit)</option>
-                        </select>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="chart-rev-compare"></canvas>
-                    </div>
-                </div>
-
-                <div id="container-oer-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
-                    <div class="flex items-center gap-3 mb-8">
-                        <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
-                        <div>
-                            <div class="flex items-center gap-3">
-                                <h3 id="title-oer-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral OER / RAV</h3>
-                                <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 90%</span>
-                            </div>
-                            <p id="subtitle-oer" class="text-xs text-slate-500 font-medium mt-1">Unidades Church's</p>
-                        </div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="chart-oer-compare"></canvas>
-                    </div>
-                </div>
-            </div>
 
             <div id="export-chart-zp" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
@@ -684,6 +640,51 @@
                     </div>
                 </div>
             </div>
+
+            <div id="compare-charts-wrapper" class="grid grid-cols-1 gap-8">
+                <div id="container-rev-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <h3 id="title-rev-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral REV / REC</h3>
+                                    <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Indicadores Operativos</span>
+                                </div>
+                                <p id="subtitle-rev" class="text-xs text-slate-500 font-medium mt-1">BK Norte y BK Centro/Sur</p>
+                            </div>
+                        </div>
+                        <select id="select-rev-type" onchange="updateRevChartType()" class="bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl p-2.5 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer shadow-sm">
+                            <option value="std">Standard</option>
+                            <option value="re">Re-Audit</option>
+                            <option value="extra">Extra REV</option>
+                            <option value="re2">2nd Re-Audit</option>
+                            <option value="ccv">CCV</option>
+                            <option value="rec">REC (Critical Visit)</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-rev-compare"></canvas>
+                    </div>
+                </div>
+
+                <div id="container-oer-compare" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h3 id="title-oer-compare" class="text-xl font-bold text-slate-800 tracking-tight">Evolución Trimestral OER / RAV</h3>
+                                <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta 90%</span>
+                            </div>
+                            <p id="subtitle-oer" class="text-xs text-slate-500 font-medium mt-1">Unidades Church's</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-oer-compare"></canvas>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div id="sin-gerente-wrapper"></div>
