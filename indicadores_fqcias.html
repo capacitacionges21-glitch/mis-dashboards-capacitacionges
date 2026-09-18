@@ -2532,8 +2532,8 @@
             const c2 = getCssVar('--color-m2') || '#8FAADC';
             const bgColors = values.map(v => v === null ? '#e2e8f0' : v >= 100 ? '#22c55e' : v >= 80 ? c2 : c1);
 
-            const barPx = Math.max(28, Math.min(60, Math.floor(1100 / Math.max(labels.length, 1))));
-            const dynW = Math.max(400, labels.length * barPx);
+            const barThickness = Math.max(14, Math.min(50, Math.floor(900 / Math.max(labels.length, 1))));
+            const dynW = Math.max(400, labels.length * (barThickness + 10) + 80);
             const wrapper = document.getElementById('bku-sem-bar-wrapper');
             wrapper.style.width = dynW + 'px';
             wrapper.style.height = '320px';
@@ -2549,7 +2549,8 @@
                         data: values,
                         backgroundColor: bgColors,
                         borderRadius: 6,
-                        borderSkipped: false
+                        borderSkipped: false,
+                        barThickness
                     }]
                 },
                 plugins: [ChartDataLabels],
