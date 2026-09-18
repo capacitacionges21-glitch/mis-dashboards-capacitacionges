@@ -507,19 +507,6 @@
                 </div>
             </div>
 
-            <div id="export-chart-gerente" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
-                    <div class="flex items-center gap-3">
-                        <h3 id="title-chart-gerente" class="text-xl font-bold text-slate-800 tracking-tight">Resultados por Gerente de Negocio</h3>
-                        <span id="meta-badge-gerente" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chart-gerente"></canvas>
-                </div>
-            </div>
-
             <!-- ===== BKU SEMANAL ===== -->
             <div id="bku-semanal-section" class="space-y-6">
 
@@ -530,14 +517,13 @@
                                 <i data-lucide="calendar-check-2" class="w-6 h-6" style="color:#8FAADC"></i>
                             </div>
                             <div>
-                                <h2 class="text-xl font-extrabold text-slate-800 tracking-tight">BKU Semanal</h2>
-                                <p class="text-slate-400 text-sm font-medium">Seguimiento semanal — BK Norte y BK Centro/Sur</p>
+                                <p class="text-slate-400 text-sm font-medium">Seguimiento diario — BK Norte y BK Centro/Sur</p>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-3 items-center" data-html2canvas-ignore="true">
                             <span id="bku-sem-cadena-badge" class="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-xl" style="background:var(--color-m2-light);color:var(--color-m2);border:1px solid var(--color-m2)">Todas las cadenas</span>
                             <select id="bku-sem-semana" onchange="updateBkuSemanal()" class="text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300">
-                                <option value="Ultima">Semana más reciente</option>
+                                <option value="Ultima">Día más reciente</option>
                             </select>
                         </div>
                     </div>
@@ -573,7 +559,7 @@
                     </div>
                     <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
-                            <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Semana activa</p>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Día activo</p>
                             <h3 id="bku-sem-kpi-semana" class="text-3xl font-black text-slate-800 mt-1">—</h3>
                             <p id="bku-sem-kpi-fecha" class="text-[9.5px] text-slate-400 font-bold mt-2">&nbsp;</p>
                         </div>
@@ -584,11 +570,21 @@
                     </div>
                 </div>
 
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
+                        <h3 class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU</h3>
+                    </div>
+                    <div class="chart-container" style="min-height:300px">
+                        <canvas id="chart-bku-mensual"></canvas>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
-                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Evolución Semanal BKU</h3>
+                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Evolución Diaria BKU</h3>
                         </div>
                         <div class="chart-container" style="min-height:320px">
                             <canvas id="chart-bku-sem-tendencia"></canvas>
@@ -610,6 +606,21 @@
 
             </div>
             <!-- ===== / BKU SEMANAL ===== -->
+
+            <div id="export-chart-gerente" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m1)]"></div>
+                    <div class="flex items-center gap-3">
+                        <h3 id="title-chart-gerente" class="text-xl font-bold text-slate-800 tracking-tight">Resultados por Negocio</h3>
+                        <span id="meta-badge-gerente" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
+                    </div>
+                </div>
+                <div class="scrollable-chart-container">
+                    <div id="chart-gerente-wrapper" style="min-width: 1000px; height: 450px;">
+                        <canvas id="chart-gerente"></canvas>
+                    </div>
+                </div>
+            </div>
 
             <div id="export-chart-cadena" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
@@ -637,6 +648,21 @@
                 <div class="scrollable-chart-container">
                     <div id="chart-distrito-wrapper" style="min-width: 1000px; height: 450px;">
                         <canvas id="chart-distrito"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="export-chart-regional" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-2 h-8 rounded-full transition-colors duration-500" style="background:var(--color-m2)"></div>
+                    <div class="flex items-center gap-3">
+                        <h3 id="title-chart-regional" class="text-xl font-bold text-slate-800 tracking-tight">Comparativa por Regional</h3>
+                        <span id="meta-badge-regional" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
+                    </div>
+                </div>
+                <div class="scrollable-chart-container">
+                    <div id="chart-regional-wrapper" style="min-width: 800px; height: 450px;">
+                        <canvas id="chart-regional"></canvas>
                     </div>
                 </div>
             </div>
@@ -1302,6 +1328,7 @@
 
             tVis('export-chart-cadena', !(ind === 'm2' && isHierarchyFiltered));
             tVis('export-chart-distrito', !isSingleSucursal);
+            tVis('export-chart-regional', !isSingleSucursal);
             tVis('export-rankings', !isSingleSucursal);
             tVis('zero-protocol-wrapper', showAll);
             tVis('sin-gerente-wrapper', showAll);
@@ -1314,7 +1341,7 @@
             if (ind === 'srv' || ind === 'cert' || ind === 'rec' || ind === 'm2') { metaText = "Meta 100%"; metaClass = "bg-green-100 text-green-700"; }
             else if (ind === 'rotacion') { metaText = "Métrica"; metaClass = "bg-amber-100 text-amber-700"; }
             else if (ind !== 'Todos') metaText = "Meta 90%";
-            ['meta-badge-gerente', 'meta-badge-cadena', 'meta-badge-distrito'].forEach(id => {
+            ['meta-badge-gerente', 'meta-badge-cadena', 'meta-badge-distrito', 'meta-badge-regional'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) { el.innerText = metaText; el.className = `text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${metaClass}`; }
             });
@@ -1463,6 +1490,8 @@
             if (document.getElementById('title-chart-cadena')) document.getElementById('title-chart-cadena').innerText = isHierarchyFiltered ? "Comparativa por Unidades de Negocio" : "Comparativa por Franquicia";
             renderBarChart('chart-cadena', isHierarchyFiltered ? 'sucursal' : 'cadena');
             renderDistritoChart();
+            renderRegionalChart();
+            renderBkuTendenciaMensual();
         }
 
         function updateRevChartType() { currentRevType = document.getElementById('select-rev-type').value; renderRevCompareChart(); }
@@ -1704,118 +1733,7 @@
         }
 
         function renderGerenteChart() {
-            if (ChartsObj['chart-gerente']) ChartsObj['chart-gerente'].destroy();
-            if (FilteredData.length === 0) return;
-
-            const managersMap = {};
-            FilteredData.forEach(d => {
-                if (d.gerente.toUpperCase().includes('SIN GERENTE')) return;
-                if (!managersMap[d.gerente]) managersMap[d.gerente] = [];
-                managersMap[d.gerente].push(d);
-            });
-
-            const managerStats = Object.keys(managersMap).map(gerente => {
-                const rows = managersMap[gerente];
-                let gerSrv = 0, subSrv = 0, gerP = 0, subP = 0, bkuCol = 0, colP = 0, certGerNum = 0, certSubNum = 0, totalPlantillaOcupada = 0;
-                let sumOcup = 0, countOcup = 0, recSum = 0, recCount = 0, totalAvgBajas = 0;
-                
-                const uSucs = new Set(); rows.forEach(d => uSucs.add(d.sucursal));
-                const sucursales = Array.from(uSucs);
-
-                sucursales.forEach(suc => {
-                    const branchSub = rows.filter(d => d.sucursal === suc);
-                    let branchBajas = 0; branchSub.forEach(d => branchBajas += (d.bajas || 0));
-                    totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
-                    const getL = extractor => { const valid = branchSub.map(extractor).filter(v => v !== null && v !== undefined && !isNaN(v)); return valid.length ? valid[valid.length - 1] : null; };
-
-                    gerSrv += getL(d=>d.gerSrv) || 0; subSrv += getL(d=>d.subSrv) || 0; gerP += getL(d=>d.gerP) || 0; subP += getL(d=>d.subP) || 0;
-                    bkuCol += getL(d=>d.bkuCol) || 0; colP += getL(d=>d.colP) || 0; certGerNum += getL(d=>d.certGerNum) || 0; certSubNum += getL(d=>d.certSubNum) || 0;
-                    totalPlantillaOcupada += getL(d=>d.totalPlantillaOcupada) || 0;
-
-                    const ocP = getL(d => d.rrhh ? d.rrhh.ocPlantilla : null);
-                    if (ocP !== null) { sumOcup += ocP; countOcup++; }
-                });
-
-                rows.forEach(d => { if (d.rec26r1 !== null && d.rec26r1 !== undefined) { recSum += d.rec26r1; recCount++; } if (d.rec26r2 !== null && d.rec26r2 !== undefined) { recSum += d.rec26r2; recCount++; } });
-                
-                const validM2 = rows.filter(d => d.m2 !== null && d.m2 !== undefined);
-                const m2 = validM2.length > 0 ? validM2.reduce((acc, d) => acc + d.m2, 0) / validM2.length : null;
-                const validRev = rows.filter(d => d.m3 !== null && d.m3 !== undefined);
-                const m3 = validRev.length > 0 ? Math.round(validRev.reduce((acc, d) => acc + d.m3, 0) / validRev.length) : null;
-
-                const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null;
-                const cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null;
-                const ocup = countOcup > 0 ? (sumOcup / countOcup) : null;
-                const rec = recCount > 0 ? Math.round(recSum / recCount) : null;
-                const rotacion = totalPlantillaOcupada > 0 ? (totalAvgBajas / totalPlantillaOcupada) * 100 : null;
-
-                const active = [];
-                if (srv !== null) active.push({v:srv}); if (m2 !== null) active.push({v:m2}); if (m3 !== null) active.push({v:m3}); if (cert !== null) active.push({v:cert});
-                const pro = active.length > 0 ? Math.round(active.reduce((a, b) => a + b.v, 0) / active.length) : null;
-
-                return {
-                    gerente, sucursal: sucursales.join(', '), cadena: rows[0].cadena, isCert: certGerNum > 0,
-                    pro, srv, m2, m3, cert, ocup, rec, rotacion: rotacion !== null ? Math.round(rotacion) : null,
-                    raw: { gerSrv, subSrv, gerP, subP, bkuCol, colP, certGerNum, certSubNum, validRev: validRev.length, totalPlantillaOcupada, recCount, avgBajas: Math.round(totalAvgBajas) }
-                };
-            }).filter(item => item.pro !== null).sort((a, b) => { if (a.cadena < b.cadena) return -1; if (a.cadena > b.cadena) return 1; return b.pro - a.pro; });
-
-            const ctx = document.getElementById('chart-gerente').getContext('2d');
-            const titleEl = document.getElementById('title-chart-gerente');
-            const uniqueSucursales = new Set(); FilteredData.forEach(d => uniqueSucursales.add(d.sucursal));
-            const isSingleManager = (selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1) && managerStats.length === 1;
-
-            if (isSingleManager) {
-                const m = managerStats[0];
-                if (titleEl) titleEl.innerText = `Desglose de Indicadores: ${m.gerente}${m.isCert ? ' (Certificado)' : ' (No Cert.)'}`;
-                const isChurchs = m.cadena.toLowerCase().includes('church');
-                const lblM2 = isChurchs ? 'PTE' : 'BKU', lblM3 = isChurchs ? 'OER / RAV' : 'REV Standard';
-
-                ChartsObj['chart-gerente'] = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['ServSafe', lblM2, lblM3, 'Cert. Gerencial', 'Ocup. Plantilla', 'REC', 'Rotación'],
-                        datasets: [{
-                            label: 'Cumplimiento', data: [m.srv, m.m2, m.m3, m.cert, m.ocup, m.rec, m.rotacion],
-                            rawData: [
-                                [`Gerentes: ${m.raw.gerSrv} con ServSafe de ${m.raw.gerP} en plantilla ocupada`, `Subgerentes: ${m.raw.subSrv} con ServSafe de ${m.raw.subP} en plantilla ocupada`],
-                                [`Promedio BKU/PTE: ${m.m2 !== null ? Math.round(m.m2) + "%" : "S/D"}`, `${m.raw.bkuCol} certificados de ${m.raw.totalPlantillaOcupada} ocupados`],
-                                [`Basado en el promedio de ${m.raw.validRev} auditorías evaluadas`],
-                                [`Gerentes: ${m.raw.certGerNum} certificados de ${m.raw.gerP} en plantilla ocupada`, `Subgerentes: ${m.raw.certSubNum} certificados de ${m.raw.subP} en plantilla ocupada`],
-                                ["Promedio de ocupación en el periodo seleccionado"], [`Basado en ${m.raw.recCount} visitas registradas`],
-                                [`${m.raw.avgBajas} bajas promedio de ${m.raw.totalPlantillaOcupada} en plantilla`]
-                            ],
-                            backgroundColor: [activePalette.m1, activePalette.m2, activePalette.m3, '#1F3864', '#4472C4', '#64748b', '#eab308'], borderRadius: 6
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { display: false }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw }, scales: { y: { min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0, font: { size: 10 } } } } }
-                });
-            } else {
-                if (titleEl) titleEl.innerText = "Resultados por Gerente de Negocio";
-                const uCads = new Set(); managerStats.forEach(m => uCads.add(m.cadena));
-                const cadenas = Array.from(uCads);
-                const ind = selections.indicador;
-                let metricKey = 'pro', rawFormatter;
-
-                if (ind === 'Todos') {
-                    rawFormatter = m => {
-                        const isC = m.cadena.toLowerCase().includes('church');
-                        return [`Sucursal: ${m.sucursal}`, `Estatus Gerente: ${m.isCert ? 'Certificado' : 'No Certificado'}`, `ServSafe: ${m.srv !== null ? Math.round(m.srv) + '%' : 'S/D'}`, `${isC ? 'PTE' : 'BKU'}: ${m.m2 !== null ? Math.round(m.m2) + '%' : 'S/D'}`, `${isC ? 'OER/RAV' : 'REV Standard'}: ${m.m3 !== null ? Math.round(m.m3) + '%' : 'S/D'}`, `Cert. Gerencial: ${m.cert !== null ? Math.round(m.cert) + '%' : 'S/D'}`, `Rotación: ${m.rotacion !== null ? Math.round(m.rotacion) + '%' : 'S/D'}`];
-                    };
-                } else if (ind === 'srv') { metricKey = 'srv'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, `Estatus Gerente: ${m.isCert ? 'Certificado' : 'No Certificado'}`, `Gerentes: ${m.raw.gerSrv} con ServSafe de ${m.raw.gerP} en plantilla`, `Subgerentes: ${m.raw.subSrv} con ServSafe de ${m.raw.subP} en plantilla`]; } 
-                else if (ind === 'm2') { metricKey = 'm2'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, `Promedio BKU/PTE: ${m.m2 !== null ? Math.round(m.m2) + "%" : "S/D"}`, `${m.raw.bkuCol} certificados de ${m.raw.totalPlantillaOcupada} ocupados`]; } 
-                else if (ind === 'm3') { metricKey = 'm3'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, `Basado en el promedio de ${m.raw.validRev} auditorías evaluadas`]; } 
-                else if (ind === 'cert') { metricKey = 'cert'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, `Estatus Gerente: ${m.isCert ? 'Certificado' : 'No Certificado'}`, `Gerentes: ${m.raw.certGerNum} certificados de ${m.raw.gerP} en plantilla`, `Subgerentes: ${m.raw.certSubNum} certificados de ${m.raw.subP} en plantilla`]; } 
-                else if (ind === 'ocup') { metricKey = 'ocup'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, "Promedio de ocupación en el periodo seleccionado"]; } 
-                else if (ind === 'rec') { metricKey = 'rec'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, `Basado en ${m.raw.recCount} visitas registradas`]; } 
-                else if (ind === 'rotacion') { metricKey = 'rotacion'; rawFormatter = m => [`Sucursal: ${m.sucursal}`, `${m.raw.avgBajas} bajas promedio de ${m.raw.totalPlantillaOcupada} en plantilla ocupada`]; }
-
-                ChartsObj['chart-gerente'] = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels: managerStats.map(m => [m.gerente, m.isCert ? '(Certificado)' : '(No Cert.)']), datasets: cadenas.map((cadena, index) => ({ label: cadena, data: managerStats.map(m => m.cadena === cadena ? m[metricKey] : null), rawData: managerStats.map(m => m.cadena === cadena ? rawFormatter(m) : null), backgroundColor: ind === 'rotacion' ? '#eab308' : trendColors[index % trendColors.length], borderRadius: 6 })) },
-                    options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } }, onClick: (e, legendItem, legend) => { const chart = legend.chart, index = legendItem.datasetIndex; chart.isDatasetVisible(index) ? chart.hide(index) : chart.show(index); const visibleCadenas = chart.data.datasets.filter((d, i) => chart.isDatasetVisible(i)).map(d => d.label); const activeManagers = managerStats.filter(m => visibleCadenas.includes(m.cadena)); const newLabels = activeManagers.map(m => [m.gerente, m.isCert ? '(Certificado)' : '(No Cert.)']); chart.data.labels = newLabels; chart.data.datasets.forEach(dataset => { dataset.data = newLabels.map(labelArr => { const label = labelArr[0]; let manager = null; for(let i=0; i<activeManagers.length; i++) { if(activeManagers[i].gerente === label) manager = activeManagers[i]; } return manager && manager.cadena === dataset.label ? manager[metricKey] : null; }); dataset.rawData = newLabels.map(labelArr => { const label = labelArr[0]; let manager = null; for(let i=0; i<activeManagers.length; i++) { if(activeManagers[i].gerente === label) manager = activeManagers[i]; } return manager && manager.cadena === dataset.label ? rawFormatter(manager) : null; }); }); chart.update(); } }, datalabels: { display: false }, tooltip: genericTooltipWithRaw }, scales: { y: { stacked: true, min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { stacked: true, grid: { display: false }, ticks: { display: false } } } }
-                });
-            }
+            renderBarChart('chart-gerente', 'sucursal');
         }
 
         function renderBarChart(id, field) {
@@ -1850,7 +1768,7 @@
             }).filter(item => item.pro !== null).sort((a,b) => {
                 const ind = selections.indicador;
                 const v = item => ind === 'm2' ? (item.m2 ?? -Infinity) : ind === 'srv' ? (item.srv ?? -Infinity) : ind === 'm3' ? (item.m3 ?? -Infinity) : ind === 'cert' ? (item.cert ?? -Infinity) : ind === 'ocup' ? (item.ocup ?? -Infinity) : ind === 'rotacion' ? (item.rotacion ?? -Infinity) : (item.pro ?? -Infinity);
-                return v(b) - v(a);
+                return v(a) - v(b);
             });
 
             const wrapperEl = document.getElementById(id + '-wrapper'), isSucursal = (field === 'sucursal');
@@ -1866,7 +1784,7 @@
 
             ChartsObj[id] = new Chart(document.getElementById(id).getContext('2d'), {
                 type: 'bar', data: { labels: stats.map(d => d.label), datasets: ds },
-                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } }, datalabels: isSucursal ? { display: false } : datalabelsZpConfig, tooltip: genericTooltipWithRaw }, scales: { y: { min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { grid: { display: false }, ticks: { display: true, maxRotation: isSucursal ? 45 : 0, minRotation: isSucursal ? 45 : 0, font: { size: 10 } } } } }
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw }, scales: { y: { display: false, min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { grid: { display: false }, ticks: { display: true, maxRotation: isSucursal ? 45 : 0, minRotation: isSucursal ? 45 : 0, font: { size: 10 } } } } }
             });
         }
 
@@ -1904,7 +1822,7 @@
             }).filter(item => item.pro !== null).sort((a,b) => {
                 const ind = selections.indicador;
                 const v = item => ind === 'm2' ? (item.m2 ?? -Infinity) : ind === 'srv' ? (item.srv ?? -Infinity) : ind === 'm3' ? (item.m3 ?? -Infinity) : ind === 'cert' ? (item.cert ?? -Infinity) : ind === 'ocup' ? (item.ocup ?? -Infinity) : ind === 'rec' ? (item.rec ?? -Infinity) : ind === 'rotacion' ? (item.rotacion ?? -Infinity) : (item.pro ?? -Infinity);
-                return v(b) - v(a);
+                return v(a) - v(b);
             });
 
             document.getElementById('chart-distrito-wrapper').style.minWidth = Math.max(1000, stats.length * 150) + 'px';
@@ -1919,7 +1837,108 @@
 
             ChartsObj['chart-distrito'] = new Chart(document.getElementById('chart-distrito').getContext('2d'), {
                 type: 'bar', data: { labels: stats.map(d => d.label), datasets: ds },
-                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } }, datalabels: { display: false }, tooltip: genericTooltipWithRaw }, scales: { y: { min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw }, scales: { y: { display: false, min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+            });
+        }
+
+        function renderRegionalChart() {
+            if (ChartsObj['chart-regional']) ChartsObj['chart-regional'].destroy();
+            if (FilteredData.length === 0) return;
+
+            const uniqueRegiones = new Set(); FilteredData.forEach(d => uniqueRegiones.add(d.region));
+
+            const stats = Array.from(uniqueRegiones).map(region => {
+                const sub = FilteredData.filter(d => d.region === region);
+                let gerSrv = 0, subSrv = 0, gerP = 0, subP = 0, bkuCol = 0, certGerNum = 0, certSubNum = 0, totalPlantillaOcupada = 0, sumOcup = 0, countOcup = 0, recSum = 0, recCount = 0, totalAvgBajas = 0;
+                const uSucs = new Set(); sub.forEach(d => uSucs.add(d.sucursal));
+
+                Array.from(uSucs).forEach(suc => {
+                    const branchSub = sub.filter(d => d.sucursal === suc);
+                    let branchBajas = 0; branchSub.forEach(d => branchBajas += (d.bajas || 0));
+                    totalAvgBajas += branchSub.length > 0 ? (branchBajas / branchSub.length) : 0;
+                    const getL = ext => { const valid = branchSub.map(ext).filter(v => v !== null && v !== undefined && !isNaN(v)); return valid.length ? valid[valid.length - 1] : null; };
+                    gerSrv += getL(d=>d.gerSrv) || 0; subSrv += getL(d=>d.subSrv) || 0; gerP += getL(d=>d.gerP) || 0; subP += getL(d=>d.subP) || 0; bkuCol += getL(d=>d.bkuCol) || 0; certGerNum += getL(d=>d.certGerNum) || 0; certSubNum += getL(d=>d.certSubNum) || 0; totalPlantillaOcupada += getL(d=>d.totalPlantillaOcupada) || 0;
+                    const ocP = getL(d => d.rrhh ? d.rrhh.ocPlantilla : null);
+                    if (ocP !== null) { sumOcup += ocP; countOcup++; }
+                });
+
+                sub.forEach(d => { if (d.rec26r1 !== null && d.rec26r1 !== undefined) { recSum += d.rec26r1; recCount++; } if (d.rec26r2 !== null && d.rec26r2 !== undefined) { recSum += d.rec26r2; recCount++; } });
+                const validM2 = sub.filter(d => d.m2 !== null && d.m2 !== undefined); const m2 = validM2.length > 0 ? validM2.reduce((acc, d) => acc + d.m2, 0) / validM2.length : null;
+                const validRev = sub.filter(d => d.m3 !== null && d.m3 !== undefined); const m3 = validRev.length > 0 ? Math.round(validRev.reduce((acc, d) => acc + d.m3, 0) / validRev.length) : null;
+                const srv = (gerP + subP) > 0 ? ((gerSrv + subSrv) / (gerP + subP)) * 100 : null, cert = (gerP + subP) > 0 ? ((certGerNum + certSubNum) / (gerP + subP)) * 100 : null, ocup = countOcup > 0 ? (sumOcup / countOcup) : null, rec = recCount > 0 ? Math.round(recSum / recCount) : null, rotacion = totalPlantillaOcupada > 0 ? (totalAvgBajas / totalPlantillaOcupada) * 100 : null;
+                const active = []; if(srv !== null) active.push({v:srv}); if(m2 !== null) active.push({v:m2}); if(m3 !== null) active.push({v:m3}); if(cert !== null) active.push({v:cert});
+
+                return {
+                    label: region, srv: srv !== null ? Math.round(srv) : null, m2: m2 !== null ? Math.round(m2) : null, m3: m3 !== null ? Math.round(m3) : null, cert: cert !== null ? Math.round(cert) : null, ocup: ocup !== null ? Math.round(ocup) : null, rec: rec !== null ? Math.round(rec) : null, rotacion: rotacion !== null ? Math.round(rotacion) : null, avgBajas: Math.round(totalAvgBajas), plantilla: totalPlantillaOcupada, pro: active.length > 0 ? Math.round(active.reduce((a, b) => a + b.v, 0) / active.length) : null,
+                    rawSrv: [`${gerSrv} Gtes y ${subSrv} Subs certificados`, `de ${gerP + subP} en plantilla`], rawM2: [`Promedio BKU/PTE: ${m2 !== null ? Math.round(m2) + "%" : "S/D"}`, `${bkuCol} certificados de ${totalPlantillaOcupada} ocupados`], rawM3: ["Basado en el promedio de", `${validRev.length} auditorías evaluadas`], rawCert: [`${certGerNum} Gtes y ${certSubNum} Subs certificados`, `de ${gerP + subP} en plantilla`], rawOcup: ["Promedio de ocupación en", `${countOcup} registros del periodo`], rawRec: [`Basado en ${recCount} visitas registradas`], rawRotacion: [`${Math.round(totalAvgBajas)} bajas promedio de`, `${totalPlantillaOcupada} en plantilla ocupada`]
+                };
+            }).filter(item => item.pro !== null).sort((a,b) => {
+                const ind = selections.indicador;
+                const v = item => ind === 'm2' ? (item.m2 ?? -Infinity) : ind === 'srv' ? (item.srv ?? -Infinity) : ind === 'm3' ? (item.m3 ?? -Infinity) : ind === 'cert' ? (item.cert ?? -Infinity) : ind === 'ocup' ? (item.ocup ?? -Infinity) : ind === 'rec' ? (item.rec ?? -Infinity) : ind === 'rotacion' ? (item.rotacion ?? -Infinity) : (item.pro ?? -Infinity);
+                return v(a) - v(b);
+            });
+
+            document.getElementById('chart-regional-wrapper').style.minWidth = Math.max(800, stats.length * 200) + 'px';
+            const ds = [], ind = selections.indicador;
+            if (ind === 'Todos' || ind === 'srv') ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => d.rawSrv), backgroundColor: activePalette.m1, borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => d.rawM2), backgroundColor: activePalette.m2, borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => d.rawM3), backgroundColor: activePalette.m3, borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => d.rawCert), backgroundColor: '#1F3864', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', data: stats.map(d => d.ocup), rawData: stats.map(d => d.rawOcup), backgroundColor: '#4472C4', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'rec') ds.push({ label: 'REC (Critical Visit)', data: stats.map(d => d.rec), rawData: stats.map(d => d.rawRec), backgroundColor: '#64748b', borderRadius: 4 });
+            if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', data: stats.map(d => d.rotacion), rawData: stats.map(d => d.rawRotacion), backgroundColor: '#eab308', borderRadius: 4 });
+
+            ChartsObj['chart-regional'] = new Chart(document.getElementById('chart-regional').getContext('2d'), {
+                type: 'bar', data: { labels: stats.map(d => d.label), datasets: ds },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 35 } }, plugins: { legend: { position: 'bottom', labels: { padding: 25, font: { weight: 'bold' } } }, datalabels: datalabelsZpConfig, tooltip: genericTooltipWithRaw }, scales: { y: { display: false, min: 0, max: 100, ticks: { callback: v => Math.round(v) + '%' }, border: { dash: [4,4] } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+            });
+        }
+
+        function renderBkuTendenciaMensual() {
+            if (ChartsObj['chart-bku-mensual']) ChartsObj['chart-bku-mensual'].destroy();
+            const canvasEl = document.getElementById('chart-bku-mensual');
+            if (!canvasEl || FilteredData.length === 0) return;
+
+            const MESES_ORD = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const cadenasFiltradas = [...new Set(FilteredData.map(d => d.cadena))];
+            const mesesPresentes = [...new Set(FilteredData.map(d => d.mes))].sort((a,b) => MESES_ORD.indexOf(a) - MESES_ORD.indexOf(b));
+
+            const c1 = getCssVar('--color-m1') || '#2F5597';
+            const c2 = getCssVar('--color-m2') || '#8FAADC';
+            const trendColors = [c1, c2, '#1F3864', '#4472C4'];
+
+            const datasets = cadenasFiltradas.map((cadena, idx) => {
+                const data = mesesPresentes.map(mes => {
+                    const rows = FilteredData.filter(d => d.cadena === cadena && d.mes === mes && d.m2 !== null && d.m2 !== undefined);
+                    if (rows.length === 0) return null;
+                    return rows.reduce((s, d) => s + d.m2, 0) / rows.length;
+                });
+                return {
+                    label: cadena, data,
+                    borderColor: trendColors[idx % trendColors.length],
+                    backgroundColor: trendColors[idx % trendColors.length] + '22',
+                    borderWidth: 2.5, pointRadius: 4,
+                    pointBackgroundColor: trendColors[idx % trendColors.length],
+                    tension: 0.3, fill: true, spanGaps: true
+                };
+            });
+
+            ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), {
+                type: 'line',
+                data: { labels: mesesPresentes, datasets },
+                plugins: [ChartDataLabels],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }, padding: 16 } },
+                        datalabels: { display: true, anchor: 'end', align: 'top', formatter: v => v !== null ? Math.round(v) + '%' : '', font: { weight: '700', size: 9 }, color: '#475569' },
+                        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato') } }
+                    },
+                    scales: {
+                        y: { display: false, min: 0, max: 110 },
+                        x: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
+                    }
+                }
             });
         }
 
@@ -2091,8 +2110,8 @@
             const isRevMetric = (sortKey === 'rotacion');
             list.sort((a, b) => isRevMetric ? a[sortKey] - b[sortKey] : b[sortKey] - a[sortKey]);
 
-            const top5 = list.filter(item => isRevMetric ? item[sortKey] <= 20 : item[sortKey] >= 80).slice(0, 5);
-            const bottom5 = [].concat(list).reverse().filter(item => isRevMetric ? item[sortKey] > 20 : item[sortKey] < 80).slice(0, 5);
+            const top5 = list.filter(item => isRevMetric ? item[sortKey] <= 20 : item[sortKey] >= 90).slice(0, 5);
+            const bottom5 = [].concat(list).reverse().filter(item => isRevMetric ? item[sortKey] > 20 : (item[sortKey] >= 40 && item[sortKey] < 90)).slice(0, 5);
 
             const metricLabels = { 'avg': 'CUMP. GENERAL', 'srv': 'SERVSAFE', 'm2': document.getElementById('label-m2').innerText.toUpperCase(), 'm3': document.getElementById('label-m3').innerText.toUpperCase(), 'cert': 'CERT. GERENCIAL', 'ocup': 'OCUP. PLANTILLA', 'rotacion': 'ROTACIÓN' };
             const renderList = (data, containerId, colorClass, emptyMsg) => {
@@ -2105,8 +2124,8 @@
                 container.innerHTML = htmlStr;
             };
 
-            renderList(top5, 'top-rank-container', 'text-green-600', isRevMetric ? 'Ninguna sucursal logró mantenerse por debajo del 20% de rotación.' : 'Ninguna sucursal alcanzó el 80% mínimo requerido.');
-            renderList(bottom5, 'bottom-rank-container', 'text-red-500', isRevMetric ? 'No hay sucursales con rotación crítica (superior al 20%).' : 'Ninguna sucursal se encuentra por debajo del 80%.');
+            renderList(top5, 'top-rank-container', 'text-green-600', isRevMetric ? 'Ninguna sucursal logró mantenerse por debajo del 20% de rotación.' : 'Ninguna sucursal alcanzó el 90% requerido.');
+            renderList(bottom5, 'bottom-rank-container', 'text-red-500', isRevMetric ? 'No hay sucursales con rotación crítica (superior al 20%).' : 'Ninguna sucursal se encuentra en el rango de atención (40%–90%).');
         }
 
         function hideLoader() { const overlay = document.getElementById('loading-overlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 500); }
@@ -2184,58 +2203,60 @@
 
         function populateBkuSemanaFilter() {
             const sel = document.getElementById('bku-sem-semana');
-            const semanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
-            sel.innerHTML = '<option value="Ultima">Semana más reciente</option>';
-            semanas.forEach(s => {
+            const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
+                const pa = a.split('/'), pb = b.split('/');
+                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+            });
+            sel.innerHTML = '<option value="Ultima">Día más reciente</option>';
+            fechasUnicas.forEach(f => {
                 const opt = document.createElement('option');
-                opt.value = s; opt.textContent = s;
+                opt.value = f;
+                const p = f.split('/');
+                opt.textContent = p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]} ${p[2]}` : f;
                 sel.appendChild(opt);
             });
         }
 
         function updateBkuSemanal() {
-            const semanaFil = document.getElementById('bku-sem-semana').value;
+            const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+            const formatDia = f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; };
 
-            // Leer cadena del filtro principal del dashboard
+            const diaFil = document.getElementById('bku-sem-semana').value;
+
             const mainCadena = selections.cadena || 'Todos';
-            // Mapear cadena principal a cadena semanal (solo BK Norte y BK Centro/Sur aplican)
             let cadenaFil = 'Todos';
             if (mainCadena.toLowerCase().includes('norte') || mainCadena.toLowerCase().includes('centura')) cadenaFil = 'BK Norte';
             else if (mainCadena.toLowerCase().includes('centro') || mainCadena.toLowerCase().includes('mote')) cadenaFil = 'BK Centro/Sur';
 
-            // Actualizar badge de cadena
             const badge = document.getElementById('bku-sem-cadena-badge');
             if (badge) badge.textContent = cadenaFil === 'Todos' ? 'Todas las cadenas' : cadenaFil;
 
-            // Vincular filtros de Región / Distrito / Gerente por nombre de negocio
             const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const negociosPermitidos = hayFiltroExtra
                 ? new Set(FilteredData.map(d => d.sucursal.toLowerCase().trim()))
                 : null;
 
-            // Determinar semana activa: la más reciente cuya fecha de inicio ya ocurrió
-            const todasSemanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
-            let semanaActiva;
-            if (semanaFil === 'Ultima') {
+            // Determinar día activo: el más reciente cuya fecha ya ocurrió
+            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
+                const pa = a.split('/'), pb = b.split('/');
+                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+            });
+            let diaActivo;
+            if (diaFil === 'Ultima') {
                 const hoy = new Date(); hoy.setHours(23, 59, 59);
-                const semFechaMap = {};
-                bkuSemanalRaw.forEach(d => {
-                    if (d.fecha && !semFechaMap[d.semana]) {
-                        const p = d.fecha.split('/');
-                        if (p.length === 3) semFechaMap[d.semana] = new Date(p[2], p[1]-1, p[0]);
-                    }
+                const validas = fechasUnicas.filter(f => {
+                    const p = f.split('/');
+                    return p.length === 3 && new Date(p[2], p[1]-1, p[0]) <= hoy;
                 });
-                const semanasValidas = Object.entries(semFechaMap)
-                    .filter(([, f]) => f <= hoy)
-                    .sort((a, b) => b[1] - a[1]);
-                semanaActiva = semanasValidas.length > 0 ? semanasValidas[0][0] : todasSemanas[0];
+                diaActivo = validas.length > 0 ? validas[validas.length - 1] : (fechasUnicas[0] || null);
             } else {
-                semanaActiva = semanaFil;
+                diaActivo = diaFil;
             }
 
-            // Filtrar por semana, cadena y (si aplica) por nombre de negocio
-            const filtSemana = bkuSemanalRaw.filter(d => d.semana === semanaActiva);
-            const filtFull = filtSemana.filter(d => {
+            // Filtrar por día, cadena y negocios permitidos
+            const filtDia = bkuSemanalRaw.filter(d => d.fecha === diaActivo);
+            const filtFull = filtDia.filter(d => {
                 if (cadenaFil !== 'Todos' && d.cadena !== cadenaFil) return false;
                 if (negociosPermitidos && !negociosPermitidos.has(d.negocio.toLowerCase().trim())) return false;
                 return true;
@@ -2257,7 +2278,7 @@
                 kpiAvg.innerText = '—';
                 kpiBar.style.width = '0%';
             }
-            document.getElementById('bku-sem-kpi-label').innerText = semanaActiva ? semanaActiva : 'Sin datos';
+            document.getElementById('bku-sem-kpi-label').innerText = diaActivo ? formatDia(diaActivo) : 'Sin datos';
 
             // KPI cobertura
             const cobPct = filtFull.length > 0 ? (conDato.length / filtFull.length) * 100 : 0;
@@ -2265,10 +2286,9 @@
             document.getElementById('bku-sem-kpi-cob-label').innerText = 'negocios con dato capturado';
             document.getElementById('bku-sem-bar-cob').style.width = cobPct.toFixed(0) + '%';
 
-            // KPI semana
-            document.getElementById('bku-sem-kpi-semana').innerText = semanaActiva || '—';
-            const fechaEj = filtSemana.length > 0 ? filtSemana[0].fecha : '';
-            document.getElementById('bku-sem-kpi-fecha').innerText = fechaEj ? 'Inicio: ' + fechaEj : '';
+            // KPI día
+            document.getElementById('bku-sem-kpi-semana').innerText = diaActivo ? formatDia(diaActivo) : '—';
+            document.getElementById('bku-sem-kpi-fecha').innerText = diaActivo ? diaActivo : '';
 
             // Badges cadena
             const hasNorte = filtFull.some(d => d.cadena === 'BK Norte');
@@ -2276,10 +2296,10 @@
             document.getElementById('bku-sem-badge-norte').classList.toggle('hidden', !hasNorte);
             document.getElementById('bku-sem-badge-centro').classList.toggle('hidden', !hasCentro);
 
-            document.getElementById('bku-sem-chart-subtitle').innerText = semanaActiva || '';
+            document.getElementById('bku-sem-chart-subtitle').innerText = diaActivo ? formatDia(diaActivo) : '';
 
             renderBkuSemTendencia(cadenaFil, negociosPermitidos);
-            renderBkuSemNegocios(filtFull, semanaActiva);
+            renderBkuSemNegocios(filtFull, diaActivo);
         }
 
         function getCssVar(name) {
@@ -2287,16 +2307,21 @@
         }
 
         function renderBkuSemTendencia(cadenaFil, negociosPermitidos) {
-            const semanas = [...new Set(bkuSemanalRaw.map(d => d.semana))].sort();
+            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
+                const pa = a.split('/'), pb = b.split('/');
+                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+            });
+            const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+            const labels = fechasUnicas.map(f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; });
             const cadenas = cadenaFil === 'Todos' ? ['BK Norte', 'BK Centro/Sur'] : [cadenaFil];
             const c1 = getCssVar('--color-m1') || '#2F5597';
             const c2 = getCssVar('--color-m2') || '#8FAADC';
             const colors = { 'BK Norte': c1, 'BK Centro/Sur': c2 };
 
             const datasets = cadenas.map(cad => {
-                const data = semanas.map(sem => {
+                const data = fechasUnicas.map(fecha => {
                     const rows = bkuSemanalRaw.filter(d => {
-                        if (d.semana !== sem || d.cadena !== cad || d.bku === null) return false;
+                        if (d.fecha !== fecha || d.cadena !== cad || d.bku === null) return false;
                         if (negociosPermitidos && !negociosPermitidos.has(d.negocio.toLowerCase().trim())) return false;
                         return true;
                     });
@@ -2304,16 +2329,12 @@
                     return rows.reduce((s, d) => s + d.bku, 0) / rows.length;
                 });
                 return {
-                    label: cad,
-                    data,
+                    label: cad, data,
                     borderColor: colors[cad],
                     backgroundColor: colors[cad] + '22',
-                    borderWidth: 2.5,
-                    pointRadius: 4,
+                    borderWidth: 2.5, pointRadius: 4,
                     pointBackgroundColor: colors[cad],
-                    tension: 0.3,
-                    fill: true,
-                    spanGaps: true
+                    tension: 0.3, fill: true, spanGaps: true
                 };
             });
 
@@ -2321,7 +2342,7 @@
             const ctx = document.getElementById('chart-bku-sem-tendencia').getContext('2d');
             bkuSemanalCharts.tendencia = new Chart(ctx, {
                 type: 'line',
-                data: { labels: semanas, datasets },
+                data: { labels, datasets },
                 plugins: [ChartDataLabels],
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -2333,10 +2354,7 @@
                         }
                     },
                     scales: {
-                        y: {
-                            min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 10 } },
-                            grid: { color: '#f1f5f9' }
-                        },
+                        y: { min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 10 } }, grid: { color: '#f1f5f9' } },
                         x: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
                     }
                 }
