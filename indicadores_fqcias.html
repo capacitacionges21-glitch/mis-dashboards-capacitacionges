@@ -201,6 +201,23 @@
                     </div>
                 </div>
 
+                <div class="space-y-1.5 relative custom-dropdown" data-level="formador">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Formador</label>
+                    <div class="relative">
+                        <input type="text" id="display-formador" readonly placeholder="Todos" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none transition-all cursor-pointer truncate pr-8">
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    <div id="menu-formador" class="absolute hidden z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl mt-1 flex flex-col transition-all duration-200 opacity-0 scale-95 origin-top" style="max-h: 280px; top: 100%; left: 0;">
+                        <div class="p-2 border-b border-slate-100 sticky top-0 bg-white rounded-t-xl z-10">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400"></i>
+                                <input type="text" id="search-formador" placeholder="Buscar..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg py-2 pl-9 pr-3 focus:ring-2 focus:ring-[var(--color-m1)] outline-none">
+                            </div>
+                        </div>
+                        <ul id="list-formador" class="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar"></ul>
+                    </div>
+                </div>
+
                 <div class="space-y-1.5 relative custom-dropdown" data-level="gerente_sucursal">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Gerente / Sucursal</label>
                     <div class="relative">
@@ -822,7 +839,7 @@
         let activePalette = PALETTES['default'];
         let currentRevType = 'std'; 
         
-        const selections = { trimestre: 'Todos', mes: 'Todos', cadena: 'Todos', indicador: 'Todos', region: 'Todos', distrito: 'Todos', gerente_sucursal: 'Todos' };
+        const selections = { trimestre: 'Todos', mes: 'Todos', cadena: 'Todos', indicador: 'Todos', region: 'Todos', distrito: 'Todos', formador: 'Todos', gerente_sucursal: 'Todos' };
 
         window.onload = async () => {
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -963,7 +980,9 @@
                             let gerP, subP, colP, totalPlantillaOcupada;
                             let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null, cofepris = null;
                             let certGerNum = null, certSubNum = null;
-                            let gerenteStr = row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente';
+                            let gerenteStr = isTiendasGes
+                                ? (row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente')
+                                : (row[4] && row[4].toString().trim() !== '' ? row[4].toString().trim() : 'Sin Gerente');
                             if (gerenteStr.toUpperCase() === 'S/G') gerenteStr = 'Sin Gerente';
 
                             if (isTiendasGes) {
@@ -984,46 +1003,28 @@
                                 const rotPct = parsePct(row[15]);
                                 bajas = (rotPct !== null && totalPlantillaOcupada > 0) ? Math.round(rotPct * totalPlantillaOcupada / 100) : 0;
                             } else {
-                                gerAut = parseCount(row[6]) || 0; subAut = parseCount(row[7]) || 0; colAut = parseCount(row[8]) || 0;
+                                gerAut = parseCount(row[7]) || 0; subAut = parseCount(row[8]) || 0; colAut = parseCount(row[9]) || 0;
                                 totalPlantillaAutorizada = gerAut + subAut + colAut;
-                                gerP = parseCount(row[9]) || 0; subP = parseCount(row[10]) || 0; colP = parseCount(row[11]) || 0;
+                                gerP = parseCount(row[10]) || 0; subP = parseCount(row[11]) || 0; colP = parseCount(row[12]) || 0;
                                 totalPlantillaOcupada = gerP + subP + colP;
-                                gerSrv = parseCount(row[12]); subSrv = parseCount(row[13]);
+                                gerSrv = parseCount(row[13]); subSrv = parseCount(row[14]);
 
                                 if (isChurchs) {
-                                    // Church's: Cofepris en col P (row[15]), luego PTE
-                                    cofepris = parsePct(row[15]); bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
-                                    srv = parsePct(row[14]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
-                                    if (m3 === null) m3 = parsePct(row[20]);
-                                    checkZP(row[19], 'OER 2026'); checkZP(row[20], 'RAV 2026');
-                                    rev26r1.std = parsePct(row[19]); rev26r2.std = parsePct(row[20]);
-                                    certGerNum = parseCount(row[21]); certSubNum = parseCount(row[22]);
-                                    rrhh.ocPlantilla = parsePct(row[23]);
-                                    rrhh.sucesionGer = parseCount(row[24]) || 0; rrhh.sucesionSub = parseCount(row[25]) || 0;
+                                    // Church's: Cofepris en col P (row[16]), luego PTE
+                                    cofepris = parsePct(row[16]); bkuCol = parseCount(row[17]); altasCount = parseCount(row[18]);
+                                    srv = parsePct(row[15]); m2 = parsePct(row[19]); m3 = parsePct(row[20]);
+                                    if (m3 === null) m3 = parsePct(row[21]);
+                                    checkZP(row[20], 'OER 2026'); checkZP(row[21], 'RAV 2026');
+                                    rev26r1.std = parsePct(row[20]); rev26r2.std = parsePct(row[21]);
+                                    certGerNum = parseCount(row[22]); certSubNum = parseCount(row[23]);
+                                    rrhh.ocPlantilla = parsePct(row[24]);
+                                    rrhh.sucesionGer = parseCount(row[25]) || 0; rrhh.sucesionSub = parseCount(row[26]) || 0;
                                     rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
-                                    bajas = parseCount(row[26]) || 0;
+                                    bajas = parseCount(row[27]) || 0;
                                 } else if (isMoteNorte) {
                                     // Mote Norte (Centura): SIN Cofepris — índices originales
-                                    bkuCol = parseCount(row[15]); altasCount = parseCount(row[16]);
-                                    srv = parsePct(row[14]); m2 = parsePct(row[17]); m3 = parsePct(row[18]);
-                                    if (m3 === null) m3 = parsePct(row[24]);
-                                    checkZP(row[18], 'Std 26 R1'); checkZP(row[19], 'Re-Audit 26 R1'); checkZP(row[20], 'Extra 26 R1');
-                                    checkZP(row[21], '2nd Re 26 R1'); checkZP(row[22], 'CCV 26 R1'); checkZP(row[23], 'REC 26 R1');
-                                    checkZP(row[24], 'Std 26 R2'); checkZP(row[25], 'Re-Audit 26 R2'); checkZP(row[26], 'Extra 26 R2');
-                                    checkZP(row[27], '2nd Re 26 R2'); checkZP(row[28], 'CCV 26 R2'); checkZP(row[29], 'REC 26 R2');
-                                    rev26r1 = { std: parsePct(row[18]), re: parsePct(row[19]), extra: parsePct(row[20]), re2: parsePct(row[21]), ccv: parsePct(row[22]) };
-                                    rec26r1 = parseRec(row[23]);
-                                    rev26r2 = { std: parsePct(row[24]), re: parsePct(row[25]), extra: parsePct(row[26]), re2: parsePct(row[27]), ccv: parsePct(row[28]) };
-                                    rec26r2 = parseRec(row[29]);
-                                    certGerNum = parseCount(row[30]); certSubNum = parseCount(row[31]);
-                                    rrhh.ocPlantilla = parsePct(row[32]);
-                                    rrhh.sucesionGer = parseCount(row[33]) || 0; rrhh.sucesionSub = parseCount(row[34]) || 0;
-                                    rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
-                                    bajas = parseCount(row[35]) || 0;
-                                } else {
-                                    // Mote Centro/Sur (Moteburger): Cofepris en col P (row[15])
-                                    cofepris = parsePct(row[15]); bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
-                                    srv = parsePct(row[14]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
+                                    bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
+                                    srv = parsePct(row[15]); m2 = parsePct(row[18]); m3 = parsePct(row[19]);
                                     if (m3 === null) m3 = parsePct(row[25]);
                                     checkZP(row[19], 'Std 26 R1'); checkZP(row[20], 'Re-Audit 26 R1'); checkZP(row[21], 'Extra 26 R1');
                                     checkZP(row[22], '2nd Re 26 R1'); checkZP(row[23], 'CCV 26 R1'); checkZP(row[24], 'REC 26 R1');
@@ -1038,6 +1039,24 @@
                                     rrhh.sucesionGer = parseCount(row[34]) || 0; rrhh.sucesionSub = parseCount(row[35]) || 0;
                                     rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
                                     bajas = parseCount(row[36]) || 0;
+                                } else {
+                                    // Mote Centro/Sur (Moteburger): Cofepris en col P (row[16])
+                                    cofepris = parsePct(row[16]); bkuCol = parseCount(row[17]); altasCount = parseCount(row[18]);
+                                    srv = parsePct(row[15]); m2 = parsePct(row[19]); m3 = parsePct(row[20]);
+                                    if (m3 === null) m3 = parsePct(row[26]);
+                                    checkZP(row[20], 'Std 26 R1'); checkZP(row[21], 'Re-Audit 26 R1'); checkZP(row[22], 'Extra 26 R1');
+                                    checkZP(row[23], '2nd Re 26 R1'); checkZP(row[24], 'CCV 26 R1'); checkZP(row[25], 'REC 26 R1');
+                                    checkZP(row[26], 'Std 26 R2'); checkZP(row[27], 'Re-Audit 26 R2'); checkZP(row[28], 'Extra 26 R2');
+                                    checkZP(row[29], '2nd Re 26 R2'); checkZP(row[30], 'CCV 26 R2'); checkZP(row[31], 'REC 26 R2');
+                                    rev26r1 = { std: parsePct(row[20]), re: parsePct(row[21]), extra: parsePct(row[22]), re2: parsePct(row[23]), ccv: parsePct(row[24]) };
+                                    rec26r1 = parseRec(row[25]);
+                                    rev26r2 = { std: parsePct(row[26]), re: parsePct(row[27]), extra: parsePct(row[28]), re2: parsePct(row[29]), ccv: parsePct(row[30]) };
+                                    rec26r2 = parseRec(row[31]);
+                                    certGerNum = parseCount(row[32]); certSubNum = parseCount(row[33]);
+                                    rrhh.ocPlantilla = parsePct(row[34]);
+                                    rrhh.sucesionGer = parseCount(row[35]) || 0; rrhh.sucesionSub = parseCount(row[36]) || 0;
+                                    rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
+                                    bajas = parseCount(row[37]) || 0;
                                 }
 
                                 if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
@@ -1056,8 +1075,8 @@
                             if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, x=>x.v) : null;
-                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[26]) : (isMoteNorte ? parseCount(row[35]) : parseCount(row[36])));
-                            let rawAltas = isTiendasGes ? parseCount(row[10]) : (isMoteNorte ? parseCount(row[16]) : parseCount(row[17]));
+                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[27]) : (isMoteNorte ? parseCount(row[36]) : parseCount(row[37])));
+                            let rawAltas = isTiendasGes ? parseCount(row[10]) : (isMoteNorte ? parseCount(row[17]) : parseCount(row[18]));
                             const hasAnyData = srv !== null || cofepris !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
                             
                             if (!hasAnyData) return; 
@@ -1070,8 +1089,10 @@
                             cleanRows.push({
                                 mes: mesStr, trimestre: tri, region: row[1] ? row[1].toString().trim() : 'S/R',
                                 distrito: row[2] ? row[2].toString().trim() : 'S/D', gerente: gerenteStr,
-                                cadena: mapChainName(row[4] ? row[4].toString().trim() : sourceName), sucursal: row[5] ? row[5].toString().trim() : 'S/S',
-                                gerente_sucursal: (row[5] ? row[5].toString().trim() : 'S/S') + ' - ' + gerenteStr,
+                                formador: isTiendasGes ? 'S/F' : (row[3] ? row[3].toString().trim() : 'S/F'),
+                                cadena: mapChainName(isTiendasGes ? (row[4] ? row[4].toString().trim() : sourceName) : (row[5] ? row[5].toString().trim() : sourceName)),
+                                sucursal: isTiendasGes ? (row[5] ? row[5].toString().trim() : 'S/S') : (row[6] ? row[6].toString().trim() : 'S/S'),
+                                gerente_sucursal: (isTiendasGes ? (row[5] ? row[5].toString().trim() : 'S/S') : (row[6] ? row[6].toString().trim() : 'S/S')) + ' - ' + gerenteStr,
                                 gerAut, subAut, colAut, totalPlantillaAutorizada, gerP, subP, colP, totalPlantillaOcupada,
                                 altasCount, pctAltas, gerSrv, subSrv, bkuCol, cofepris, certGerNum, certSubNum,
                                 srv, m2, m3, promedio, rev26r1, rev26r2, rec26r1, rec26r2, bajas,
@@ -1099,7 +1120,7 @@
         }
 
         function initCustomDropdowns() {
-            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'gerente_sucursal'];
+            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'formador', 'gerente_sucursal'];
             document.addEventListener('click', e => { if (!e.target.closest('.custom-dropdown')) closeAllDropdowns(); });
 
             levels.forEach(level => {
@@ -1140,7 +1161,7 @@
         }
 
         function populateFilters() {
-            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'gerente_sucursal'];
+            const levels = ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'formador', 'gerente_sucursal'];
             let currentSubset = [].concat(RawData);
 
             levels.forEach(level => {
@@ -1159,7 +1180,7 @@
                 else options.sort();
 
                 const prevValue = selections[level];
-                let labelText = level === 'gerente_sucursal' ? 'Gerente / Sucursal' : level.charAt(0).toUpperCase() + level.slice(1);
+                let labelText = level === 'gerente_sucursal' ? 'Gerente / Sucursal' : level === 'formador' ? 'Formador' : level.charAt(0).toUpperCase() + level.slice(1);
                 listEl.innerHTML = ''; 
 
                 const addItem = (val, text) => {
@@ -1190,7 +1211,7 @@
 
             FilteredData = RawData.filter(d => {
                 let matches = true;
-                const strictKeys = ['cadena', 'region', 'distrito', 'gerente_sucursal'];
+                const strictKeys = ['cadena', 'region', 'distrito', 'formador', 'gerente_sucursal'];
                 for (let i = 0; i < strictKeys.length; i++) {
                     let key = strictKeys[i];
                     if (selections[key] !== 'Todos' && d[key] !== selections[key]) { matches = false; break; }
@@ -1207,7 +1228,7 @@
         function resetFilters() {
             for (let k in selections) selections[k] = 'Todos';
             document.getElementById('filter-indicador').value = 'Todos';
-            ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'gerente_sucursal'].forEach(level => {
+            ['trimestre', 'mes', 'cadena', 'region', 'distrito', 'formador', 'gerente_sucursal'].forEach(level => {
                 const displayInput = document.getElementById('display-' + level);
                 if (displayInput) displayInput.value = 'Todos';
             });
@@ -1314,7 +1335,7 @@
             const compareWrapper = document.getElementById('compare-charts-wrapper');
             if (compareWrapper) compareWrapper.classList.remove('lg:grid-cols-2'); 
 
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             tVis('export-chart-zp', showAll && !isHierarchyFiltered);
 
             const hideTendencias = (selections.cadena !== 'Todos') && (selections.region === 'Todos') && (selections.distrito === 'Todos') && (selections.gerente_sucursal === 'Todos');
@@ -1486,7 +1507,7 @@
             renderRevCompareChart(); renderOerCompareChart(); renderZpChart();
             renderBKUFranquiciaChart(); renderAltasFranquiciaChart(); renderRotacionFranquiciaChart();
             renderGerenteChart(); 
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             if (document.getElementById('title-chart-cadena')) document.getElementById('title-chart-cadena').innerText = isHierarchyFiltered ? "Comparativa por Unidades de Negocio" : "Comparativa por Franquicia";
             renderBarChart('chart-cadena', isHierarchyFiltered ? 'sucursal' : 'cadena');
             renderDistritoChart();
@@ -1612,7 +1633,7 @@
             const zpContainer = document.getElementById('export-chart-zp');
             if (FilteredData.length === 0 || (zpContainer && zpContainer.classList.contains('hidden'))) return;
 
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
             if (document.getElementById('title-chart-zp')) document.getElementById('title-chart-zp').innerText = isHierarchyFiltered ? "Incidencia Zero Protocol por Sucursal" : "Incidencia Zero Protocol por Franquicia";
 
@@ -1640,7 +1661,7 @@
             const container = document.getElementById('export-chart-bku');
             if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
             const chartType = isHierarchyFiltered ? 'bar' : 'line';
             const metricName = document.getElementById('label-m2') ? document.getElementById('label-m2').innerText : 'BKU / PTE';
@@ -1674,7 +1695,7 @@
             const container = document.getElementById('export-chart-altas');
             if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena', chartType = isHierarchyFiltered ? 'bar' : 'line';
             const metricNameAltas = document.getElementById('label-altas') ? document.getElementById('label-altas').innerText : 'BKU / PTE ALTAS';
             if (document.getElementById('title-chart-altas')) document.getElementById('title-chart-altas').innerText = isHierarchyFiltered ? `Tendencia Mensual ${metricNameAltas} por Sucursal` : `Tendencia Mensual ${metricNameAltas} por Franquicia`;
@@ -1706,7 +1727,7 @@
             const container = document.getElementById('export-chart-rotacion');
             if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
-            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena', chartType = isHierarchyFiltered ? 'bar' : 'line';
             if (document.getElementById('title-chart-rotacion')) document.getElementById('title-chart-rotacion').innerText = isHierarchyFiltered ? "Tendencia Mensual Rotación por Sucursal" : "Tendencia Mensual Rotación por Franquicia";
 
@@ -2232,7 +2253,7 @@
             const badge = document.getElementById('bku-sem-cadena-badge');
             if (badge) badge.textContent = cadenaFil === 'Todos' ? 'Todas las cadenas' : cadenaFil;
 
-            const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const negociosPermitidos = hayFiltroExtra
                 ? new Set(FilteredData.map(d => d.sucursal.toLowerCase().trim()))
                 : null;
