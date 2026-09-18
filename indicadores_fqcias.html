@@ -2366,16 +2366,15 @@
                 complete: results => {
                     bkuSemanalRaw = [];
                     results.data.slice(1).forEach(row => {
-                        if (row.length < 6) return;
+                        if (row.length < 5) return;
                         const mes = (row[0] || '').toString().trim();
-                        const semanaRaw = (row[1] || '').toString().trim();
-                        const semana = semanaRaw.toUpperCase();
-                        const fecha = (row[2] || '').toString().trim() || semanaRaw;
-                        const cadena = (row[3] || '').toString().trim();
-                        const negocio = (row[4] || '').toString().trim();
-                        const bkuRaw = (row[5] || '').toString().trim();
+                        const fecha = (row[1] || '').toString().trim();
+                        const semana = fecha.toUpperCase();
+                        const cadena = (row[2] || '').toString().trim();
+                        const negocio = (row[3] || '').toString().trim();
+                        const bkuRaw = (row[4] || '').toString().trim();
                         const bku = bkuRaw === '' ? null : parseFloat(bkuRaw.replace('%', '').replace(',', '.'));
-                        if (!semana || !cadena || !negocio) return;
+                        if (!fecha || !cadena || !negocio) return;
                         bkuSemanalRaw.push({ mes, semana, fecha, cadena, negocio, bku: isNaN(bku) ? null : bku });
                     });
                     populateBkuSemanaFilter();
