@@ -730,6 +730,7 @@
         <div id="sin-gerente-wrapper"></div>
         <div id="zero-protocol-wrapper"></div>
         <div id="sucesion-wrapper"></div>
+        <div id="servsafe-pendiente-wrapper" class="hidden"></div>
 
         <div id="export-rankings" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
@@ -1272,6 +1273,7 @@
             renderSinGerente();
             renderZeroProtocol();
             renderSucesion();
+            renderServSafePendiente();
             renderTable();
             renderRankings();
             if (bkuSemanalRaw.length > 0) updateBkuSemanal();
@@ -1380,7 +1382,8 @@
             tVis('export-chart-cadena', !(ind === 'm2' && isHierarchyFiltered));
             tVis('export-chart-distrito', !isSingleSucursal);
             tVis('export-chart-regional', !isSingleSucursal);
-            tVis('export-rankings', !isSingleSucursal);
+            tVis('servsafe-pendiente-wrapper', ind === 'srv' && !isSingleSucursal);
+            tVis('export-rankings', ind !== 'srv' && !isSingleSucursal);
             tVis('zero-protocol-wrapper', showAll);
             tVis('sin-gerente-wrapper', showAll);
             tVis('sucesion-wrapper', false); // inhabilitado hasta nuevo aviso
@@ -2023,6 +2026,53 @@
             });
 
             wrapper.innerHTML = `<div class="bg-orange-50 p-8 rounded-3xl shadow-sm border border-orange-200 mb-8 mt-8"><div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><i data-lucide="user-x" class="w-6 h-6 text-orange-600"></i></div><div><h3 class="text-xl font-bold text-orange-800 tracking-tight">Alerta Operativa: Sucursales Sin Gerente</h3><p class="text-xs text-orange-600 font-medium mt-1">Unidades que actualmente no cuentan con un Gerente de Negocio asignado</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">${cardsHtml}</div></div>`;
+        }
+
+        function renderServSafePendiente() {
+            const wrapper = document.getElementById('servsafe-pendiente-wrapper');
+            if (!wrapper) return;
+            if (selections.indicador !== 'srv') { wrapper.innerHTML = ''; return; }
+
+            const grupos = {};
+            FilteredData.forEach(d => {
+                if (window.SucursalesActivas && !window.SucursalesActivas.has(d.sucursal)) return;
+                if (!grupos[d.sucursal]) grupos[d.sucursal] = { dataArr: [] };
+                grupos[d.sucursal].dataArr.push(d);
+            });
+
+            const pendientes = [];
+            Object.keys(grupos).forEach(suc => {
+                const rows = grupos[suc].dataArr.sort((a, b) => MESES_NOM.indexOf(a.mes) - MESES_NOM.indexOf(b.mes));
+                const latest = rows[rows.length - 1];
+                const getL = ext => { const valid = rows.map(ext).filter(v => v !== null && v !== undefined && !isNaN(v)); return valid.length ? valid[valid.length - 1] : null; };
+                const gerP = getL(d => d.gerP) || 0, gerSrv = getL(d => d.gerSrv) || 0;
+                const subP = getL(d => d.subP) || 0, subSrv = getL(d => d.subSrv) || 0;
+                const gerPend = Math.max(0, gerP - gerSrv), subPend = Math.max(0, subP - subSrv);
+                if (gerPend > 0 || subPend > 0) {
+                    pendientes.push({ sucursal: suc, cadena: latest.cadena, region: latest.region, distrito: latest.distrito, gerPend, gerP, subPend, subP });
+                }
+            });
+
+            if (pendientes.length === 0) {
+                wrapper.innerHTML = `<div class="p-8 rounded-3xl shadow-sm border border-green-200 bg-green-50 mb-8 mt-8 text-center"><i data-lucide="shield-check" class="w-8 h-8 text-green-500 mx-auto mb-3"></i><p class="text-green-700 font-bold text-sm">¡Todas las sucursales tienen SerSafe completo!</p></div>`;
+                if (window.lucide) lucide.createIcons(); return;
+            }
+
+            pendientes.sort((a, b) => (b.gerPend + b.subPend) - (a.gerPend + a.subPend));
+
+            let cardsHtml = '';
+            pendientes.forEach(info => {
+                const badges = [];
+                if (info.gerPend > 0) badges.push(`<span class="inline-block text-[9px] px-2 py-0.5 rounded-md font-bold mt-1 mr-1" style="background:var(--color-m1-light);color:var(--color-m1)">${info.gerPend} Ger. pendiente${info.gerPend > 1 ? 's' : ''} (${info.gerSrv || (info.gerP - info.gerPend)}/${info.gerP})</span>`);
+                if (info.subPend > 0) badges.push(`<span class="inline-block bg-slate-100 text-slate-600 text-[9px] px-2 py-0.5 rounded-md font-bold mt-1 mr-1">${info.subPend} Sub. pendiente${info.subPend > 1 ? 's' : ''} (${info.subP - info.subPend}/${info.subP})</span>`);
+                const ctxHtml = (selections.distrito !== 'Todos' && selections.region !== 'Todos')
+                    ? `<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Distrito:</span> ${info.distrito}</p>`
+                    : `<p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Región:</span> ${info.region}</p><p class="text-[9px] text-slate-500 truncate"><span class="font-bold">Distrito:</span> ${info.distrito}</p>`;
+                cardsHtml += `<div class="bg-white p-4 rounded-2xl flex items-start gap-4 shadow-sm" style="border:1px solid var(--color-m1-light)"><div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1" style="background:var(--color-m1-light)"><i data-lucide="shield-x" class="w-4 h-4" style="color:var(--color-m1)"></i></div><div class="overflow-hidden flex-1"><p class="font-bold text-slate-800 text-sm truncate" title="${info.sucursal}">${info.sucursal}</p><p class="text-[10px] font-bold uppercase truncate mb-1" style="color:var(--color-m1)">${info.cadena}</p><div class="mb-1.5 mt-0.5">${ctxHtml}</div><div class="flex flex-wrap">${badges.join('')}</div></div></div>`;
+            });
+
+            wrapper.innerHTML = `<div class="p-8 rounded-3xl shadow-sm border mb-8 mt-8" style="background:var(--color-m1-light);border-color:var(--color-m1)"><div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:rgba(47,85,151,0.12)"><i data-lucide="shield-alert" class="w-6 h-6" style="color:var(--color-m1)"></i></div><div><h3 class="text-xl font-bold tracking-tight" style="color:var(--color-m1)">SerSafe Pendiente — ${pendientes.length} sucursal${pendientes.length !== 1 ? 'es' : ''}</h3><p class="text-xs font-medium mt-1 text-slate-600">Unidades con Gerentes o Subgerentes sin certificación SerSafe vigente</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">${cardsHtml}</div></div>`;
+            if (window.lucide) lucide.createIcons();
         }
 
         function renderZeroProtocol() {
