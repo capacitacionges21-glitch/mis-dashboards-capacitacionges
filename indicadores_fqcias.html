@@ -2525,15 +2525,18 @@
         }
 
         function renderBkuSemNegocios(filtFull, semanaActiva) {
-            const sorted = [...filtFull].sort((a, b) => (b.bku ?? -1) - (a.bku ?? -1));
+            const sorted = [...filtFull].sort((a, b) => (a.bku ?? -1) - (b.bku ?? -1));
             const labels = sorted.map(d => d.negocio);
             const values = sorted.map(d => d.bku);
             const c1 = getCssVar('--color-m1') || '#2F5597';
             const c2 = getCssVar('--color-m2') || '#8FAADC';
             const bgColors = values.map(v => v === null ? '#e2e8f0' : v >= 100 ? '#22c55e' : v >= 80 ? c2 : c1);
 
-            const minW = Math.max(600, labels.length * 30);
-            document.getElementById('bku-sem-bar-wrapper').style.width = minW + 'px';
+            const barPx = Math.max(28, Math.min(60, Math.floor(1100 / Math.max(labels.length, 1))));
+            const dynW = Math.max(400, labels.length * barPx);
+            const wrapper = document.getElementById('bku-sem-bar-wrapper');
+            wrapper.style.width = dynW + 'px';
+            wrapper.style.height = '320px';
 
             if (bkuSemanalCharts.negocios) bkuSemanalCharts.negocios.destroy();
             const ctx = document.getElementById('chart-bku-sem-negocios').getContext('2d');
