@@ -295,9 +295,6 @@
                         <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                     </div>
                     <h3 id="kpi-m2" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
-                    <div id="detail-bku" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
-                        0 Colaboradores certificados / 0 Plantilla ocupada<br>&nbsp;
-                    </div>
                 </div>
                 <div class="mt-4">
                     <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -1460,7 +1457,6 @@
             if(document.getElementById('detail-rotacion')) document.getElementById('detail-rotacion').innerHTML = Math.round(totalAvgBajas) + " bajas promedio de " + sumTotalPlantillaOcupada + " en plantilla ocupada<br>&nbsp;";
             if (document.getElementById('detail-ocup')) document.getElementById('detail-ocup').innerHTML = `Totales: ${sumTotalPlantillaOcupada} ocup. / ${sumTotalPlantillaAutorizada} aut.<br>Gtes: ${sumGerP}/${sumGerAut} &bull; Subs: ${sumSubP}/${sumSubAut} &bull; Colab: ${sumColP}/${sumColAut}`;
             if (document.getElementById('detail-srv')) document.getElementById('detail-srv').innerHTML = `${sumGerSrv} Gtes. con ServSafe / ${sumGerP} Plantilla ocupada<br>${sumSubSrv} Sub. con ServSafe / ${sumSubP} Plantilla ocupada`;
-            if (document.getElementById('detail-bku')) document.getElementById('detail-bku').innerHTML = `${sumBkuCol} Colaboradores certificados / ${sumTotalPlantillaOcupada} Plantilla ocupada<br>&nbsp;`;
             if (document.getElementById('detail-altas')) document.getElementById('detail-altas').innerHTML = `${sumAltasCount} colaboradores de alta / ${sumTotalPlantillaOcupada} Plantilla ocupada<br>&nbsp;`;
             if (document.getElementById('detail-cert')) document.getElementById('detail-cert').innerHTML = `${sumCertGer} Gtes. Certificados / ${sumGerP} Plantilla ocupada<br>${sumCertSub} Sub. Certificados / ${sumSubP} Plantilla ocupada`;
             if (document.getElementById('detail-rev')) document.getElementById('detail-rev').innerHTML = revText.length > 0 ? revText.join(' &bull; ') : 'Sin auditorías operativas registradas<br>&nbsp;';
