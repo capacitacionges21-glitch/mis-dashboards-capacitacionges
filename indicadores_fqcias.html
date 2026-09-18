@@ -561,18 +561,6 @@
                     </div>
                     <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
-                            <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Negocios con dato</p>
-                            <h3 id="bku-sem-kpi-cob" class="text-4xl font-black text-slate-800 mt-1">—</h3>
-                            <p id="bku-sem-kpi-cob-label" class="text-[9.5px] text-slate-400 font-bold mt-2">de total en filtro</p>
-                        </div>
-                        <div class="mt-4">
-                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                <div id="bku-sem-bar-cob" class="h-full transition-all duration-1000 bg-slate-400" style="width:0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                        <div>
                             <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Día activo</p>
                             <h3 id="bku-sem-kpi-semana" class="text-3xl font-black text-slate-800 mt-1">—</h3>
                             <p id="bku-sem-kpi-fecha" class="text-[9.5px] text-slate-400 font-bold mt-2">&nbsp;</p>
@@ -594,7 +582,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-6">
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
@@ -1482,7 +1470,7 @@
             const cofeprisAvg = safeAvg(FilteredData, d => d.cofepris);
             if (document.getElementById('kpi-cofepris')) { document.getElementById('kpi-cofepris').innerText = displayKPI(cofeprisAvg); document.getElementById('bar-cofepris').style.width = widthKPI(cofeprisAvg); }
             document.getElementById('kpi-m2').innerText = m2 !== null ? (m2 <= 0 ? '0%' : m2.toFixed(1) + '%') : '-'; document.getElementById('bar-m2').style.width = widthKPI(m2);
-            if(document.getElementById('kpi-altas')) { document.getElementById('kpi-altas').innerText = displayKPI(pctAltasTotal); document.getElementById('bar-altas').style.width = widthKPI(pctAltasTotal); }
+            if(document.getElementById('kpi-altas')) { document.getElementById('kpi-altas').innerText = pctAltasTotal !== null ? (pctAltasTotal <= 0 ? '0%' : pctAltasTotal.toFixed(1) + '%') : '-'; document.getElementById('bar-altas').style.width = widthKPI(pctAltasTotal); }
             document.getElementById('kpi-m3').innerText = displayKPI(m3); document.getElementById('bar-m3').style.width = widthKPI(m3);
 
             const cert = (sumGerP + sumSubP) > 0 ? ((sumCertGer + sumCertSub) / (sumGerP + sumSubP)) * 100 : null;
@@ -2387,7 +2375,9 @@
         function populateBkuSemanaFilter() {
             const sel = document.getElementById('bku-sem-semana');
             const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-            const sortFechas = (a, b) => { const pa = a.split('/'), pb = b.split('/'); if (pa.length === 3 && pb.length === 3) return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]); return a.localeCompare(b); };
+            const MESES_IDX = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
+            const parseFecha = f => { const p = f.split('/'); if (p.length===3) return new Date(p[2],p[1]-1,p[0]); const m = f.trim().match(/^(\d+)\s+(\w+)$/); if (m) return new Date(2026, MESES_IDX[m[2].toLowerCase()]??0, parseInt(m[1])); return new Date(0); };
+            const sortFechas = (a, b) => parseFecha(a) - parseFecha(b);
             const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort(sortFechas);
             sel.innerHTML = '<option value="Ultima">Día más reciente</option>';
             fechasUnicas.forEach(f => {
@@ -2419,15 +2409,14 @@
                 : null;
 
             // Determinar día activo: el más reciente cuya fecha ya ocurrió
-            const sortFechasU = (a, b) => { const pa = a.split('/'), pb = b.split('/'); if (pa.length === 3 && pb.length === 3) return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]); return a.localeCompare(b); };
+            const MESES_IDX_U = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
+            const parseFechaU = f => { const p = f.split('/'); if (p.length===3) return new Date(p[2],p[1]-1,p[0]); const m = f.trim().match(/^(\d+)\s+(\w+)$/); if (m) return new Date(2026, MESES_IDX_U[m[2].toLowerCase()]??0, parseInt(m[1])); return new Date(0); };
+            const sortFechasU = (a, b) => parseFechaU(a) - parseFechaU(b);
             const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort(sortFechasU);
             let diaActivo;
             if (diaFil === 'Ultima') {
                 const hoy = new Date(); hoy.setHours(23, 59, 59);
-                const validas = fechasUnicas.filter(f => {
-                    const p = f.split('/');
-                    return p.length === 3 && new Date(p[2], p[1]-1, p[0]) <= hoy;
-                });
+                const validas = fechasUnicas.filter(f => parseFechaU(f) <= hoy);
                 // Fallback al último disponible si no hay fechas en formato DD/MM/YYYY
                 diaActivo = validas.length > 0 ? validas[validas.length - 1] : (fechasUnicas[fechasUnicas.length - 1] || null);
             } else {
@@ -2488,11 +2477,9 @@
         }
 
         function renderBkuSemTendencia(cadenaFil, negociosPermitidos) {
-            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
-                const pa = a.split('/'), pb = b.split('/');
-                if (pa.length === 3 && pb.length === 3) return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
-                return a.localeCompare(b);
-            });
+            const MESES_IDX_T = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
+            const parseFechaT = f => { const p = f.split('/'); if (p.length===3) return new Date(p[2],p[1]-1,p[0]); const m = f.trim().match(/^(\d+)\s+(\w+)$/); if (m) return new Date(2026, MESES_IDX_T[m[2].toLowerCase()]??0, parseInt(m[1])); return new Date(0); };
+            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => parseFechaT(a) - parseFechaT(b));
             const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
             const labels = fechasUnicas.map(f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; });
             const cadenas = cadenaFil === 'Todos' ? ['BK Norte', 'BK Centro/Sur'] : [cadenaFil];
