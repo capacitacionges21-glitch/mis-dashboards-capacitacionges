@@ -2466,9 +2466,10 @@
             document.getElementById('bku-sem-kpi-cob-label').innerText = 'negocios con dato capturado';
             document.getElementById('bku-sem-bar-cob').style.width = cobPct.toFixed(0) + '%';
 
-            // KPI día
-            document.getElementById('bku-sem-kpi-semana').innerText = diaActivo ? formatDia(diaActivo) : '—';
-            document.getElementById('bku-sem-kpi-fecha').innerText = diaActivo ? diaActivo : '';
+            // KPI día — siempre muestra la fecha de hoy
+            const hoyKpi = (() => { const h = new Date(); return `${h.getDate()} ${MESES_CORTOS[h.getMonth()]}`; })();
+            document.getElementById('bku-sem-kpi-semana').innerText = hoyKpi;
+            document.getElementById('bku-sem-kpi-fecha').innerText = diaActivo ? `Datos: ${diaActivo}` : '';
 
             // Badges cadena
             const hasNorte = filtFull.some(d => d.cadena === 'BK Norte');
