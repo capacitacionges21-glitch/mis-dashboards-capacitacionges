@@ -1375,6 +1375,8 @@
             FilteredData.forEach(d => uniqueSucursales.add(d.sucursal));
             const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1;
 
+            tVis('bku-semanal-section', showAll || ind === 'm2');
+            tVis('export-chart-gerente', ind !== 'srv');
             tVis('export-chart-cadena', !(ind === 'm2' && isHierarchyFiltered));
             tVis('export-chart-distrito', !isSingleSucursal);
             tVis('export-chart-regional', !isSingleSucursal);
