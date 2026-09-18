@@ -2368,8 +2368,9 @@
                     results.data.slice(1).forEach(row => {
                         if (row.length < 6) return;
                         const mes = (row[0] || '').toString().trim();
-                        const semana = (row[1] || '').toString().trim().toUpperCase();
-                        const fecha = (row[2] || '').toString().trim();
+                        const semanaRaw = (row[1] || '').toString().trim();
+                        const semana = semanaRaw.toUpperCase();
+                        const fecha = (row[2] || '').toString().trim() || semanaRaw;
                         const cadena = (row[3] || '').toString().trim();
                         const negocio = (row[4] || '').toString().trim();
                         const bkuRaw = (row[5] || '').toString().trim();
@@ -2387,10 +2388,8 @@
         function populateBkuSemanaFilter() {
             const sel = document.getElementById('bku-sem-semana');
             const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
-                const pa = a.split('/'), pb = b.split('/');
-                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
-            });
+            const sortFechas = (a, b) => { const pa = a.split('/'), pb = b.split('/'); if (pa.length === 3 && pb.length === 3) return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]); return a.localeCompare(b); };
+            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort(sortFechas);
             sel.innerHTML = '<option value="Ultima">Día más reciente</option>';
             fechasUnicas.forEach(f => {
                 const opt = document.createElement('option');
@@ -2421,10 +2420,8 @@
                 : null;
 
             // Determinar día activo: el más reciente cuya fecha ya ocurrió
-            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
-                const pa = a.split('/'), pb = b.split('/');
-                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
-            });
+            const sortFechasU = (a, b) => { const pa = a.split('/'), pb = b.split('/'); if (pa.length === 3 && pb.length === 3) return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]); return a.localeCompare(b); };
+            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort(sortFechasU);
             let diaActivo;
             if (diaFil === 'Ultima') {
                 const hoy = new Date(); hoy.setHours(23, 59, 59);
@@ -2432,7 +2429,8 @@
                     const p = f.split('/');
                     return p.length === 3 && new Date(p[2], p[1]-1, p[0]) <= hoy;
                 });
-                diaActivo = validas.length > 0 ? validas[validas.length - 1] : (fechasUnicas[0] || null);
+                // Fallback al último disponible si no hay fechas en formato DD/MM/YYYY
+                diaActivo = validas.length > 0 ? validas[validas.length - 1] : (fechasUnicas[fechasUnicas.length - 1] || null);
             } else {
                 diaActivo = diaFil;
             }
@@ -2492,7 +2490,8 @@
         function renderBkuSemTendencia(cadenaFil, negociosPermitidos) {
             const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => {
                 const pa = a.split('/'), pb = b.split('/');
-                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+                if (pa.length === 3 && pb.length === 3) return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+                return a.localeCompare(b);
             });
             const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
             const labels = fechasUnicas.map(f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; });
