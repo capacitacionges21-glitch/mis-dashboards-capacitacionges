@@ -876,8 +876,8 @@
             if (validItems.length === 0) return null;
             const sum = validItems.reduce((acc, d) => acc + valFn(d), 0);
             const avg = sum / validItems.length;
-            if (avg < 0 && avg > -0.5) return -0.00001; 
-            return Math.round(avg);
+            if (avg < 0 && avg > -0.5) return -0.00001;
+            return avg;
         }
 
         function parsePct(val) {
@@ -1445,7 +1445,7 @@
             document.getElementById('kpi-srv').innerText = displayKPI(srv); document.getElementById('bar-srv').style.width = widthKPI(srv);
             const cofeprisAvg = safeAvg(FilteredData, d => d.cofepris);
             if (document.getElementById('kpi-cofepris')) { document.getElementById('kpi-cofepris').innerText = displayKPI(cofeprisAvg); document.getElementById('bar-cofepris').style.width = widthKPI(cofeprisAvg); }
-            document.getElementById('kpi-m2').innerText = displayKPI(m2); document.getElementById('bar-m2').style.width = widthKPI(m2);
+            document.getElementById('kpi-m2').innerText = m2 !== null ? (m2 <= 0 ? '0%' : m2.toFixed(1) + '%') : '-'; document.getElementById('bar-m2').style.width = widthKPI(m2);
             if(document.getElementById('kpi-altas')) { document.getElementById('kpi-altas').innerText = displayKPI(pctAltasTotal); document.getElementById('bar-altas').style.width = widthKPI(pctAltasTotal); }
             document.getElementById('kpi-m3').innerText = displayKPI(m3); document.getElementById('bar-m3').style.width = widthKPI(m3);
 
@@ -1490,7 +1490,7 @@
         }
 
         const tooltipZpConfig = { callbacks: { label: context => `${context.dataset.label ? context.dataset.label + ': ' : ''}${context.parsed.y <= 0 ? '0%' : Math.round(context.parsed.y) + '%'}` } };
-        const datalabelsZpConfig = { anchor: 'end', align: 'top', formatter: v => v === null || v === undefined ? '' : (v <= 0 ? '0%' : Math.round(v) + '%'), font: { weight: 'black', size: 10 }, color: '#475569' };
+        const datalabelsZpConfig = { anchor: 'end', align: 'top', formatter: v => v === null || v === undefined ? '' : (v <= 0 ? '0%' : parseFloat(v).toFixed(1) + '%'), font: { weight: 'black', size: 10 }, color: '#475569' };
         const genericTooltipWithRaw = {
             callbacks: {
                 label: context => {
@@ -1678,7 +1678,7 @@
                     const validM2 = sub.filter(d => d.m2 !== null && d.m2 !== undefined);
                     let sumBku = 0, sumPlantilla = 0;
                     sub.forEach(d => { sumBku += (d.bkuCol || 0); sumPlantilla += (d.totalPlantillaOcupada || 0); });
-                    if (validM2.length > 0) { const pct = validM2.reduce((acc, d) => acc + d.m2, 0) / validM2.length; dataVals.push(pct); rawVals.push([`Promedio BKU/PTE: ${Math.round(pct)}%`, `${sumBku} certificados de ${sumPlantilla} ocupados`]); } 
+                    if (validM2.length > 0) { const pct = validM2.reduce((acc, d) => acc + d.m2, 0) / validM2.length; dataVals.push(pct); rawVals.push([`Promedio BKU/PTE: ${pct.toFixed(1)}%`, `${sumBku} certificados de ${sumPlantilla} ocupados`]); }
                     else { dataVals.push(null); rawVals.push(["Sin datos de BKU/PTE en este mes"]); }
                 });
                 return { label: g, data: dataVals, rawData: rawVals, borderColor: trendColors[i % trendColors.length], backgroundColor: trendColors[i % trendColors.length], tension: 0.3, pointRadius: 4, borderWidth: chartType === 'bar' ? 0 : 2, borderRadius: chartType === 'bar' ? 4 : 0, fill: false };
@@ -1952,7 +1952,7 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }, padding: 16 } },
-                        datalabels: { display: true, anchor: 'end', align: 'top', formatter: v => v !== null ? Math.round(v) + '%' : '', font: { weight: '700', size: 9 }, color: '#475569' },
+                        datalabels: { display: true, anchor: 'end', align: 'top', formatter: v => v !== null ? parseFloat(v).toFixed(1) + '%' : '', font: { weight: '700', size: 9 }, color: '#475569' },
                         tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato') } }
                     },
                     scales: {
