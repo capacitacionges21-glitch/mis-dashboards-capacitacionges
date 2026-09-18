@@ -762,14 +762,27 @@
                     </h3>
                     <p class="text-slate-400 text-sm font-medium mt-1">Análisis de plantilla, RRHH y cumplimiento porcentual</p>
                 </div>
-                <div class="px-4 py-2 rounded-xl border flex items-center gap-3 transition-colors duration-500 bg-[var(--color-m1-light)] border-[var(--color-m1)]">
-                    <span id="badge-count" class="text-xs font-black uppercase transition-colors duration-500 text-[var(--color-m1)]">0 REGISTROS</span>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1">
+                        <button onclick="scrollTable(-250)" class="w-8 h-8 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors" title="Desplazar izquierda">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button onclick="scrollTable(250)" class="w-8 h-8 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors" title="Desplazar derecha">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                    <div class="px-4 py-2 rounded-xl border flex items-center gap-3 transition-colors duration-500 bg-[var(--color-m1-light)] border-[var(--color-m1)]">
+                        <span id="badge-count" class="text-xs font-black uppercase transition-colors duration-500 text-[var(--color-m1)]">0 REGISTROS</span>
+                    </div>
                 </div>
             </div>
-            <div class="table-container overflow-x-auto">
+            <div id="table-top-scrollbar" class="overflow-x-auto" style="height:14px; border-bottom: 1px solid #f1f5f9;">
+                <div id="table-top-scrollbar-inner" style="height:1px;"></div>
+            </div>
+            <div id="main-table-container" class="table-container overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-max">
                     <thead>
-                        <tr class="bg-slate-50/50">
+                        <tr class="bg-slate-50 sticky top-0 z-10">
                             <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Región</th>
                             <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Distrito</th>
                             <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">Cadena</th>
@@ -793,6 +806,24 @@
                 </table>
             </div>
         </div>
+        <script>
+            function scrollTable(px) {
+                const c = document.getElementById('main-table-container');
+                if (c) c.scrollBy({ left: px, behavior: 'smooth' });
+            }
+            window.addEventListener('DOMContentLoaded', function() {
+                const c = document.getElementById('main-table-container');
+                const top = document.getElementById('table-top-scrollbar');
+                const inner = document.getElementById('table-top-scrollbar-inner');
+                if (!c || !top || !inner) return;
+                function syncInnerWidth() { inner.style.width = c.scrollWidth + 'px'; }
+                syncInnerWidth();
+                new MutationObserver(syncInnerWidth).observe(c, { childList: true, subtree: true });
+                let syncing = false;
+                c.addEventListener('scroll', function() { if (!syncing) { syncing = true; top.scrollLeft = c.scrollLeft; syncing = false; } });
+                top.addEventListener('scroll', function() { if (!syncing) { syncing = true; c.scrollLeft = top.scrollLeft; syncing = false; } });
+            });
+        </script>
 
     </div>
 
