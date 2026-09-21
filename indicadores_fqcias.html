@@ -2496,7 +2496,7 @@
             const formadoresMap = {};
             FilteredData.forEach(d => {
                 const f = (d.formador || '').trim();
-                if (!f) return; // ignorar filas sin formador
+                if (!f || f.toUpperCase() === 'S/F') return; // ignorar filas sin formador asignado
                 const neg = d.sucursal.toLowerCase().trim();
                 if (!formadoresMap[f]) formadoresMap[f] = new Set();
                 formadoresMap[f].add(neg);
