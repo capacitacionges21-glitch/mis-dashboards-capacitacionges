@@ -1357,7 +1357,7 @@
             FilteredData.forEach(d => uniqueSucursales.add(d.sucursal));
             const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1;
 
-            tVis('bku-semanal-section', ind === 'm2');
+            tVis('bku-semanal-section', ind === 'm2' && !isTiendasGes);
             tVis('export-chart-gerente', ind !== 'srv');
             tVis('export-chart-cadena', !(ind === 'm2' && isHierarchyFiltered));
             tVis('export-chart-distrito', !isSingleSucursal);
@@ -2393,6 +2393,15 @@
         }
 
         function updateBkuSemanal() {
+            // Sección solo aplica para indicador BKU y cadenas BK (no Tiendas GES)
+            const semanalSection = document.getElementById('bku-semanal-section');
+            const esTiendas = (selections.cadena || '').toLowerCase().includes('tiendas');
+            if (selections.indicador !== 'm2' || esTiendas) {
+                if (semanalSection) semanalSection.classList.add('hidden');
+                return;
+            }
+            if (semanalSection) semanalSection.classList.remove('hidden');
+
             const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
             const formatDia = f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; };
 
@@ -2482,10 +2491,11 @@
 
         function renderBkuSemFormador(cadenaFil, negociosPermitidos, diaActivo) {
             const section = document.getElementById('bku-sem-formador-section');
-            // Obtener formadores desde FilteredData
+            // Obtener formadores desde FilteredData (solo negocios con formador asignado)
             const formadoresMap = {};
             FilteredData.forEach(d => {
-                const f = (d.formador || 'S/F').trim();
+                const f = (d.formador || '').trim();
+                if (!f) return; // ignorar filas sin formador
                 const neg = d.sucursal.toLowerCase().trim();
                 if (!formadoresMap[f]) formadoresMap[f] = new Set();
                 formadoresMap[f].add(neg);
