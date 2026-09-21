@@ -585,15 +585,6 @@
                 <div class="flex flex-col gap-6">
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
-                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Evolución Diaria BKU</h3>
-                        </div>
-                        <div class="chart-container" style="min-height:320px">
-                            <canvas id="chart-bku-sem-tendencia"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                        <div class="flex items-center gap-3 mb-6">
                             <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
                             <h3 class="text-lg font-bold text-slate-800 tracking-tight">BKU por Negocio</h3>
                             <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
@@ -601,6 +592,18 @@
                         <div class="scrollable-chart-container">
                             <div id="bku-sem-bar-wrapper" style="min-width:600px;height:320px">
                                 <canvas id="chart-bku-sem-negocios"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="bku-sem-formador-section" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
+                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">BKU por Formador</h3>
+                            <span id="bku-sem-form-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
+                        </div>
+                        <div class="scrollable-chart-container">
+                            <div id="bku-sem-form-wrapper" style="min-width:400px;height:320px">
+                                <canvas id="chart-bku-sem-formador"></canvas>
                             </div>
                         </div>
                     </div>
@@ -1727,15 +1730,20 @@
             FilteredData.forEach(d => { uniqueGroups.add(d[field]); uniqueMonths.add(d.mes); });
             const activeMonths = Array.from(uniqueMonths).sort((a,b) => MESES_NOM.indexOf(a) - MESES_NOM.indexOf(b));
 
-            const datasets = Array.from(uniqueGroups).map((g, i) => {
+            let groupItems = Array.from(uniqueGroups).map(g => {
                 const dataVals = [], rawVals = [];
                 activeMonths.forEach(mes => {
                     const sub = FilteredData.filter(d => d[field] === g && d.mes === mes);
                     let sumAltas = 0, sumPlantilla = 0;
                     sub.forEach(d => { sumAltas += (d.altasCount || 0); sumPlantilla += (d.totalPlantillaOcupada || 0); });
-                    if (sumPlantilla > 0) { dataVals.push((sumAltas / sumPlantilla) * 100); rawVals.push([`${sumAltas} colaboradores de alta`, `de ${sumPlantilla} en plantilla ocupada`]); } 
+                    if (sumPlantilla > 0) { dataVals.push((sumAltas / sumPlantilla) * 100); rawVals.push([`${sumAltas} colaboradores de alta`, `de ${sumPlantilla} en plantilla ocupada`]); }
                     else { dataVals.push(null); rawVals.push(["Sin datos operativos en este mes"]); }
                 });
+                const avg = dataVals.filter(v => v !== null).reduce((s, v) => s + v, 0) / (dataVals.filter(v => v !== null).length || 1);
+                return { g, dataVals, rawVals, avg };
+            });
+            if (chartType === 'bar') groupItems.sort((a, b) => a.avg - b.avg);
+            const datasets = groupItems.map(({ g, dataVals, rawVals }, i) => {
                 return { label: g, data: dataVals, rawData: rawVals, borderColor: trendColors[i % trendColors.length], backgroundColor: trendColors[i % trendColors.length], tension: 0.3, pointRadius: 4, borderWidth: chartType === 'bar' ? 0 : 2, borderRadius: chartType === 'bar' ? 4 : 0, fill: false };
             });
 
@@ -2404,9 +2412,10 @@
             if (badge) badge.textContent = cadenaFil === 'Todos' ? 'Todas las cadenas' : cadenaFil;
 
             const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
-            const negociosPermitidos = hayFiltroExtra
+            const negociosSet = hayFiltroExtra && FilteredData.length > 0
                 ? new Set(FilteredData.map(d => d.sucursal.toLowerCase().trim()))
                 : null;
+            const negociosPermitidos = negociosSet && negociosSet.size > 0 ? negociosSet : null;
 
             // Determinar día activo: el más reciente cuya fecha ya ocurrió
             const MESES_IDX_U = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
@@ -2462,63 +2471,66 @@
 
             document.getElementById('bku-sem-chart-subtitle').innerText = diaActivo ? formatDia(diaActivo) : '';
 
-            renderBkuSemTendencia(cadenaFil, negociosPermitidos);
             renderBkuSemNegocios(filtFull, diaActivo);
+            renderBkuSemFormador(cadenaFil, negociosPermitidos, diaActivo);
         }
 
         function getCssVar(name) {
             return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || name;
         }
 
-        function renderBkuSemTendencia(cadenaFil, negociosPermitidos) {
-            const MESES_IDX_T = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
-            const parseFechaT = f => { const p = f.split('/'); if (p.length===3) return new Date(p[2],p[1]-1,p[0]); const m = f.trim().match(/^(\d+)\s+(\w+)$/); if (m) return new Date(2026, MESES_IDX_T[m[2].toLowerCase()]??0, parseInt(m[1])); return new Date(0); };
-            const fechasUnicas = [...new Set(bkuSemanalRaw.map(d => d.fecha).filter(Boolean))].sort((a, b) => parseFechaT(a) - parseFechaT(b));
-            const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-            const labels = fechasUnicas.map(f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; });
-            const cadenas = cadenaFil === 'Todos' ? ['BK Norte', 'BK Centro/Sur'] : [cadenaFil];
+        function renderBkuSemFormador(cadenaFil, negociosPermitidos, diaActivo) {
+            const section = document.getElementById('bku-sem-formador-section');
+            // Obtener formadores desde FilteredData
+            const formadoresMap = {};
+            FilteredData.forEach(d => {
+                const f = (d.formador || 'S/F').trim();
+                const neg = d.sucursal.toLowerCase().trim();
+                if (!formadoresMap[f]) formadoresMap[f] = new Set();
+                formadoresMap[f].add(neg);
+            });
+            const formadores = Object.keys(formadoresMap);
+            if (formadores.length <= 1 || !diaActivo) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+
+            const filtDia = bkuSemanalRaw.filter(d => d.fecha === diaActivo);
+            const stats = formadores.map(f => {
+                const negsF = formadoresMap[f];
+                const rows = filtDia.filter(d => {
+                    if (cadenaFil !== 'Todos' && d.cadena !== cadenaFil) return false;
+                    return negsF.has(d.negocio.toLowerCase().trim()) && d.bku !== null;
+                });
+                if (rows.length === 0) return null;
+                const avg = rows.reduce((s, d) => s + d.bku, 0) / rows.length;
+                return { label: f, bku: avg, count: rows.length };
+            }).filter(Boolean).sort((a, b) => a.bku - b.bku);
+
+            if (stats.length === 0) { section.classList.add('hidden'); return; }
+            document.getElementById('bku-sem-form-subtitle').innerText = diaActivo;
+
             const c1 = getCssVar('--color-m1') || '#2F5597';
             const c2 = getCssVar('--color-m2') || '#8FAADC';
-            const colors = { 'BK Norte': c1, 'BK Centro/Sur': c2 };
+            const bgColors = stats.map(s => s.bku >= 100 ? '#22c55e' : s.bku >= 80 ? c2 : c1);
+            const barThicknessF = Math.max(20, Math.min(60, Math.floor(600 / Math.max(stats.length, 1))));
+            const dynWF = Math.max(300, stats.length * (barThicknessF + 16) + 80);
+            const wrapperF = document.getElementById('bku-sem-form-wrapper');
+            wrapperF.style.width = dynWF + 'px';
 
-            const datasets = cadenas.map(cad => {
-                const data = fechasUnicas.map(fecha => {
-                    const rows = bkuSemanalRaw.filter(d => {
-                        if (d.fecha !== fecha || d.cadena !== cad || d.bku === null) return false;
-                        if (negociosPermitidos && !negociosPermitidos.has(d.negocio.toLowerCase().trim())) return false;
-                        return true;
-                    });
-                    if (rows.length === 0) return null;
-                    return rows.reduce((s, d) => s + d.bku, 0) / rows.length;
-                });
-                return {
-                    label: cad, data,
-                    borderColor: colors[cad],
-                    backgroundColor: colors[cad] + '22',
-                    borderWidth: 2.5, pointRadius: 4,
-                    pointBackgroundColor: colors[cad],
-                    tension: 0.3, fill: true, spanGaps: true
-                };
-            });
-
-            if (bkuSemanalCharts.tendencia) bkuSemanalCharts.tendencia.destroy();
-            const ctx = document.getElementById('chart-bku-sem-tendencia').getContext('2d');
-            bkuSemanalCharts.tendencia = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
+            if (bkuSemanalCharts.formador) bkuSemanalCharts.formador.destroy();
+            bkuSemanalCharts.formador = new Chart(document.getElementById('chart-bku-sem-formador').getContext('2d'), {
+                type: 'bar',
+                data: { labels: stats.map(s => s.label), datasets: [{ label: 'BKU %', data: stats.map(s => s.bku), backgroundColor: bgColors, borderRadius: 6, borderSkipped: false, barThickness: barThicknessF }] },
                 plugins: [ChartDataLabels],
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }, padding: 16 } },
-                        datalabels: { display: false },
-                        tooltip: {
-                            callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato') }
-                        }
+                        legend: { display: false },
+                        datalabels: { anchor: 'end', align: 'top', formatter: v => v.toFixed(1) + '%', font: { weight: '700', size: 10 }, color: '#475569' },
+                        tooltip: { callbacks: { label: ctx => ctx.raw.toFixed(1) + '%' } }
                     },
                     scales: {
                         y: { min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 10 } }, grid: { color: '#f1f5f9' } },
-                        x: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
+                        x: { ticks: { font: { size: 10 }, maxRotation: 30 }, grid: { display: false } }
                     }
                 }
             });
