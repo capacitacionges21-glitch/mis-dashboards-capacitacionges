@@ -1676,7 +1676,7 @@
 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const field = isHierarchyFiltered ? 'sucursal' : 'cadena';
-            const chartType = isHierarchyFiltered ? 'bar' : 'line';
+            const chartType = 'line';
             const metricName = document.getElementById('label-m2') ? document.getElementById('label-m2').innerText : 'BKU / PTE';
             if (document.getElementById('title-chart-bku')) document.getElementById('title-chart-bku').innerText = isHierarchyFiltered ? `Tendencia Mensual ${metricName} por Sucursal` : `Tendencia Mensual ${metricName} por Franquicia`;
 
@@ -1746,7 +1746,7 @@
             if (FilteredData.length === 0 || (container && container.classList.contains('hidden'))) return;
 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
-            const field = isHierarchyFiltered ? 'sucursal' : 'cadena', chartType = isHierarchyFiltered ? 'bar' : 'line';
+            const field = isHierarchyFiltered ? 'sucursal' : 'cadena', chartType = 'line';
             if (document.getElementById('title-chart-rotacion')) document.getElementById('title-chart-rotacion').innerText = isHierarchyFiltered ? "Tendencia Mensual Rotación por Sucursal" : "Tendencia Mensual Rotación por Franquicia";
 
             const uniqueGroups = new Set(), uniqueMonths = new Set();
