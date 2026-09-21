@@ -2415,9 +2415,11 @@
             const badge = document.getElementById('bku-sem-cadena-badge');
             if (badge) badge.textContent = cadenaFil === 'Todos' ? 'Todas las cadenas' : cadenaFil;
 
+            const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
             const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const negociosSet = hayFiltroExtra && FilteredData.length > 0
-                ? new Set(FilteredData.map(d => d.sucursal.toLowerCase().trim()))
+                ? new Set(FilteredData.map(d => norm(d.sucursal)))
                 : null;
             const negociosPermitidos = negociosSet && negociosSet.size > 0 ? negociosSet : null;
 
@@ -2429,10 +2431,9 @@
             let diaActivo;
             if (diaFil === 'Ultima') {
                 const hoy = new Date(); hoy.setHours(23, 59, 59);
-                // Si hay filtro de negocios, buscar el último día con datos para esos negocios
                 const pasadas = fechasUnicas.filter(f => parseFechaU(f) <= hoy);
                 if (negociosPermitidos && negociosPermitidos.size > 0) {
-                    const conDatos = pasadas.filter(f => bkuSemanalRaw.some(d => d.fecha === f && d.bku !== null && negociosPermitidos.has(d.negocio.toLowerCase().trim())));
+                    const conDatos = pasadas.filter(f => bkuSemanalRaw.some(d => d.fecha === f && d.bku !== null && negociosPermitidos.has(norm(d.negocio))));
                     diaActivo = conDatos.length > 0 ? conDatos[conDatos.length - 1] : (pasadas[pasadas.length - 1] || null);
                 } else {
                     const conDatos = pasadas.filter(f => bkuSemanalRaw.some(d => d.fecha === f && d.bku !== null));
@@ -2446,7 +2447,7 @@
             const filtDia = bkuSemanalRaw.filter(d => d.fecha === diaActivo);
             const filtFull = filtDia.filter(d => {
                 if (cadenaFil !== 'Todos' && d.cadena !== cadenaFil) return false;
-                if (negociosPermitidos && !negociosPermitidos.has(d.negocio.toLowerCase().trim())) return false;
+                if (negociosPermitidos && !negociosPermitidos.has(norm(d.negocio))) return false;
                 return true;
             });
 
@@ -2497,9 +2498,9 @@
             FilteredData.forEach(d => {
                 const f = (d.formador || '').trim();
                 if (!f || f.toUpperCase() === 'S/F') return; // ignorar filas sin formador asignado
-                const neg = d.sucursal.toLowerCase().trim();
+                const normSuc = (d.sucursal || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
                 if (!formadoresMap[f]) formadoresMap[f] = new Set();
-                formadoresMap[f].add(neg);
+                formadoresMap[f].add(normSuc);
             });
             const formadores = Object.keys(formadoresMap);
             if (formadores.length <= 1 || !diaActivo) { section.classList.add('hidden'); return; }
@@ -2510,7 +2511,8 @@
                 const negsF = formadoresMap[f];
                 const rows = filtDia.filter(d => {
                     if (cadenaFil !== 'Todos' && d.cadena !== cadenaFil) return false;
-                    return negsF.has(d.negocio.toLowerCase().trim()) && d.bku !== null;
+                    const normNeg = (d.negocio || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+                    return negsF.has(normNeg) && d.bku !== null;
                 });
                 if (rows.length === 0) return null;
                 const avg = rows.reduce((s, d) => s + d.bku, 0) / rows.length;
