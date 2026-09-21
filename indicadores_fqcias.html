@@ -2502,7 +2502,7 @@
                 formadoresMap[f].add(normSuc);
             });
             const formadores = Object.keys(formadoresMap);
-            if (formadores.length <= 1 || !diaActivo) { section.classList.add('hidden'); return; }
+            if (formadores.length === 0 || !diaActivo) { section.classList.add('hidden'); return; }
             section.classList.remove('hidden');
 
             const filtDia = bkuSemanalRaw.filter(d => d.fecha === diaActivo);
@@ -2585,7 +2585,7 @@
                         legend: { display: false },
                         datalabels: {
                             anchor: 'end', align: 'top',
-                            formatter: v => v !== null ? v.toFixed(0) + '%' : 'N/D',
+                            formatter: v => v !== null ? v.toFixed(1) + '%' : 'N/D',
                             font: { weight: '700', size: 9 }, color: '#475569'
                         },
                         tooltip: { callbacks: { label: ctx => ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato' } }
