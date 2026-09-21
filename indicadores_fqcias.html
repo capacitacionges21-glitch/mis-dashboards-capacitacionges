@@ -495,18 +495,6 @@
                 </div>
             </div>
 
-            <div id="export-chart-altas" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-2 h-8 rounded-full bg-indigo-500"></div>
-                    <div class="flex items-center gap-3">
-                        <h3 id="title-chart-altas" class="text-xl font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU / PTE ALTAS</h3>
-                        <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Métrica</span>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chart-altas-franquicia"></canvas>
-                </div>
-            </div>
 
             <div id="export-chart-rotacion" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex items-center gap-3 mb-8">
@@ -1363,7 +1351,6 @@
 
             const hideTendencias = (selections.cadena !== 'Todos') && (selections.region === 'Todos') && (selections.distrito === 'Todos') && (selections.gerente_sucursal === 'Todos');
             tVis('export-chart-bku', !hideTendencias && (showAll || ind === 'm2'));
-            tVis('export-chart-altas', !hideTendencias && (showAll || ind === 'm2'));
             tVis('export-chart-rotacion', false); // inhabilitado hasta nuevo aviso
 
             const uniqueSucursales = new Set();
@@ -1531,7 +1518,7 @@
         function renderCharts() {
             Chart.register(ChartDataLabels);
             renderRevCompareChart(); renderOerCompareChart(); renderZpChart();
-            renderBKUFranquiciaChart(); renderAltasFranquiciaChart(); renderRotacionFranquiciaChart();
+            renderBKUFranquiciaChart(); renderRotacionFranquiciaChart();
             renderGerenteChart(); 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             if (document.getElementById('title-chart-cadena')) document.getElementById('title-chart-cadena').innerText = isHierarchyFiltered ? "Comparativa por Unidades de Negocio" : "Comparativa por Franquicia";
@@ -1587,7 +1574,7 @@
                     const sub = targetData.filter(d => d.sucursal === suc);
                     const r26_1 = safeAvg(sub, getV1), r26_2 = safeAvg(sub, getV2);
                     return { suc, r26_1, r26_2, c26_1: sub.filter(d => getV1(d) !== null && getV1(d) !== undefined && !isNaN(getV1(d))).length, c26_2: sub.filter(d => getV2(d) !== null && getV2(d) !== undefined && !isNaN(getV2(d))).length, total: (r26_1||0) + (r26_2||0) };
-                }).sort((a,b) => b.total - a.total);
+                }).sort((a,b) => a.total - b.total);
                 labels = sucStats.map(s => s.suc); data26r1 = sucStats.map(s => s.r26_1); data26r2 = sucStats.map(s => s.r26_2);
                 raw26r1 = sucStats.map(s => [`Basado en ${s.c26_1} ${actionText}`]); raw26r2 = sucStats.map(s => [`Basado en ${s.c26_2} ${actionText}`]);
             } else {
@@ -1633,7 +1620,7 @@
                     const sub = targetData.filter(d => d.sucursal === suc);
                     const r26r1 = safeAvg(sub, d => d.rev26r1.std), r26r2 = safeAvg(sub, d => d.rev26r2.std);
                     return { suc, r26r1, r26r2, cOer: sub.filter(d => d.rev26r1 && d.rev26r1.std !== null).length, cRav: sub.filter(d => d.rev26r2 && d.rev26r2.std !== null).length, total: (r26r1||0) + (r26r2||0) };
-                }).sort((a,b) => b.total - a.total);
+                }).sort((a,b) => a.total - b.total);
                 labels = sucStats.map(s => s.suc); data26r1 = sucStats.map(s => s.r26r1); data26r2 = sucStats.map(s => s.r26r2);
                 raw26r1 = sucStats.map(s => ["Basado en el promedio de " + s.cOer + " Auditorías OER"]); raw26r2 = sucStats.map(s => ["Basado en el promedio de " + s.cRav + " Auditorías RAV"]);
             } else {
@@ -1673,7 +1660,7 @@
                 const branchesZP = zps.size, branchesTotal = tots.size;
                 const pct = branchesTotal > 0 ? ((branchesZP / branchesTotal) * 100) : 0;
                 return { label: g, pct, branchesZP, branchesTotal, affectedList: Array.from(affectedMap.entries()).map(arr => `• ${arr[0]} (Distrito: ${arr[1]})`) };
-            }).filter(item => item.pct > 0 || field === 'cadena').sort((a,b) => b.pct - a.pct).slice(0, 15);
+            }).filter(item => item.pct > 0 || field === 'cadena').sort((a,b) => a.pct - b.pct).slice(0, 15);
 
             ChartsObj['chart-zp'] = new Chart(document.getElementById('chart-zp').getContext('2d'), {
                 type: 'bar',
