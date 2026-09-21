@@ -1357,7 +1357,7 @@
             FilteredData.forEach(d => uniqueSucursales.add(d.sucursal));
             const isSingleSucursal = selections.gerente_sucursal !== 'Todos' || uniqueSucursales.size === 1;
 
-            tVis('bku-semanal-section', showAll || ind === 'm2');
+            tVis('bku-semanal-section', ind === 'm2');
             tVis('export-chart-gerente', ind !== 'srv');
             tVis('export-chart-cadena', !(ind === 'm2' && isHierarchyFiltered));
             tVis('export-chart-distrito', !isSingleSucursal);
@@ -2412,9 +2412,14 @@
             let diaActivo;
             if (diaFil === 'Ultima') {
                 const hoy = new Date(); hoy.setHours(23, 59, 59);
-                const validas = fechasUnicas.filter(f => parseFechaU(f) <= hoy);
-                // Fallback al último disponible si no hay fechas en formato DD/MM/YYYY
-                diaActivo = validas.length > 0 ? validas[validas.length - 1] : (fechasUnicas[fechasUnicas.length - 1] || null);
+                // Si hay filtro de negocios, buscar el último día con datos para esos negocios
+                const pasadas = fechasUnicas.filter(f => parseFechaU(f) <= hoy);
+                if (negociosPermitidos && negociosPermitidos.size > 0) {
+                    const conDatos = pasadas.filter(f => bkuSemanalRaw.some(d => d.fecha === f && d.bku !== null && negociosPermitidos.has(d.negocio.toLowerCase().trim())));
+                    diaActivo = conDatos.length > 0 ? conDatos[conDatos.length - 1] : (pasadas[pasadas.length - 1] || null);
+                } else {
+                    diaActivo = pasadas.length > 0 ? pasadas[pasadas.length - 1] : (fechasUnicas[fechasUnicas.length - 1] || null);
+                }
             } else {
                 diaActivo = diaFil;
             }
