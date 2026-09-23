@@ -619,7 +619,7 @@
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m2)]"></div>
                     <div class="flex items-center gap-3">
-                        <h3 id="title-chart-cadena" class="text-xl font-bold text-slate-800 tracking-tight">Comparativa por Franquicia</h3>
+                        <h3 id="title-chart-cadena" class="text-xl font-bold text-slate-800 tracking-tight">Resultados por Franquicia</h3>
                         <span id="meta-badge-cadena" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
                     </div>
                 </div>
@@ -634,7 +634,7 @@
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500 bg-[var(--color-m3)]"></div>
                     <div class="flex items-center gap-3">
-                        <h3 id="title-chart-distrito" class="text-xl font-bold text-slate-800 tracking-tight">Ranking de Desempeño por Distrito</h3>
+                        <h3 id="title-chart-distrito" class="text-xl font-bold text-slate-800 tracking-tight">Resultados por Distrito</h3>
                         <span id="meta-badge-distrito" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
                     </div>
                 </div>
@@ -649,7 +649,7 @@
                 <div class="flex items-center gap-3 mb-8">
                     <div class="w-2 h-8 rounded-full transition-colors duration-500" style="background:var(--color-m2)"></div>
                     <div class="flex items-center gap-3">
-                        <h3 id="title-chart-regional" class="text-xl font-bold text-slate-800 tracking-tight">Comparativa por Regional</h3>
+                        <h3 id="title-chart-regional" class="text-xl font-bold text-slate-800 tracking-tight">Resultado por Regional</h3>
                         <span id="meta-badge-regional" class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest">Meta Global</span>
                     </div>
                 </div>
@@ -1521,15 +1521,15 @@
             renderBKUFranquiciaChart(); renderRotacionFranquiciaChart();
             renderGerenteChart(); 
             const isHierarchyFiltered = selections.cadena !== 'Todos' || selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
-            if (document.getElementById('title-chart-cadena')) document.getElementById('title-chart-cadena').innerText = isHierarchyFiltered ? "Comparativa por Unidades de Negocio" : "Comparativa por Franquicia";
+            if (document.getElementById('title-chart-cadena')) document.getElementById('title-chart-cadena').innerText = isHierarchyFiltered ? "Resultados por Negocio" : "Resultados por Franquicia";
             renderBarChart('chart-cadena', isHierarchyFiltered ? 'sucursal' : 'cadena');
             renderDistritoChart();
             renderRegionalChart();
             const isBkuMes = selections.indicador === 'm2' && selections.mes !== 'Todos';
             const elDist = document.getElementById('title-chart-distrito');
-            if (elDist) elDist.innerText = isBkuMes ? 'Ranking de Desempeño Semanal por Distrito' : 'Ranking de Desempeño por Distrito';
+            if (elDist) elDist.innerText = isBkuMes ? 'Resultados Semanales por Distrito' : 'Resultados por Distrito';
             const elReg = document.getElementById('title-chart-regional');
-            if (elReg) elReg.innerText = isBkuMes ? 'Comparativa Semanal por Regional' : 'Comparativa por Regional';
+            if (elReg) elReg.innerText = isBkuMes ? 'Resultado Semanal por Regional' : 'Resultado por Regional';
             renderBkuTendenciaMensual();
         }
 
