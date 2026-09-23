@@ -2089,10 +2089,10 @@
                 }
             });
 
-            // Solo sucursales con BKU < 100% (y >= 40% para excluir datos vacíos)
+            // Solo sucursales con BKU entre 40% y 89% (las que no han alcanzado meta)
             const alertas = Object.keys(grupos)
                 .map(suc => ({ sucursal: suc, ...grupos[suc] }))
-                .filter(d => d.m2 < 100 && d.m2 >= 40)
+                .filter(d => d.m2 < 90 && d.m2 >= 40)
                 .sort((a, b) => a.m2 - b.m2);
 
             if (alertas.length === 0) {
@@ -2130,8 +2130,7 @@
             }).join('');
 
             const rojos    = alertas.filter(d => d.m2 < 70).length;
-            const naranjas = alertas.filter(d => d.m2 >= 70 && d.m2 < 90).length;
-            const amarillos = alertas.filter(d => d.m2 >= 90).length;
+            const naranjas = alertas.filter(d => d.m2 >= 70).length;
 
             wrapper.innerHTML = `<div class="mt-8 p-8 rounded-3xl shadow-sm border border-slate-200 bg-white">
                 <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -2147,7 +2146,6 @@
                     <div class="flex gap-2 flex-wrap">
                         ${rojos    > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fef2f2;color:#dc2626">🔴 ${rojos} Crítico${rojos!==1?'s':''} (&lt;70%)</span>` : ''}
                         ${naranjas > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fff7ed;color:#ea580c">🟠 ${naranjas} Atención (70–89%)</span>` : ''}
-                        ${amarillos> 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fefce8;color:#ca8a04">🟡 ${amarillos} Seguimiento (90–99%)</span>` : ''}
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cardsHtml}</div>
