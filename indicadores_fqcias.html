@@ -1969,7 +1969,7 @@
                 // === MODO DIARIO: tendencia por día dentro del mes seleccionado ===
                 if (tituloEl) tituloEl.textContent = `Tendencia Diaria BKU — ${mesFiltro}`;
 
-                const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+                const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/^bk\s+/, '');
                 const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' ||
                                        selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
                 const negociosPermitidos = hayFiltroExtra && FilteredData.length > 0
@@ -2462,7 +2462,7 @@
             const badge = document.getElementById('bku-sem-cadena-badge');
             if (badge) badge.textContent = cadenaFil === 'Todos' ? 'Todas las cadenas' : cadenaFil;
 
-            const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+            const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/^bk\s+/, '');
 
             const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
             const negociosSet = hayFiltroExtra && FilteredData.length > 0
@@ -2548,7 +2548,7 @@
             FilteredData.forEach(d => {
                 const f = (d.formador || '').trim();
                 if (!f || f.toUpperCase() === 'S/F') return; // ignorar filas sin formador asignado
-                const normSuc = (d.sucursal || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+                const normSuc = (d.sucursal || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/^bk\s+/, '');
                 if (!formadoresMap[f]) formadoresMap[f] = new Set();
                 formadoresMap[f].add(normSuc);
             });
@@ -2560,7 +2560,7 @@
             const stats = formadores.map(f => {
                 const negsF = formadoresMap[f];
                 const rows = filtDia.filter(d => {
-                    const normNeg = (d.negocio || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+                    const normNeg = (d.negocio || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/^bk\s+/, '');
                     return negsF.has(normNeg) && d.bku !== null;
                 });
                 if (rows.length === 0) return null;
