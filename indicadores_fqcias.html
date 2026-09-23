@@ -2102,8 +2102,8 @@
             }
 
             const semColor = m2 => {
-                if (m2 < 70)  return { bg:'#fef2f2', border:'#fecaca', dot:'#ef4444', text:'#dc2626', label:'Crítico' };
-                if (m2 < 90)  return { bg:'#fff7ed', border:'#fdba74', dot:'#f97316', text:'#ea580c', label:'Atención' };
+                if (m2 < 60)  return { bg:'#fef2f2', border:'#fecaca', dot:'#ef4444', text:'#dc2626', label:'Crítico' };
+                if (m2 < 75)  return { bg:'#fff7ed', border:'#fdba74', dot:'#f97316', text:'#ea580c', label:'Atención' };
                 return           { bg:'#fefce8', border:'#fde047', dot:'#eab308', text:'#ca8a04', label:'Seguimiento' };
             };
 
@@ -2130,8 +2130,9 @@
                 </div>`;
             }).join('');
 
-            const rojos    = alertas.filter(d => d.m2 < 70).length;
-            const naranjas = alertas.filter(d => d.m2 >= 70).length;
+            const rojos     = alertas.filter(d => d.m2 < 60).length;
+            const naranjas  = alertas.filter(d => d.m2 >= 60 && d.m2 < 75).length;
+            const amarillos = alertas.filter(d => d.m2 >= 75).length;
 
             wrapper.innerHTML = `<div class="mt-8 p-8 rounded-3xl shadow-sm border border-slate-200 bg-white">
                 <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -2145,8 +2146,9 @@
                         </div>
                     </div>
                     <div class="flex gap-2 flex-wrap">
-                        ${rojos    > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fef2f2;color:#dc2626">🔴 ${rojos} Crítico${rojos!==1?'s':''} (&lt;70%)</span>` : ''}
-                        ${naranjas > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fff7ed;color:#ea580c">🟠 ${naranjas} Atención (70–89%)</span>` : ''}
+                        ${rojos     > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fef2f2;color:#dc2626">🔴 ${rojos} Crítico${rojos!==1?'s':''} (&lt;60%)</span>` : ''}
+                        ${naranjas  > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fff7ed;color:#ea580c">🟠 ${naranjas} Atención (60–74%)</span>` : ''}
+                        ${amarillos > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fefce8;color:#ca8a04">🟡 ${amarillos} Seguimiento (75–89%)</span>` : ''}
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cardsHtml}</div>
