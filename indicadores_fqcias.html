@@ -2090,10 +2090,10 @@
                 }
             });
 
-            // Solo sucursales con BKU entre 40% y 89% (las que no han alcanzado meta)
+            // Solo sucursales con BKU menor a 90% (las que no han alcanzado meta)
             const alertas = Object.keys(grupos)
                 .map(suc => ({ sucursal: suc, ...grupos[suc] }))
-                .filter(d => d.m2 < 90 && d.m2 >= 40)
+                .filter(d => d.m2 < 90 && d.m2 > 0)
                 .sort((a, b) => a.m2 - b.m2);
 
             if (alertas.length === 0) {
@@ -2130,12 +2130,8 @@
                 </div>`;
             }).join('');
 
-            const rojos     = alertas.filter(d => d.m2 < 60).length;
-            const naranjas  = alertas.filter(d => d.m2 >= 60 && d.m2 < 75).length;
-            const amarillos = alertas.filter(d => d.m2 >= 75).length;
-
             wrapper.innerHTML = `<div class="mt-8 p-8 rounded-3xl shadow-sm border border-slate-200 bg-white">
-                <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+                <div class="flex items-center mb-6">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center bg-red-50 flex-shrink-0">
                             <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
@@ -2144,11 +2140,6 @@
                             <h3 class="text-xl font-bold text-slate-800 tracking-tight">Semáforo BKU ${selections.mes !== 'Todos' ? 'Diario' : 'Semanal'} — ${alertas.length} sucursal${alertas.length !== 1 ? 'es' : ''} por alcanzar meta</h3>
                             <p class="text-xs text-slate-500 font-medium mt-0.5">Sucursales con BKU menor al 100%, ordenadas de menor a mayor</p>
                         </div>
-                    </div>
-                    <div class="flex gap-2 flex-wrap">
-                        ${rojos     > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fef2f2;color:#dc2626">🔴 ${rojos} Crítico${rojos!==1?'s':''} (&lt;60%)</span>` : ''}
-                        ${naranjas  > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fff7ed;color:#ea580c">🟠 ${naranjas} Atención (60–74%)</span>` : ''}
-                        ${amarillos > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fefce8;color:#ca8a04">🟡 ${amarillos} Seguimiento (75–89%)</span>` : ''}
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cardsHtml}</div>
