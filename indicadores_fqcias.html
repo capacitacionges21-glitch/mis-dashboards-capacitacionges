@@ -563,7 +563,7 @@
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
-                        <h3 class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU</h3>
+                        <h3 id="bku-mensual-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU</h3>
                     </div>
                     <div class="chart-container" style="min-height:300px">
                         <canvas id="chart-bku-mensual"></canvas>
@@ -1936,48 +1936,18 @@
         function renderBkuTendenciaMensual() {
             if (ChartsObj['chart-bku-mensual']) ChartsObj['chart-bku-mensual'].destroy();
             const canvasEl = document.getElementById('chart-bku-mensual');
-            if (!canvasEl || RawData.length === 0) return;
+            if (!canvasEl) return;
 
             const MESES_ORD = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-            // Usar RawData filtrado por cadena/jerarquía pero SIN filtro de mes para mostrar todos los meses
-            const baseData = RawData.filter(d => {
-                if (selections.cadena !== 'Todos' && d.cadena !== selections.cadena) return false;
-                if (selections.region !== 'Todos' && d.region !== selections.region) return false;
-                if (selections.distrito !== 'Todos' && d.distrito !== selections.distrito) return false;
-                if (selections.formador !== 'Todos' && d.formador !== selections.formador) return false;
-                if (selections.gerente_sucursal !== 'Todos' && d.gerente_sucursal !== selections.gerente_sucursal) return false;
-                return true;
-            });
-
-            const cadenas = [...new Set(baseData.map(d => d.cadena))];
-            const mesesPresentes = [...new Set(baseData.filter(d => d.m2 !== null && d.m2 !== undefined).map(d => d.mes).filter(Boolean))].sort((a,b) => MESES_ORD.indexOf(a) - MESES_ORD.indexOf(b));
-
-            if (mesesPresentes.length === 0) return;
-
+            const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
             const c1 = getCssVar('--color-m1') || '#2F5597';
             const c2 = getCssVar('--color-m2') || '#8FAADC';
             const trendColors = [c1, c2, '#1F3864', '#4472C4'];
+            const tituloEl = document.getElementById('bku-mensual-titulo');
 
-            const datasets = cadenas.map((cadena, idx) => {
-                const data = mesesPresentes.map(mes => {
-                    const rows = baseData.filter(d => d.cadena === cadena && d.mes === mes && d.m2 !== null && d.m2 !== undefined);
-                    if (rows.length === 0) return null;
-                    return rows.reduce((s, d) => s + d.m2, 0) / rows.length;
-                });
-                return {
-                    label: cadena, data,
-                    borderColor: trendColors[idx % trendColors.length],
-                    backgroundColor: trendColors[idx % trendColors.length] + '22',
-                    borderWidth: 2.5, pointRadius: 4,
-                    pointBackgroundColor: trendColors[idx % trendColors.length],
-                    tension: 0.3, fill: true, spanGaps: true
-                };
-            });
-
-            ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), {
+            const baseChartOpts = (labels, datasets) => ({
                 type: 'line',
-                data: { labels: mesesPresentes, datasets },
+                data: { labels, datasets },
                 plugins: [ChartDataLabels],
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -1992,6 +1962,78 @@
                     }
                 }
             });
+
+            const mesFiltro = selections.mes;
+
+            if (mesFiltro !== 'Todos' && bkuSemanalRaw.length > 0) {
+                // === MODO DIARIO: tendencia por día dentro del mes seleccionado ===
+                if (tituloEl) tituloEl.textContent = `Tendencia Diaria BKU — ${mesFiltro}`;
+
+                const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+                const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' ||
+                                       selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+                const negociosPermitidos = hayFiltroExtra && FilteredData.length > 0
+                    ? new Set(FilteredData.map(d => norm(d.sucursal))) : null;
+
+                const mesIdx = MESES_ORD.indexOf(mesFiltro);
+                let filtMes = bkuSemanalRaw.filter(d => {
+                    if (d.mes) return d.mes === mesFiltro;
+                    const p = (d.fecha || '').split('/');
+                    return p.length === 3 && parseInt(p[1]) - 1 === mesIdx;
+                });
+                if (selections.cadena !== 'Todos') filtMes = filtMes.filter(d => d.cadena === selections.cadena);
+                if (negociosPermitidos) filtMes = filtMes.filter(d => negociosPermitidos.has(norm(d.negocio)));
+
+                const parseFechaD = f => { const p = f.split('/'); return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(0); };
+                const formatDia = f => { const p = f.split('/'); return p.length === 3 ? `${p[0]} ${MESES_CORTOS[parseInt(p[1])-1]}` : f; };
+                const fechas = [...new Set(filtMes.map(d => d.fecha))].filter(Boolean).sort((a,b) => parseFechaD(a) - parseFechaD(b));
+
+                if (fechas.length === 0) return;
+
+                const cadenasDia = selections.cadena !== 'Todos'
+                    ? [selections.cadena]
+                    : [...new Set(filtMes.map(d => d.cadena))];
+
+                const datasets = cadenasDia.map((cadena, idx) => {
+                    const data = fechas.map(fecha => {
+                        const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bku !== null);
+                        if (rows.length === 0) return null;
+                        return rows.reduce((s, d) => s + d.bku, 0) / rows.length;
+                    });
+                    return { label: cadena, data, borderColor: trendColors[idx % trendColors.length], backgroundColor: trendColors[idx % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[idx % trendColors.length], tension: 0.3, fill: false, spanGaps: true };
+                });
+
+                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasets));
+
+            } else {
+                // === MODO MENSUAL: comparativa histórica Enero→mes actual ===
+                if (tituloEl) tituloEl.textContent = 'Tendencia Mensual BKU';
+                if (RawData.length === 0) return;
+
+                const baseData = RawData.filter(d => {
+                    if (selections.cadena !== 'Todos' && d.cadena !== selections.cadena) return false;
+                    if (selections.region !== 'Todos' && d.region !== selections.region) return false;
+                    if (selections.distrito !== 'Todos' && d.distrito !== selections.distrito) return false;
+                    if (selections.formador !== 'Todos' && d.formador !== selections.formador) return false;
+                    if (selections.gerente_sucursal !== 'Todos' && d.gerente_sucursal !== selections.gerente_sucursal) return false;
+                    return true;
+                });
+
+                const cadenas = [...new Set(baseData.map(d => d.cadena))];
+                const mesesPresentes = [...new Set(baseData.filter(d => d.m2 !== null && d.m2 !== undefined).map(d => d.mes).filter(Boolean))].sort((a,b) => MESES_ORD.indexOf(a) - MESES_ORD.indexOf(b));
+                if (mesesPresentes.length === 0) return;
+
+                const datasets = cadenas.map((cadena, idx) => {
+                    const data = mesesPresentes.map(mes => {
+                        const rows = baseData.filter(d => d.cadena === cadena && d.mes === mes && d.m2 !== null && d.m2 !== undefined);
+                        if (rows.length === 0) return null;
+                        return rows.reduce((s, d) => s + d.m2, 0) / rows.length;
+                    });
+                    return { label: cadena, data, borderColor: trendColors[idx % trendColors.length], backgroundColor: trendColors[idx % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[idx % trendColors.length], tension: 0.3, fill: true, spanGaps: true };
+                });
+
+                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(mesesPresentes, datasets));
+            }
         }
 
         function renderSinGerente() {
