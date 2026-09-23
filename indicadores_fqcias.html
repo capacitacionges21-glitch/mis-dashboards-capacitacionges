@@ -1350,7 +1350,8 @@
             tVis('export-chart-zp', showAll && !isHierarchyFiltered);
 
             const hideTendencias = (selections.cadena !== 'Todos') && (selections.region === 'Todos') && (selections.distrito === 'Todos') && (selections.gerente_sucursal === 'Todos');
-            tVis('export-chart-bku', !hideTendencias && (showAll || ind === 'm2'));
+            const hideBySubFilter = selections.distrito !== 'Todos' || selections.formador !== 'Todos' || selections.gerente_sucursal !== 'Todos';
+            tVis('export-chart-bku', !hideTendencias && !hideBySubFilter && (showAll || ind === 'm2'));
             tVis('export-chart-rotacion', false); // inhabilitado hasta nuevo aviso
 
             const uniqueSucursales = new Set();
