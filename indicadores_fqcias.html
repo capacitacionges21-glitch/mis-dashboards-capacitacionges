@@ -1936,13 +1936,22 @@
         function renderBkuTendenciaMensual() {
             if (ChartsObj['chart-bku-mensual']) ChartsObj['chart-bku-mensual'].destroy();
             const canvasEl = document.getElementById('chart-bku-mensual');
-            if (!canvasEl || FilteredData.length === 0) return;
+            if (!canvasEl || RawData.length === 0) return;
 
             const MESES_ORD = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-            // Usar FilteredData (campo m2) para mostrar historial mensual completo
-            const cadenas = [...new Set(FilteredData.map(d => d.cadena))];
-            const mesesPresentes = [...new Set(FilteredData.filter(d => d.m2 !== null && d.m2 !== undefined).map(d => d.mes).filter(Boolean))].sort((a,b) => MESES_ORD.indexOf(a) - MESES_ORD.indexOf(b));
+            // Usar RawData filtrado por cadena/jerarquía pero SIN filtro de mes para mostrar todos los meses
+            const baseData = RawData.filter(d => {
+                if (selections.cadena !== 'Todos' && d.cadena !== selections.cadena) return false;
+                if (selections.region !== 'Todos' && d.region !== selections.region) return false;
+                if (selections.distrito !== 'Todos' && d.distrito !== selections.distrito) return false;
+                if (selections.formador !== 'Todos' && d.formador !== selections.formador) return false;
+                if (selections.gerente_sucursal !== 'Todos' && d.gerente_sucursal !== selections.gerente_sucursal) return false;
+                return true;
+            });
+
+            const cadenas = [...new Set(baseData.map(d => d.cadena))];
+            const mesesPresentes = [...new Set(baseData.filter(d => d.m2 !== null && d.m2 !== undefined).map(d => d.mes).filter(Boolean))].sort((a,b) => MESES_ORD.indexOf(a) - MESES_ORD.indexOf(b));
 
             if (mesesPresentes.length === 0) return;
 
@@ -1952,7 +1961,7 @@
 
             const datasets = cadenas.map((cadena, idx) => {
                 const data = mesesPresentes.map(mes => {
-                    const rows = FilteredData.filter(d => d.cadena === cadena && d.mes === mes && d.m2 !== null && d.m2 !== undefined);
+                    const rows = baseData.filter(d => d.cadena === cadena && d.mes === mes && d.m2 !== null && d.m2 !== undefined);
                     if (rows.length === 0) return null;
                     return rows.reduce((s, d) => s + d.m2, 0) / rows.length;
                 });
