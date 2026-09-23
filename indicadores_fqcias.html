@@ -2079,78 +2079,79 @@
             if (!wrapper) return;
             if (selections.indicador !== 'm2') { wrapper.innerHTML = ''; return; }
 
-            // Collect per-sucursal monthly BKU points
+            // Último valor BKU por sucursal (mes más reciente en FilteredData)
             const grupos = {};
             FilteredData.forEach(d => {
                 if (window.SucursalesActivas && !window.SucursalesActivas.has(d.sucursal)) return;
                 if (d.m2 === null || d.m2 === undefined) return;
-                if (!grupos[d.sucursal]) grupos[d.sucursal] = { cadena: d.cadena, region: d.region, distrito: d.distrito, puntos: [] };
-                // avoid duplicate months
-                if (!grupos[d.sucursal].puntos.find(p => p.mes === d.mes)) grupos[d.sucursal].puntos.push({ mes: d.mes, val: d.m2 });
+                if (!grupos[d.sucursal] || MESES_NOM.indexOf(d.mes) > MESES_NOM.indexOf(grupos[d.sucursal].mes)) {
+                    grupos[d.sucursal] = { cadena: d.cadena, region: d.region, distrito: d.distrito, formador: d.formador || '', mes: d.mes, m2: d.m2 };
+                }
             });
 
-            const tendencias = [];
-            Object.keys(grupos).forEach(suc => {
-                const info = grupos[suc];
-                info.puntos.sort((a, b) => MESES_NOM.indexOf(a.mes) - MESES_NOM.indexOf(b.mes));
-                if (info.puntos.length < 2) return;
-                const primero = info.puntos[0], ultimo = info.puntos[info.puntos.length - 1];
-                const delta = ultimo.val - primero.val;
-                tendencias.push({ sucursal: suc, cadena: info.cadena, region: info.region, distrito: info.distrito, delta, primero, ultimo, nPuntos: info.puntos.length });
-            });
+            // Solo sucursales con BKU < 100% (y >= 40% para excluir datos vacíos)
+            const alertas = Object.keys(grupos)
+                .map(suc => ({ sucursal: suc, ...grupos[suc] }))
+                .filter(d => d.m2 < 100 && d.m2 >= 40)
+                .sort((a, b) => a.m2 - b.m2);
 
-            if (tendencias.length === 0) { wrapper.innerHTML = ''; return; }
+            if (alertas.length === 0) {
+                wrapper.innerHTML = `<div class="mt-8 p-6 rounded-3xl border border-green-200 bg-green-50 text-center"><p class="text-green-700 font-bold text-sm">¡Todas las sucursales están al 100% de BKU!</p></div>`;
+                return;
+            }
 
-            tendencias.sort((a, b) => b.delta - a.delta);
-            const top5 = tendencias.filter(t => t.delta > 0).slice(0, 5);
-            const bot5 = tendencias.filter(t => t.delta < 0).reverse().slice(0, 5);
-
-            const renderPanel = (items, containerId, colorClass, bgClass, borderClass, emptyMsg, signo) => {
-                const el = document.getElementById(containerId);
-                if (!el) return;
-                if (items.length === 0) { el.innerHTML = `<div class="p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-500 text-xs font-bold">${emptyMsg}</div>`; return; }
-                el.innerHTML = items.map((item, idx) => {
-                    const dStr = signo + Math.abs(item.delta).toFixed(1) + 'pp';
-                    const ctxHtml = (selections.distrito !== 'Todos' && selections.region !== 'Todos')
-                        ? `<p class="text-[9px] text-slate-400 truncate">Dist: ${item.distrito}</p>`
-                        : `<p class="text-[9px] text-slate-400 truncate">Reg: ${item.region} · Dist: ${item.distrito}</p>`;
-                    return `<div class="flex items-center justify-between p-4 ${bgClass} rounded-2xl border ${borderClass} hover:opacity-90 transition-all">
-                        <div class="flex items-center gap-3">
-                            <span class="w-7 h-7 flex items-center justify-center bg-white rounded-full text-[10px] font-black shadow-sm text-slate-400 border border-slate-100 flex-shrink-0">#${idx+1}</span>
-                            <div class="overflow-hidden">
-                                <h4 class="font-bold text-slate-800 text-sm leading-none truncate">${item.sucursal}</h4>
-                                <p class="text-[9px] font-black text-slate-400 uppercase mt-0.5 tracking-widest truncate">${item.cadena}</p>
-                                ${ctxHtml}
-                                <p class="text-[9px] text-slate-400 mt-0.5">${item.primero.mes} → ${item.ultimo.mes}: ${item.primero.val.toFixed(1)}% → ${item.ultimo.val.toFixed(1)}%</p>
-                            </div>
-                        </div>
-                        <div class="text-right flex-shrink-0 ml-3">
-                            <p class="text-xl font-black ${colorClass}">${dStr}</p>
-                            <p class="text-[8px] font-bold text-slate-400 uppercase">vs inicio</p>
-                        </div>
-                    </div>`;
-                }).join('');
+            const semColor = m2 => {
+                if (m2 < 70)  return { bg:'#fef2f2', border:'#fecaca', dot:'#ef4444', text:'#dc2626', label:'Crítico' };
+                if (m2 < 90)  return { bg:'#fff7ed', border:'#fdba74', dot:'#f97316', text:'#ea580c', label:'Atención' };
+                return           { bg:'#fefce8', border:'#fde047', dot:'#eab308', text:'#ca8a04', label:'Seguimiento' };
             };
 
-            wrapper.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                    <div class="flex items-center gap-3 mb-6">
-                        <i data-lucide="trending-up" class="text-green-500 w-6 h-6 flex-shrink-0"></i>
-                        <h3 class="text-lg font-bold text-slate-800">Mayor Avance BKU (Top 5)</h3>
+            const cardsHtml = alertas.map(d => {
+                const c = semColor(d.m2);
+                const ctxHtml = (selections.distrito !== 'Todos' && selections.region !== 'Todos')
+                    ? `<p class="text-[9px] text-slate-400 truncate">Dist: ${d.distrito}</p>`
+                    : `<p class="text-[9px] text-slate-400 truncate">Reg: ${d.region} · Dist: ${d.distrito}</p>`;
+                const formHtml = d.formador && d.formador.toUpperCase() !== 'S/F'
+                    ? `<p class="text-[9px] text-slate-400 truncate">Form: ${d.formador}</p>` : '';
+                return `<div class="flex items-center justify-between p-4 rounded-2xl border" style="background:${c.bg};border-color:${c.border}">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${c.dot}"></div>
+                        <div class="overflow-hidden">
+                            <h4 class="font-bold text-slate-800 text-sm leading-none truncate">${d.sucursal}</h4>
+                            <p class="text-[9px] font-black uppercase mt-0.5 tracking-widest truncate" style="color:${c.text}">${d.cadena} · ${d.mes}</p>
+                            ${ctxHtml}${formHtml}
+                        </div>
                     </div>
-                    <div id="bku-top-container" class="space-y-3"></div>
-                </div>
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                    <div class="flex items-center gap-3 mb-6">
-                        <i data-lucide="trending-down" class="text-red-500 w-6 h-6 flex-shrink-0"></i>
-                        <h3 class="text-lg font-bold text-slate-800">Mayor Caída BKU (Top 5)</h3>
+                    <div class="text-right flex-shrink-0 ml-3">
+                        <p class="text-xl font-black" style="color:${c.text}">${d.m2.toFixed(1)}%</p>
+                        <p class="text-[8px] font-bold uppercase" style="color:${c.text}">${c.label}</p>
                     </div>
-                    <div id="bku-bot-container" class="space-y-3"></div>
-                </div>
-            </div>`;
+                </div>`;
+            }).join('');
 
-            renderPanel(top5, 'bku-top-container', 'text-green-600', 'bg-green-50/50', 'border-green-100', 'Sin sucursales con mejora en el período.', '+');
-            renderPanel(bot5, 'bku-bot-container', 'text-red-500', 'bg-red-50/50', 'border-red-100', 'Sin sucursales con caída en el período.', '−');
+            const rojos    = alertas.filter(d => d.m2 < 70).length;
+            const naranjas = alertas.filter(d => d.m2 >= 70 && d.m2 < 90).length;
+            const amarillos = alertas.filter(d => d.m2 >= 90).length;
+
+            wrapper.innerHTML = `<div class="mt-8 p-8 rounded-3xl shadow-sm border border-slate-200 bg-white">
+                <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center bg-red-50 flex-shrink-0">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 tracking-tight">Semáforo BKU — ${alertas.length} sucursal${alertas.length !== 1 ? 'es' : ''} por alcanzar meta</h3>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">Sucursales con BKU menor al 100%, ordenadas de menor a mayor</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        ${rojos    > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fef2f2;color:#dc2626">🔴 ${rojos} Crítico${rojos!==1?'s':''} (&lt;70%)</span>` : ''}
+                        ${naranjas > 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fff7ed;color:#ea580c">🟠 ${naranjas} Atención (70–89%)</span>` : ''}
+                        ${amarillos> 0 ? `<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#fefce8;color:#ca8a04">🟡 ${amarillos} Seguimiento (90–99%)</span>` : ''}
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${cardsHtml}</div>
+            </div>`;
             if (window.lucide) lucide.createIcons();
         }
 
