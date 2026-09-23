@@ -1525,6 +1525,11 @@
             renderBarChart('chart-cadena', isHierarchyFiltered ? 'sucursal' : 'cadena');
             renderDistritoChart();
             renderRegionalChart();
+            const isBkuMes = selections.indicador === 'm2' && selections.mes !== 'Todos';
+            const elDist = document.getElementById('title-chart-distrito');
+            if (elDist) elDist.innerText = isBkuMes ? 'Ranking de Desempeño Semanal por Distrito' : 'Ranking de Desempeño por Distrito';
+            const elReg = document.getElementById('title-chart-regional');
+            if (elReg) elReg.innerText = isBkuMes ? 'Comparativa Semanal por Regional' : 'Comparativa por Regional';
             renderBkuTendenciaMensual();
         }
 
