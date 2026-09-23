@@ -2509,7 +2509,6 @@
             const stats = formadores.map(f => {
                 const negsF = formadoresMap[f];
                 const rows = filtDia.filter(d => {
-                    if (cadenaFil !== 'Todos' && d.cadena !== cadenaFil) return false;
                     const normNeg = (d.negocio || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
                     return negsF.has(normNeg) && d.bku !== null;
                 });
