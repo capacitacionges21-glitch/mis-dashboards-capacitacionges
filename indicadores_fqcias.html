@@ -2091,10 +2091,10 @@
                 }
             });
 
-            // Solo sucursales con BKU menor a 90% (las que no han alcanzado meta)
+            // Sucursales con BKU entre 40% y 99% (las que no han alcanzado meta al 100%)
             const alertas = Object.keys(grupos)
                 .map(suc => ({ sucursal: suc, ...grupos[suc] }))
-                .filter(d => d.m2 < 90 && d.m2 > 0)
+                .filter(d => d.m2 < 100 && d.m2 >= 40)
                 .sort((a, b) => a.m2 - b.m2);
 
             if (alertas.length === 0) {
