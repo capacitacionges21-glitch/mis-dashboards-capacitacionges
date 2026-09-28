@@ -574,7 +574,7 @@
                     <div id="bku-sem-negocios-section" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
-                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">BKU Diario por Negocio</h3>
+                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">% BKU Diario por Negocio</h3>
                             <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
                         </div>
                         <div class="scrollable-chart-container">
@@ -2634,15 +2634,15 @@
                         legend: { display: false },
                         datalabels: {
                             anchor: 'end', align: 'top',
-                            formatter: v => v !== null ? v.toFixed(1) + '%' : 'N/D',
+                            formatter: v => v !== null ? v.toFixed(1) : 'N/D',
                             font: { weight: '700', size: 9 }, color: '#475569'
                         },
                         tooltip: { callbacks: { label: ctx => ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato' } }
                     },
                     scales: {
                         y: {
-                            min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 10 } },
-                            grid: { color: '#f1f5f9' }
+                            min: 0, max: 110, display: false,
+                            grid: { display: false }
                         },
                         x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } }
                     }
