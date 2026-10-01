@@ -938,18 +938,17 @@
 
                 // EN SUCESIÓN — oculto por solicitud
 
-                // Sin Gerente — basado en campo Gerente de Negocio del mes más reciente con dato
-                const mesOrdKpi = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
+                // Sin Gerente — sucursales sin ningún registro con gerente asignado
                 const latestData = getLatestRecordPerBranch(data);
-                const sinGerente = latestData.filter(d => {
-                    const negocio = d['Negocio'];
-                    if (!negocio) return false;
-                    const records = data
-                        .filter(r => r['Negocio'] === negocio && r['Gerente de Negocio'] !== undefined)
-                        .sort((a, b) => (mesOrdKpi[(b['Mes']||'').toLowerCase()]||0) - (mesOrdKpi[(a['Mes']||'').toLowerCase()]||0));
-                    if (!records.length) return false;
-                    const ger = (records[0]['Gerente de Negocio'] || '').toString().trim();
-                    return !ger || ger === '-' || ger === 'Sin Gerente' || ger === 'S/G';
+                const uniqueBranchNames = [...new Set(data.map(d => d['Negocio']).filter(Boolean))];
+                const sinGerente = uniqueBranchNames.filter(negocio => {
+                    const conGerente = data.filter(r =>
+                        r['Negocio'] === negocio &&
+                        r['Gerente de Negocio'] &&
+                        r['Gerente de Negocio'].toString().trim() !== '' &&
+                        r['Gerente de Negocio'].toString().trim() !== '-'
+                    );
+                    return conGerente.length === 0;
                 }).length;
                 const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
                 
