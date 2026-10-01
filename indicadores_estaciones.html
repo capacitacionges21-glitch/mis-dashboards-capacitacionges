@@ -1636,15 +1636,13 @@
 
             const displayData = branchData.sort((a,b) => b[metricKey] - a[metricKey]);
 
-            // Función auxiliar para obtener el primer gerente de negocio válido
+            // Gerente de Negocio: tomar del mes más reciente con dato válido
+            const mesOrd = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
             const getGerenteNegocio = (branchName) => {
-                const records = state.filteredData.filter(d => d['Negocio'] === branchName);
-                for (let i = 0; i < records.length; i++) {
-                    if (records[i]['Gerente de Negocio'] && records[i]['Gerente de Negocio'].toString().trim() !== '') {
-                        return records[i]['Gerente de Negocio'].toString().trim();
-                    }
-                }
-                return '-';
+                const records = state.filteredData
+                    .filter(d => d['Negocio'] === branchName && d['Gerente de Negocio'] && d['Gerente de Negocio'].toString().trim() !== '')
+                    .sort((a, b) => (mesOrd[(b['Mes'] || '').toLowerCase()] || 0) - (mesOrd[(a['Mes'] || '').toLowerCase()] || 0));
+                return records.length > 0 ? records[0]['Gerente de Negocio'].toString().trim() : '-';
             };
 
             displayData.forEach(row => {
