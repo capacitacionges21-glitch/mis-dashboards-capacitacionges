@@ -407,15 +407,19 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     const fields = results.meta.fields || [];
-                    // Nueva estructura (jul-2026): se agregaron Subgerentes (H/L), Talento GES (O/P), mystery col. (Q), Cert Resp (Z)
-                    const colI  = fields.length > 8  ? fields[8]  : null; // Plantilla aut. Responsables de Turno (I)
-                    const colM  = fields.length > 12 ? fields[12] : null; // Plantilla Responsables de Turno Ocupada (M)
-                    const colO  = fields.length > 14 ? fields[14] : null; // Talento GES ALTAS (O)
-                    const colP  = fields.length > 15 ? fields[15] : null; // Talento GES CERTIFICACION (P)
-                    const colQ  = fields.length > 16 ? fields[16] : null; // Colaborador mystery (Q)
-                    const colY  = fields.length > 24 ? fields[24] : null; // CERTIFICACION GERENTES % (Y)
-                    const colZ  = fields.length > 25 ? fields[25] : null; // CERTIFICACION RESPONSABLES % (Z)
-                    const colAE = fields.length > 30 ? fields[30] : null; // ROTACION(BAJAS) % (AE)
+                    // Estructura oct-2026: A=Mes B=RegReg C=Dist D=Formador E=GerNeg F=Cadena G=Negocio
+                    // H-K=Plantilla Aut (Ger/Sub/Resp/Col) L-O=Plantilla Ocup (Ger/Sub/Resp/Col)
+                    // P=TalentoAltas Q=TalentoCert R=ColMystery S=Mystery T=LaGas U=Imagen V=Equipos
+                    // W=Servicio X=Operacion Y=Promos Z=CertGer AA=CertSub AB=OcupPlant
+                    // AC-AF=Sucesion(total/Ger/Sub/Resp) AG=Rotacion
+                    const colI  = fields.length > 9  ? fields[9]  : null; // Plantilla aut. Resp de Turno (J=9)
+                    const colM  = fields.length > 13 ? fields[13] : null; // Plantilla Resp de Turno Ocupada (N=13)
+                    const colO  = fields.length > 15 ? fields[15] : null; // Talento GES ALTAS (P=15)
+                    const colP  = fields.length > 16 ? fields[16] : null; // Talento GES CERTIFICACION (Q=16)
+                    const colQ  = fields.length > 17 ? fields[17] : null; // Colaborador mystery (R=17)
+                    const colY  = fields.length > 25 ? fields[25] : null; // CERTIFICACION GERENTES (Z=25)
+                    const colZ  = fields.length > 26 ? fields[26] : null; // CERTIFICACION SUBGERENTES (AA=26)
+                    const colAE = fields.length > 31 ? fields[31] : null; // ROTACION(BAJAS) (AG=31)
 
                     state.rawData = results.data.map(row => {
                         const cleanedRow = {};
@@ -424,8 +428,13 @@
                         Object.keys(row).forEach(k => {
                             if(!k) return;
                             let cleanK = k.trim();
-                            if(cleanK === 'ROTACION (BAJAS)') cleanK = 'ROTACION(BAJAS)';
+                            if(cleanK === 'ROTACION (BAJAS)' || cleanK === 'ROTACION(BAJAS)') cleanK = 'ROTACION(BAJAS)';
                             if(cleanK.includes('Colaborador que recib')) cleanK = 'Colaborador mystery';
+                            // Normalizar mayúsculas/minúsculas en columnas Talento Ges
+                            if(cleanK === 'Talento Ges ALTAS') cleanK = 'Talento GES ALTAS';
+                            if(cleanK === 'Talento Ges CERTIFICACION') cleanK = 'Talento GES CERTIFICACION';
+                            // Normalizar CERTIFICACION SUBGERENTES → nombre interno
+                            if(cleanK === 'CERTIFICACION SUBGERENTES') cleanK = 'CERTIFICACION RESPONSABLES';
                             cleanedRow[cleanK] = row[k];
                         });
 
@@ -846,8 +855,8 @@
                 return Math.round(rawSum / numMonths);
             };
 
-            // Ocupacion
-            if (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS') {
+            // Ocupacion — oculto por solicitud
+            if (false && (ind === 'all' || ind === 'OCUPACION DE PLANTILLAS')) {
                 const gerentesOcu = getMonthlyAvg('Plantilla Gerentes Ocupada');
                 const gerentesAut = getMonthlyAvg('Plantilla autorizada Gerentes');
                 const subGerOcu   = getMonthlyAvg('Plantilla Subgerentes Ocupada');
@@ -924,31 +933,24 @@
                         <span>Plantilla referencia: <b class="text-gray-700">${plantillaTotal}</b> col.</span>
                     </div>
                 `;
-                html += buildCardHTML('Rotación', rotAvg, CONFIG.metas['ROTACION(BAJAS)'], rotSubtext, null, 'warning');
+                // Rotación — oculto por solicitud
+                // html += buildCardHTML('Rotación', rotAvg, ...);
 
-                // Sucesión (Sin contemplar Subgerentes)
-                const sucGerentes = getMonthlyAvg('COLABORADORES EN SUCESION GERENTES');
-                const sucResponsables = getMonthlyAvg('COLABORADORES EN SUCESION RESPONSABLES');
-                const totalSucesion = sucGerentes + sucResponsables;
-                
-                html += `
-                <div class="bg-white border-gray-100 p-5 rounded-xl border shadow-sm flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-3">
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">EN SUCESIÓN</h4>
-                        <i data-lucide="graduation-cap" class="w-4 h-4 text-brand-blue"></i>
-                    </div>
-                    <div class="mb-2">
-                        <span class="text-3xl font-extrabold text-gray-800 tracking-tight">${totalSucesion}</span>
-                    </div>
-                    <div class="text-[10px] font-medium text-gray-500 mt-auto flex flex-col gap-1">
-                        <div class="flex justify-between border-b border-gray-50 pb-0.5"><span>Para Gerente:</span> <b class="text-gray-700">${sucGerentes}</b></div>
-                        <div class="flex justify-between"><span>Para Responsable:</span> <b class="text-gray-700">${sucResponsables}</b></div>
-                    </div>
-                </div>`;
+                // EN SUCESIÓN — oculto por solicitud
 
-                // Sin Gerente - AHORA EVALÚA SOLO EL ESTADO MÁS RECIENTE
+                // Sin Gerente — basado en campo Gerente de Negocio del mes más reciente con dato
+                const mesOrdKpi = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
                 const latestData = getLatestRecordPerBranch(data);
-                const sinGerente = latestData.filter(d => (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)).length;
+                const sinGerente = latestData.filter(d => {
+                    const negocio = d['Negocio'];
+                    if (!negocio) return false;
+                    const records = data
+                        .filter(r => r['Negocio'] === negocio && r['Gerente de Negocio'] !== undefined)
+                        .sort((a, b) => (mesOrdKpi[(b['Mes']||'').toLowerCase()]||0) - (mesOrdKpi[(a['Mes']||'').toLowerCase()]||0));
+                    if (!records.length) return false;
+                    const ger = (records[0]['Gerente de Negocio'] || '').toString().trim();
+                    return !ger || ger === '-' || ger === 'Sin Gerente' || ger === 'S/G';
+                }).length;
                 const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
                 
                 html += `
@@ -981,7 +983,8 @@
                         <span><b class="text-gray-700">Auditoría, Mystery y Cert. Gerencial</b></span>
                     </div>
                 `;
-                html += buildCardHTML('Desempeño Global', globalAvg, 90, globalSubtext, 'activity');
+                // Desempeño Global — oculto por solicitud
+                // html += buildCardHTML('Desempeño Global', globalAvg, 90, globalSubtext, 'activity');
             }
 
             container.innerHTML = html;
