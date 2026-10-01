@@ -1092,12 +1092,14 @@
             const containerRadar = document.getElementById('container-radar');
             const containerRanking = document.getElementById('container-ranking');
 
-            if (!hasLaGas) {
+            const mesEspecifico = state.filters.mes !== 'all';
+
+            if (!hasLaGas || mesEspecifico) {
                 containerAudMys.classList.add('hidden');
                 containerRadar.classList.add('hidden');
             } else {
                 containerAudMys.classList.remove('hidden');
-                
+
                 if (ind === 'all') {
                     cardAudLine.style.display = 'block';
                     cardMysLine.style.display = 'block';
@@ -1106,7 +1108,7 @@
                     cardAudLine.style.display = (ind === 'LA GAS Auditoria') ? 'block' : 'none';
                     cardMysLine.style.display = (ind === 'PROTOCOLO MYSTERY') ? 'block' : 'none';
                     containerRadar.classList.toggle('hidden', ind !== 'LA GAS Auditoria');
-                    
+
                     if(cardAudLine.style.display === 'none' && cardMysLine.style.display === 'none') {
                         containerAudMys.classList.add('hidden');
                     }
