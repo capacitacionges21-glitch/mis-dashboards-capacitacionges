@@ -939,16 +939,15 @@
 
                 // EN SUCESIÓN — oculto por solicitud
 
-                // Sin Gerente — sucursales sin ningún registro con gerente asignado
-                const latestData = getLatestRecordPerBranch(data);
-                const uniqueBranchNames = [...new Set(data.map(d => d['Negocio']).filter(Boolean))];
-                const sinGerente = uniqueBranchNames.filter(negocio => {
-                    const conGerente = data.filter(r => {
-                        if (r['Negocio'] !== negocio) return false;
-                        const g = (r['Gerente de Negocio'] || '').toString().trim();
-                        return g !== '' && g !== '-' && g.toUpperCase() !== 'SIN GERENTE';
-                    });
-                    return conGerente.length === 0;
+                // Sin Gerente — columna E (Gerente de Negocio) del mes más reciente por sucursal
+                const mesOrdKpi = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
+                const isSinGerente = (g) => { const v = (g||'').toString().trim(); return v==='' || v==='-' || v.toUpperCase()==='SIN GERENTE'; };
+                const uniqueBranchesKpi = [...new Set(data.map(d=>d['Negocio']).filter(Boolean))];
+                const sinGerente = uniqueBranchesKpi.filter(negocio => {
+                    const rec = data
+                        .filter(r => r['Negocio'] === negocio)
+                        .sort((a,b) => (mesOrdKpi[(b['Mes']||'').toLowerCase()]||0) - (mesOrdKpi[(a['Mes']||'').toLowerCase()]||0));
+                    return rec.length === 0 || isSinGerente(rec[0]['Gerente de Negocio']);
                 }).length;
                 const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
                 
@@ -1003,12 +1002,19 @@
                 alertsContainer.parentElement.classList.remove('hidden');
             }
 
-            // AHORA extraemos el estado del MES MÁS RECIENTE para no arrastrar alertas viejas
-            const uniqueBranches = getLatestRecordPerBranch(state.filteredData);
+            // Estado del mes más reciente por sucursal, basado en columna E (Gerente de Negocio)
+            const mesOrdAl = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
+            const isSinGte = (g) => { const v=(g||'').toString().trim(); return v===''||v==='-'||v.toUpperCase()==='SIN GERENTE'; };
+            const allBranchNames = [...new Set(state.filteredData.map(d=>d['Negocio']).filter(Boolean))];
+            const latestByBranch = allBranchNames.map(negocio => {
+                const recs = state.filteredData
+                    .filter(r => r['Negocio'] === negocio)
+                    .sort((a,b) => (mesOrdAl[(b['Mes']||'').toLowerCase()]||0) - (mesOrdAl[(a['Mes']||'').toLowerCase()]||0));
+                return recs.length ? recs[0] : null;
+            }).filter(Boolean);
+            const uniqueBranches = latestByBranch;
 
-            const sinGerenteList = uniqueBranches.filter(d => 
-                (d['Plantilla autorizada Gerentes'] > 0) && (!d['Plantilla Gerentes Ocupada'] || d['Plantilla Gerentes Ocupada'] <= 0)
-            );
+            const sinGerenteList = uniqueBranches.filter(d => isSinGte(d['Gerente de Negocio']));
 
             if(sinGerenteList.length === 0) {
                 alertsContainer.classList.add('hidden');
