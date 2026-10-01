@@ -43,6 +43,7 @@
     <!-- Librerías Externas -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -428,7 +429,7 @@
                         Object.keys(row).forEach(k => {
                             if(!k) return;
                             let cleanK = k.trim();
-                            if(cleanK === 'ROTACION (BAJAS)' || cleanK === 'ROTACION(BAJAS)') cleanK = 'ROTACION(BAJAS)';
+                            if(cleanK === 'ROTACION (BAJAS)' || cleanK === 'ROTACION(BAJAS)' || cleanK.replace(/[\n\r]+/g,' ') === 'ROTACION (BAJAS)') cleanK = 'ROTACION(BAJAS)';
                             if(cleanK.includes('Colaborador que recib')) cleanK = 'Colaborador mystery';
                             // Normalizar mayúsculas/minúsculas en columnas Talento Ges
                             if(cleanK === 'Talento Ges ALTAS') cleanK = 'Talento GES ALTAS';
@@ -942,12 +943,11 @@
                 const latestData = getLatestRecordPerBranch(data);
                 const uniqueBranchNames = [...new Set(data.map(d => d['Negocio']).filter(Boolean))];
                 const sinGerente = uniqueBranchNames.filter(negocio => {
-                    const conGerente = data.filter(r =>
-                        r['Negocio'] === negocio &&
-                        r['Gerente de Negocio'] &&
-                        r['Gerente de Negocio'].toString().trim() !== '' &&
-                        r['Gerente de Negocio'].toString().trim() !== '-'
-                    );
+                    const conGerente = data.filter(r => {
+                        if (r['Negocio'] !== negocio) return false;
+                        const g = (r['Gerente de Negocio'] || '').toString().trim();
+                        return g !== '' && g !== '-' && g.toUpperCase() !== 'SIN GERENTE';
+                    });
                     return conGerente.length === 0;
                 }).length;
                 const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
