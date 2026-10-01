@@ -939,15 +939,15 @@
 
                 // EN SUCESIÓN — oculto por solicitud
 
-                // Sin Gerente — columna E (Gerente de Negocio) del mes más reciente por sucursal
+                // Sin Gerente — columna E: toma el último mes donde E tiene valor explícito
                 const mesOrdKpi = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
-                const isSinGerente = (g) => { const v = (g||'').toString().trim(); return v==='' || v==='-' || v.toUpperCase()==='SIN GERENTE'; };
+                const isSinGerente = (g) => { const v=(g||'').toString().trim(); return v===''||v==='-'||v.toUpperCase()==='SIN GERENTE'; };
                 const uniqueBranchesKpi = [...new Set(data.map(d=>d['Negocio']).filter(Boolean))];
                 const sinGerente = uniqueBranchesKpi.filter(negocio => {
-                    const rec = data
-                        .filter(r => r['Negocio'] === negocio)
+                    const conValor = data
+                        .filter(r => r['Negocio']===negocio && (r['Gerente de Negocio']||'').toString().trim()!=='')
                         .sort((a,b) => (mesOrdKpi[(b['Mes']||'').toLowerCase()]||0) - (mesOrdKpi[(a['Mes']||'').toLowerCase()]||0));
-                    return rec.length === 0 || isSinGerente(rec[0]['Gerente de Negocio']);
+                    return conValor.length===0 || isSinGerente(conValor[0]['Gerente de Negocio']);
                 }).length;
                 const pctSinGerente = totalSuc ? ((sinGerente/totalSuc)*100).toFixed(1) : 0;
                 
@@ -1002,19 +1002,21 @@
                 alertsContainer.parentElement.classList.remove('hidden');
             }
 
-            // Estado del mes más reciente por sucursal, basado en columna E (Gerente de Negocio)
+            // Alertas Sin Gerente — columna E: último mes con valor explícito por sucursal
             const mesOrdAl = { 'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12 };
             const isSinGte = (g) => { const v=(g||'').toString().trim(); return v===''||v==='-'||v.toUpperCase()==='SIN GERENTE'; };
             const allBranchNames = [...new Set(state.filteredData.map(d=>d['Negocio']).filter(Boolean))];
-            const latestByBranch = allBranchNames.map(negocio => {
-                const recs = state.filteredData
-                    .filter(r => r['Negocio'] === negocio)
+            const sinGerenteList = allBranchNames.map(negocio => {
+                const conValor = state.filteredData
+                    .filter(r => r['Negocio']===negocio && (r['Gerente de Negocio']||'').toString().trim()!=='')
                     .sort((a,b) => (mesOrdAl[(b['Mes']||'').toLowerCase()]||0) - (mesOrdAl[(a['Mes']||'').toLowerCase()]||0));
-                return recs.length ? recs[0] : null;
+                if (conValor.length===0 || isSinGte(conValor[0]['Gerente de Negocio'])) {
+                    const lastRec = state.filteredData.filter(r=>r['Negocio']===negocio).sort((a,b)=>(mesOrdAl[(b['Mes']||'').toLowerCase()]||0)-(mesOrdAl[(a['Mes']||'').toLowerCase()]||0))[0];
+                    return lastRec || null;
+                }
+                return null;
             }).filter(Boolean);
-            const uniqueBranches = latestByBranch;
-
-            const sinGerenteList = uniqueBranches.filter(d => isSinGte(d['Gerente de Negocio']));
+            const uniqueBranches = sinGerenteList; // kept for sucesionList below
 
             if(sinGerenteList.length === 0) {
                 alertsContainer.classList.add('hidden');
