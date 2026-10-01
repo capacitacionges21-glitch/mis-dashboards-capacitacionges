@@ -1520,7 +1520,9 @@
                 .sort((a, b) => b.avg - a.avg);
 
             const containerFormador = document.getElementById('container-formador');
-            if (formadorEntries.length === 0) {
+            const ocultarFormador = formadorEntries.length === 0 ||
+                (state.filters.mes !== 'all' && state.filters.formador !== 'all');
+            if (ocultarFormador) {
                 containerFormador.classList.add('hidden');
             } else {
                 containerFormador.classList.remove('hidden');
