@@ -815,7 +815,8 @@
             'Centura': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=250274755&single=true&output=csv',
             'Moteburger': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=98366889&single=true&output=csv',
             'Churchs': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=624506431&single=true&output=csv',
-            'TiendasGes': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=500898991&single=true&output=csv'
+            'TiendasGes': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=500898991&single=true&output=csv',
+            'PizzaHut': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=738537704&single=true&output=csv'
         };
 
         const BKU_SEMANAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBS19xUVJ0shZw_kzvRzgz6DsDtNIrB97Vy0BuLn1DJE6TmoGfSQqzx-FI3tJah7hKOtpCqDLDQkNp/pub?gid=710760441&single=true&output=csv';
@@ -835,6 +836,7 @@
             'moteburger': { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
             'centura':    { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' },
             'tiendasges': { m1: '#166534', m2: '#4ADE80', m3: '#BBF7D0' },
+            'pizzahut':   { m1: '#CC0000', m2: '#FF6B6B', m3: '#FFB3B3' },
             'default':    { m1: '#2F5597', m2: '#8FAADC', m3: '#B4C6E7' }
         };
 
@@ -963,12 +965,13 @@
                         clearTimeout(timeout);
                         const cleanRows = [];
                         const isTiendasGes = sourceName.toLowerCase().includes('tiendas');
-                        const minRowLength = isTiendasGes ? 10 : 20;
+                        const isPizzaHut   = sourceName.toLowerCase().includes('pizza');
+                        const minRowLength = (isTiendasGes || isPizzaHut) ? 10 : 20;
                         const rowsToProcess = results.data.slice(1).filter(row => row.length >= minRowLength);
 
                         rowsToProcess.forEach(row => {
-                            const isChurchs  = !isTiendasGes && sourceName.toLowerCase().includes('church');
-                            const isMoteNorte = !isTiendasGes && !isChurchs && sourceName.toLowerCase().includes('centura');
+                            const isChurchs  = !isTiendasGes && !isPizzaHut && sourceName.toLowerCase().includes('church');
+                            const isMoteNorte = !isTiendasGes && !isPizzaHut && !isChurchs && sourceName.toLowerCase().includes('centura');
                             let srv = null, m2 = null, m3 = null;
                             let rev26r1 = { std: null, re: null, extra: null, re2: null, ccv: null }, rev26r2 = { std: null, re: null, extra: null, re2: null, ccv: null };
                             let rec26r1 = null, rec26r2 = null, bajas = 0;
@@ -989,28 +992,47 @@
                             let gerP, subP, colP, totalPlantillaOcupada;
                             let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null, cofepris = null;
                             let certGerNum = null, certSubNum = null;
-                            let gerenteStr = isTiendasGes
-                                ? (row[3] && row[3].toString().trim() !== '' ? row[3].toString().trim() : 'Sin Gerente')
-                                : (row[4] && row[4].toString().trim() !== '' ? row[4].toString().trim() : 'Sin Gerente');
+                            // Todas las fuentes: A=Mes,B=Regional,C=Distrito,D=Formador,E=Gerente,F=Cadena,G=Negocio
+                            let gerenteStr = row[4] && row[4].toString().trim() !== '' ? row[4].toString().trim() : 'Sin Gerente';
                             if (gerenteStr.toUpperCase() === 'S/G') gerenteStr = 'Sin Gerente';
 
                             if (isTiendasGes) {
-                                // Columnas A-P: G=gerAut, H=colAut (sin sub), I=gerP, J=colP, K=altas, L=TalGES%, M=certGer%, N=ocup%, O=suc, P=rot%
-                                gerAut = parseCount(row[6]) || 0; subAut = 0; colAut = parseCount(row[7]) || 0;
+                                // Col D=Formador(nuevo), E=Gerente, F=Cadena, G=Negocio
+                                // H=gerAut, I=colAut (sin sub), J=gerP, K=colP, L=altas, M=TalGES%, N=certGer%, O=ocup%, P=suc, Q=rot%
+                                gerAut = parseCount(row[7]) || 0; subAut = 0; colAut = parseCount(row[8]) || 0;
                                 totalPlantillaAutorizada = gerAut + colAut;
-                                gerP = parseCount(row[8]) || 0; subP = 0; colP = parseCount(row[9]) || 0;
+                                gerP = parseCount(row[9]) || 0; subP = 0; colP = parseCount(row[10]) || 0;
                                 totalPlantillaOcupada = gerP + colP;
-                                altasCount = parseCount(row[10]);
-                                m2 = parsePct(row[11]); // Talento GES CERTIFICACION %
-                                certGerNum = parseCount(row[12]); // Conteo de gerentes certificados
+                                altasCount = parseCount(row[11]);
+                                m2 = parsePct(row[12]); // Talento GES CERTIFICACION %
+                                certGerNum = parseCount(row[13]); // Conteo de gerentes certificados
                                 certSubNum = 0;
                                 rrhh.certGerencial = (certGerNum !== null && gerP > 0) ? (certGerNum / gerP) * 100 : null;
-                                rrhh.ocPlantilla = parsePct(row[13]);
-                                rrhh.sucesionGer = parseCount(row[14]) || 0; rrhh.sucesionSub = 0;
+                                rrhh.ocPlantilla = parsePct(row[14]);
+                                rrhh.sucesionGer = parseCount(row[15]) || 0; rrhh.sucesionSub = 0;
                                 rrhh.colSucesion = rrhh.sucesionGer;
-                                // Rotación viene como % directo: back-calculamos bajas para la tarjeta
-                                const rotPct = parsePct(row[15]);
+                                const rotPct = parsePct(row[16]);
                                 bajas = (rotPct !== null && totalPlantillaOcupada > 0) ? Math.round(rotPct * totalPlantillaOcupada / 100) : 0;
+                            } else if (isPizzaHut) {
+                                // Col D=Formador, E=Gerente, F=Cadena, G=Negocio
+                                // H=gerAut, I=subAut, J=colAut, K=gerP, L=subP, M=colP
+                                // N=gerSrv, O=subSrv, P=SerSafe%, Q=colHutflix, R=HutflixAltas, S=Hutflix%, T=HutUnivColabs, U=HutUnivAltas
+                                gerAut = parseCount(row[7]) || 0; subAut = parseCount(row[8]) || 0; colAut = parseCount(row[9]) || 0;
+                                totalPlantillaAutorizada = gerAut + subAut + colAut;
+                                gerP = parseCount(row[10]) || 0; subP = parseCount(row[11]) || 0; colP = parseCount(row[12]) || 0;
+                                totalPlantillaOcupada = gerP + subP + colP;
+                                gerSrv = parseCount(row[13]); subSrv = parseCount(row[14]);
+                                srv = parsePct(row[15]);
+                                bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
+                                m2 = parsePct(row[18]);
+                                m3 = parsePct(row[20]);
+                                certGerNum = gerSrv; certSubNum = subSrv;
+                                rrhh.ocPlantilla = (totalPlantillaAutorizada > 0 && totalPlantillaOcupada > 0) ? (totalPlantillaOcupada / totalPlantillaAutorizada * 100) : null;
+                                rrhh.sucesionGer = 0; rrhh.sucesionSub = 0; rrhh.colSucesion = 0;
+                                bajas = 0;
+                                if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
+                                    rrhh.certGerencial = (((certGerNum || 0) + (certSubNum || 0)) / totalPlantillaOcupada) * 100;
+                                } else rrhh.certGerencial = null;
                             } else {
                                 gerAut = parseCount(row[7]) || 0; subAut = parseCount(row[8]) || 0; colAut = parseCount(row[9]) || 0;
                                 totalPlantillaAutorizada = gerAut + subAut + colAut;
@@ -1084,8 +1106,8 @@
                             if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, x=>x.v) : null;
-                            let rawBajas = isTiendasGes ? null : (isChurchs ? parseCount(row[27]) : (isMoteNorte ? parseCount(row[36]) : parseCount(row[37])));
-                            let rawAltas = isTiendasGes ? parseCount(row[10]) : (isMoteNorte ? parseCount(row[17]) : parseCount(row[18]));
+                            let rawBajas = (isTiendasGes || isPizzaHut) ? null : (isChurchs ? parseCount(row[27]) : (isMoteNorte ? parseCount(row[36]) : parseCount(row[37])));
+                            let rawAltas = isTiendasGes ? parseCount(row[11]) : (isPizzaHut ? parseCount(row[17]) : (isMoteNorte ? parseCount(row[17]) : parseCount(row[18])));
                             const hasAnyData = srv !== null || cofepris !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
                             
                             if (!hasAnyData) return; 
@@ -1098,10 +1120,10 @@
                             cleanRows.push({
                                 mes: mesStr, trimestre: tri, region: row[1] ? row[1].toString().trim() : 'S/R',
                                 distrito: row[2] ? row[2].toString().trim() : 'S/D', gerente: gerenteStr,
-                                formador: isTiendasGes ? 'S/F' : (row[3] ? row[3].toString().trim() : 'S/F'),
-                                cadena: mapChainName(isTiendasGes ? (row[4] ? row[4].toString().trim() : sourceName) : (row[5] ? row[5].toString().trim() : sourceName)),
-                                sucursal: isTiendasGes ? (row[5] ? row[5].toString().trim() : 'S/S') : (row[6] ? row[6].toString().trim() : 'S/S'),
-                                gerente_sucursal: (isTiendasGes ? (row[5] ? row[5].toString().trim() : 'S/S') : (row[6] ? row[6].toString().trim() : 'S/S')) + ' - ' + gerenteStr,
+                                formador: row[3] ? row[3].toString().trim() : 'S/F',
+                                cadena: mapChainName(row[5] ? row[5].toString().trim() : sourceName),
+                                sucursal: row[6] ? row[6].toString().trim() : 'S/S',
+                                gerente_sucursal: (row[6] ? row[6].toString().trim() : 'S/S') + ' - ' + gerenteStr,
                                 gerAut, subAut, colAut, totalPlantillaAutorizada, gerP, subP, colP, totalPlantillaOcupada,
                                 altasCount, pctAltas, gerSrv, subSrv, bkuCol, cofepris, certGerNum, certSubNum,
                                 srv, m2, m3, promedio, rev26r1, rev26r2, rec26r1, rec26r2, bajas,
@@ -1266,14 +1288,15 @@
             FilteredData.forEach(d => uniqueCadenas.add(d.cadena.toLowerCase()));
             const cadenas = Array.from(uniqueCadenas);
             
-            let isChurchs = true, isMoteburger = true, isCentura = true, isTiendasGes = true;
-            if (cadenas.length === 0) { isChurchs = false; isMoteburger = false; isCentura = false; isTiendasGes = false; }
+            let isChurchs = true, isMoteburger = true, isCentura = true, isTiendasGes = true, isPizzaHut = true;
+            if (cadenas.length === 0) { isChurchs = false; isMoteburger = false; isCentura = false; isTiendasGes = false; isPizzaHut = false; }
             else {
                 cadenas.forEach(c => {
                     if (!c.includes('church') && !c.includes('pte')) isChurchs = false;
                     if (!c.includes('centro')) isMoteburger = false;
                     if (!c.includes('norte')) isCentura = false;
                     if (!c.includes('tiendas')) isTiendasGes = false;
+                    if (!c.includes('pizza') && !c.includes('hut')) isPizzaHut = false;
                 });
             }
 
@@ -1281,6 +1304,7 @@
             let subtitleRevRec = "BK Norte y BK Centro/Sur";
 
             if (isTiendasGes && cadenas.length > 0) { activePalette = PALETTES['tiendasges']; labelM2 = "Talento GES"; labelM3 = "N/A"; labelAltas = "Talento GES ALTAS"; subtitleRevRec = "Tiendas GES"; }
+            else if (isPizzaHut && cadenas.length > 0) { activePalette = PALETTES['pizzahut']; labelM2 = "Hutflix"; labelM3 = "Hut University"; labelAltas = "Hutflix ALTAS"; subtitleRevRec = "Pizza Hut"; }
             else if (isChurchs && cadenas.length > 0) { activePalette = PALETTES['churchs']; labelM2 = "PTE"; labelM3 = "OER / RAV"; labelAltas = "PTE ALTAS"; }
             else if (isMoteburger && cadenas.length > 0) { activePalette = PALETTES['moteburger']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Centro/Sur"; }
             else if (isCentura && cadenas.length > 0) { activePalette = PALETTES['centura']; labelM2 = "BKU"; labelM3 = "REV Standard"; labelAltas = "BKU ALTAS"; subtitleRevRec = "BK Norte"; }
@@ -1312,11 +1336,12 @@
             const subRev = document.getElementById('subtitle-rev');
             if (subRev) subRev.innerText = subtitleRevRec;
 
-            let hasChurchsCheck = false, hasMoteCenturaCheck = false, hasTiendasGesCheck = false;
+            let hasChurchsCheck = false, hasMoteCenturaCheck = false, hasTiendasGesCheck = false, hasPizzaHutCheck = false;
             FilteredData.forEach(d => {
                 const cad = d.cadena.toLowerCase();
                 if (cad.includes('church') || cad.includes('pte')) hasChurchsCheck = true;
                 else if (cad.includes('tiendas')) hasTiendasGesCheck = true;
+                else if (cad.includes('pizza') || cad.includes('hut')) hasPizzaHutCheck = true;
                 else hasMoteCenturaCheck = true;
             });
 
