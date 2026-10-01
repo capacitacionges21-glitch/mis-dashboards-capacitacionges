@@ -168,6 +168,12 @@
                     </select>
                 </div>
                 <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Formador</label>
+                    <select id="filter-formador" class="w-full bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg focus:border-brand-blue focus:ring-1 focus:ring-brand-blue block p-2 outline-none" onchange="applyFilters()">
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Gerente / Sucursal</label>
                     <select id="filter-sucursal" class="w-full bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg focus:border-brand-blue focus:ring-1 focus:ring-brand-blue block p-2 outline-none" onchange="applyFilters()">
                         <option value="all">Todos</option>
@@ -226,6 +232,20 @@
             </div>
             <div class="relative w-full h-[400px]">
                 <canvas id="sucursalChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 3b. Desempeño por Formador -->
+        <div id="container-formador" class="card p-6 mb-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-brand-blue rounded-full"></div>
+                    <h3 class="font-bold text-brand-blue text-lg">Desempeño por Formador</h3>
+                    <span id="formador-chart-badge" class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded">CUMPLIMIENTO GENERAL</span>
+                </div>
+            </div>
+            <div class="relative w-full h-[300px]">
+                <canvas id="formadorChart"></canvas>
             </div>
         </div>
 
@@ -361,6 +381,7 @@
             auditoriaChartInstance: null,
             mysteryChartInstance: null,
             sucursalChartInstance: null,
+            formadorChartInstance: null,
             puntosAuditoriaChartInstance: null
         };
 
@@ -512,6 +533,7 @@
             populateSelect('filter-cadena', getUniqueValues('Cadena'));
             populateSelect('filter-region', getUniqueValues('Gerente Regional'));
             populateSelect('filter-distrito', getUniqueValues('Gerente de Distrito'));
+            populateSelect('filter-formador', getUniqueValues('Formador'));
             populateSelect('filter-sucursal', getUniqueValues('Negocio'));
         }
 
@@ -550,23 +572,28 @@
             if (reg !== 'all') data = data.filter(d => d['Gerente Regional'] === reg);
             if (dist !== 'all') data = data.filter(d => d['Gerente de Distrito'] === dist);
 
+            const formadores = data.map(d => d['Formador']).filter(Boolean);
+            populateSelect('filter-formador', [...new Set(formadores)].sort());
             const sucursales = data.map(d => d['Negocio']);
             populateSelect('filter-sucursal', [...new Set(sucursales)].sort());
-            
+
+            document.getElementById('filter-formador').value = 'all';
             document.getElementById('filter-sucursal').value = 'all';
             applyFilters();
         }
 
         function resetFilters() {
             ['trimestre', 'mes', 'cadena', 'region', 'indicador'].forEach(f => document.getElementById(`filter-${f}`).value = 'all');
-            
+
             populateSelect('filter-mes', getUniqueValues('Mes'));
             populateSelect('filter-distrito', getUniqueValues('Gerente de Distrito'));
+            populateSelect('filter-formador', getUniqueValues('Formador'));
             populateSelect('filter-sucursal', getUniqueValues('Negocio'));
-            
+
             document.getElementById('filter-distrito').value = 'all';
+            document.getElementById('filter-formador').value = 'all';
             document.getElementById('filter-sucursal').value = 'all';
-            
+
             applyFilters();
         }
 
@@ -577,6 +604,7 @@
                 cadena: document.getElementById('filter-cadena').value,
                 region: document.getElementById('filter-region').value,
                 distrito: document.getElementById('filter-distrito').value,
+                formador: document.getElementById('filter-formador').value,
                 sucursal: document.getElementById('filter-sucursal').value,
                 indicador: document.getElementById('filter-indicador').value
             };
@@ -587,6 +615,7 @@
                        (state.filters.cadena === 'all' || row['Cadena'] === state.filters.cadena) &&
                        (state.filters.region === 'all' || row['Gerente Regional'] === state.filters.region) &&
                        (state.filters.distrito === 'all' || row['Gerente de Distrito'] === state.filters.distrito) &&
+                       (state.filters.formador === 'all' || row['Formador'] === state.filters.formador) &&
                        (state.filters.sucursal === 'all' || row['Negocio'] === state.filters.sucursal);
             });
 
@@ -1430,17 +1459,14 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { 
+                    plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     const stats = statsSucursal[context.dataIndex];
                                     if (!stats) return '';
-                                    
                                     const formatVal = val => (val !== null && val !== undefined && !isNaN(val)) ? Math.round(val) + '%' : 'N/A';
-                                    
-                                    // Si no hay filtro específico, mostramos desglose, si no, mostramos solo ese indicador
                                     if (ind === 'all') {
                                         return [
                                             `Cumplimiento General: ${Math.round(stats.avg)}%`,
@@ -1464,6 +1490,56 @@
                     }
                 }
             });
+
+            // Gráfica por Formador
+            document.getElementById('formador-chart-badge').innerText = metricLabel;
+            const formadorMap = {};
+            state.filteredData.forEach(row => {
+                const f = (row['Formador'] || '').toString().trim() || 'Sin Formador';
+                if (f === 'S/F' || f === '') return;
+                const val = row[metricKey];
+                if (val === null || val === undefined || isNaN(val)) return;
+                if (!formadorMap[f]) formadorMap[f] = { sum: 0, count: 0 };
+                formadorMap[f].sum += val;
+                formadorMap[f].count++;
+            });
+            const formadorEntries = Object.entries(formadorMap)
+                .map(([name, d]) => ({ name, avg: d.sum / d.count }))
+                .sort((a, b) => b.avg - a.avg);
+
+            const containerFormador = document.getElementById('container-formador');
+            if (formadorEntries.length === 0) {
+                containerFormador.classList.add('hidden');
+            } else {
+                containerFormador.classList.remove('hidden');
+                const ctxForm = document.getElementById('formadorChart').getContext('2d');
+                if (state.formadorChartInstance) state.formadorChartInstance.destroy();
+                state.formadorChartInstance = new Chart(ctxForm, {
+                    type: 'bar',
+                    data: {
+                        labels: formadorEntries.map(d => d.name.length > 20 ? d.name.substring(0, 20) + '…' : d.name),
+                        datasets: [{
+                            label: metricLabel,
+                            data: formadorEntries.map(d => Math.round(d.avg * 10) / 10),
+                            backgroundColor: CONFIG.colors.secondary || '#8FAADC',
+                            borderRadius: 4
+                        }]
+                    },
+                    plugins: [ChartDataLabels],
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: { anchor: 'end', align: 'top', formatter: v => v.toFixed(1) + '%', font: { weight: '700', size: 10 }, color: '#1e3a5f' },
+                            tooltip: { callbacks: { label: ctx => `${metricLabel}: ${ctx.raw.toFixed(1)}%` } }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, display: false },
+                            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 30 } }
+                        }
+                    }
+                });
+            }
         }
 
         function renderTopBottom() {
