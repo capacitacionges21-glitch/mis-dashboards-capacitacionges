@@ -1014,9 +1014,11 @@
                                 const rotPct = parsePct(row[16]);
                                 bajas = (rotPct !== null && totalPlantillaOcupada > 0) ? Math.round(rotPct * totalPlantillaOcupada / 100) : 0;
                             } else if (isPizzaHut) {
-                                // Col D=Formador, E=Gerente, F=Cadena, G=Negocio
-                                // H=gerAut, I=subAut, J=colAut, K=gerP, L=subP, M=colP
-                                // N=gerSrv, O=subSrv, P=SerSafe%, Q=colHutflix, R=HutflixAltas, S=Hutflix%, T=HutUnivColabs, U=HutUnivAltas
+                                // A=Mes B=GerReg C=GerDist D=Formador E=GerNeg F=Cadena G=Negocio
+                                // H(7)=gerAut I(8)=subAut J(9)=colAut K(10)=gerP L(11)=subP M(12)=colP
+                                // N(13)=gerSrv O(14)=subSrv P(15)=ServSafe% Q(16)=HutflixColabs R(17)=HutflixAltas
+                                // S(18)=Hutflix% T(19)=HutUnivColabs U(20)=HutUnivAltas V(21)=HutUniv%
+                                // W(22)=ACE X(23)=CertGer Y(24)=CertSub Z(25)=OcupPlant AA(26)=SucGer AB(27)=SucSub AC(28)=Bajas
                                 gerAut = parseCount(row[7]) || 0; subAut = parseCount(row[8]) || 0; colAut = parseCount(row[9]) || 0;
                                 totalPlantillaAutorizada = gerAut + subAut + colAut;
                                 gerP = parseCount(row[10]) || 0; subP = parseCount(row[11]) || 0; colP = parseCount(row[12]) || 0;
@@ -1024,12 +1026,14 @@
                                 gerSrv = parseCount(row[13]); subSrv = parseCount(row[14]);
                                 srv = parsePct(row[15]);
                                 bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
-                                m2 = parsePct(row[18]);
-                                m3 = parsePct(row[20]);
-                                certGerNum = gerSrv; certSubNum = subSrv;
-                                rrhh.ocPlantilla = (totalPlantillaAutorizada > 0 && totalPlantillaOcupada > 0) ? (totalPlantillaOcupada / totalPlantillaAutorizada * 100) : null;
-                                rrhh.sucesionGer = 0; rrhh.sucesionSub = 0; rrhh.colSucesion = 0;
-                                bajas = 0;
+                                m2 = parsePct(row[18]);          // Hutflix CERTIFICACION%
+                                m3 = parsePct(row[21]);          // Hut University CERTIFICACION% (V, no U)
+                                certGerNum = parseCount(row[23]); certSubNum = parseCount(row[24]); // X=CertGer, Y=CertSub
+                                rrhh.ocPlantilla = parsePct(row[25]); // Z=OCUPACION DE PLANTILLAS
+                                rrhh.sucesionGer = parseCount(row[26]) || 0; // AA
+                                rrhh.sucesionSub = parseCount(row[27]) || 0; // AB
+                                rrhh.colSucesion = (rrhh.sucesionGer || 0) + (rrhh.sucesionSub || 0);
+                                bajas = parseCount(row[28]) || 0; // AC=ROTACION(BAJAS)
                                 if (totalPlantillaOcupada > 0 && (certGerNum !== null || certSubNum !== null)) {
                                     rrhh.certGerencial = (((certGerNum || 0) + (certSubNum || 0)) / totalPlantillaOcupada) * 100;
                                 } else rrhh.certGerencial = null;
@@ -1106,7 +1110,7 @@
                             if (rrhh.certGerencial !== null) activeMetrics.push({v: rrhh.certGerencial});
 
                             const promedio = activeMetrics.length > 0 ? safeAvg(activeMetrics, x=>x.v) : null;
-                            let rawBajas = (isTiendasGes || isPizzaHut) ? null : (isChurchs ? parseCount(row[27]) : (isMoteNorte ? parseCount(row[36]) : parseCount(row[37])));
+                            let rawBajas = isTiendasGes ? null : (isPizzaHut ? parseCount(row[28]) : (isChurchs ? parseCount(row[27]) : (isMoteNorte ? parseCount(row[36]) : parseCount(row[37]))));
                             let rawAltas = isTiendasGes ? parseCount(row[11]) : (isPizzaHut ? parseCount(row[17]) : (isMoteNorte ? parseCount(row[17]) : parseCount(row[18])));
                             const hasAnyData = srv !== null || cofepris !== null || m2 !== null || m3 !== null || rrhh.certGerencial !== null || isZeroProtocol || rec26r1 !== null || rec26r2 !== null || rawAltas !== null || rawBajas !== null;
                             
