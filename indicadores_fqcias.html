@@ -1471,11 +1471,11 @@
                           FilteredData.filter(d => !d.cadena.toLowerCase().includes('church') && d.rev26r2 && d.rev26r2.std !== null).length;
             const c_rec = FilteredData.filter(d => d.rec26r1 !== null).length + FilteredData.filter(d => d.rec26r2 !== null).length;
 
-            let hasChurchs = false, hasMoteCentura = false;
-            FilteredData.forEach(d => { const c = d.cadena.toLowerCase(); if(c.includes('church')) hasChurchs = true; else hasMoteCentura = true; });
+            let hasChurchs = false, hasMoteCentura = false, hasPizzaHut = false;
+            FilteredData.forEach(d => { const c = (d.cadena || '').toLowerCase(); if(c.includes('church')) hasChurchs = true; else if(c.includes('pizza')) hasPizzaHut = true; else hasMoteCentura = true; });
 
             let revText = [];
-            if (isPizzaHut) {
+            if (hasPizzaHut) {
                 const aceAvg = safeAvg(FilteredData.filter(d => d.rev26r1 && d.rev26r1.std !== null), d => d.rev26r1.std);
                 if (aceAvg !== null) revText.push("ACE: " + aceAvg.toFixed(1) + "%");
             }
