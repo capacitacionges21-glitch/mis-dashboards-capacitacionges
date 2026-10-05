@@ -307,7 +307,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p id="label-altas" class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-indigo-500">BKU / PTE ALTAS</p>
-                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
+                        <span id="badge-altas" class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Métrica</span>
                     </div>
                     <h3 id="kpi-altas" class="text-4xl font-black text-slate-800 mt-1">0%</h3>
                     <div id="detail-altas" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
@@ -1334,6 +1334,11 @@
             
             const lblAltas = document.getElementById('label-altas');
             if(lblAltas) lblAltas.innerText = labelAltas;
+            const badgeAltas = document.getElementById('badge-altas');
+            if (badgeAltas) {
+                if (isPizzaHut) { badgeAltas.textContent = 'Meta 100%'; badgeAltas.className = 'bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider'; }
+                else { badgeAltas.textContent = 'Métrica'; badgeAltas.className = 'bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider'; }
+            }
 
             document.getElementById('dynamic-subtitle').innerText = selections.cadena !== 'Todos' ? "Métricas consolidadas de " + selections.cadena : "Consolidado General Multi-Marca";
             document.getElementById('dynamic-subtitle').style.color = activePalette.m1;
@@ -1517,7 +1522,10 @@
             if (document.getElementById('detail-srv')) document.getElementById('detail-srv').innerHTML = `${sumGerSrv} Gtes. con ServSafe / ${sumGerP} Plantilla ocupada<br>${sumSubSrv} Sub. con ServSafe / ${sumSubP} Plantilla ocupada`;
             if (document.getElementById('detail-altas')) document.getElementById('detail-altas').innerHTML = `${sumAltasCount} colaboradores de alta / ${sumTotalPlantillaOcupada} Plantilla ocupada<br>&nbsp;`;
             if (document.getElementById('detail-cert')) document.getElementById('detail-cert').innerHTML = `${sumCertGer} Gtes. Certificados / ${sumGerP} Plantilla ocupada<br>${sumCertSub} Sub. Certificados / ${sumSubP} Plantilla ocupada`;
-            if (document.getElementById('detail-rev')) document.getElementById('detail-rev').innerHTML = revText.length > 0 ? revText.join(' &bull; ') : 'Sin auditorías operativas registradas<br>&nbsp;';
+            if (document.getElementById('detail-rev')) {
+                const revFallback = hasPizzaHut ? 'ACE: Sin datos registrados<br>&nbsp;' : 'Sin auditorías operativas registradas<br>&nbsp;';
+                document.getElementById('detail-rev').innerHTML = revText.length > 0 ? revText.join(' &bull; ') : revFallback;
+            }
             if (document.getElementById('detail-rec')) document.getElementById('detail-rec').innerHTML = `Visitas Críticas generadas: ${c_rec}<br>&nbsp;`;
             if (document.getElementById('detail-sucesion')) document.getElementById('detail-sucesion').innerHTML = `${sumSucGer} Gtes. en sucesión<br>${sumSucSub} Sub. en sucesión`;
 
