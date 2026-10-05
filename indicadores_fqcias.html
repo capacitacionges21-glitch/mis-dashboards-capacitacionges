@@ -1027,7 +1027,8 @@
                                 srv = parsePct(row[15]);
                                 bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
                                 m2 = parsePct(row[18]);          // Hutflix CERTIFICACION%
-                                m3 = parsePct(row[21]);          // Hut University CERTIFICACION% (V, no U)
+                                m3 = parsePct(row[21]);          // Hut University CERTIFICACION% (V)
+                                rev26r1.std = parsePct(row[22]); // ACE (W) — auditoria operativa Pizza Hut
                                 certGerNum = parseCount(row[23]); certSubNum = parseCount(row[24]); // X=CertGer, Y=CertSub
                                 rrhh.ocPlantilla = parsePct(row[25]); // Z=OCUPACION DE PLANTILLAS
                                 rrhh.sucesionGer = parseCount(row[26]) || 0; // AA
@@ -1469,6 +1470,10 @@
             FilteredData.forEach(d => { const c = d.cadena.toLowerCase(); if(c.includes('church')) hasChurchs = true; else hasMoteCentura = true; });
 
             let revText = [];
+            if (isPizzaHut) {
+                const aceAvg = safeAvg(FilteredData.filter(d => d.rev26r1 && d.rev26r1.std !== null), d => d.rev26r1.std);
+                if (aceAvg !== null) revText.push("ACE: " + aceAvg.toFixed(1) + "%");
+            }
             if (hasMoteCentura) { if(c_std > 0) revText.push("Standard: " + c_std); }
             if (hasChurchs) {
                 const c_oer = FilteredData.filter(d => d.cadena.toLowerCase().includes('church') && d.rev26r1 && d.rev26r1.std !== null).length;
