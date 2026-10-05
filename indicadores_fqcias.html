@@ -1419,7 +1419,9 @@
             FilteredData.forEach(d => {
                 const cleanMes = d.mes ? d.mes.toString().trim() : '';
                 const idx = MESES_NOM.indexOf(cleanMes);
-                if (idx > maxMonthIdx) { maxMonthIdx = idx; latestMes = cleanMes; }
+                // Solo considerar filas con datos reales para determinar el mes más reciente
+                const tieneData = d.totalPlantillaAutorizada > 0 || d.totalPlantillaOcupada > 0 || d.m2 !== null || d.m3 !== null || d.srv !== null;
+                if (tieneData && idx > maxMonthIdx) { maxMonthIdx = idx; latestMes = cleanMes; }
             });
 
             const uniqueSucursales = new Set();
