@@ -376,7 +376,7 @@
                 </div>
             </div>
 
-            <div id="card-ocup" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div id="card-ocup" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between" style="display:none">
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest text-[#4472C4]">Ocup. Plantillas</p>
@@ -394,7 +394,7 @@
                 </div>
             </div>
             
-            <div id="card-rotacion" class="kpi-card bg-amber-50 p-6 rounded-3xl shadow-sm border border-amber-200 flex flex-col justify-between">
+            <div id="card-rotacion" class="kpi-card bg-amber-50 p-6 rounded-3xl shadow-sm border border-amber-200 flex flex-col justify-between" style="display:none">
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <p class="text-xs font-black uppercase tracking-widest text-amber-600">Rotación</p>
@@ -1859,8 +1859,9 @@
             if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => [`Promedio del Indicador: ${d.m2 !== null ? Math.round(d.m2) + "%" : "S/D"}`, `${d.raw.bku} certificados de ${d.plantilla} ocupados`]), backgroundColor: activePalette.m2, borderRadius: 6 });
             if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => ["Basado en el promedio de", `${d.raw.m3Count} auditorías evaluadas`]), backgroundColor: activePalette.m3, borderRadius: 6 });
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => [`${d.raw.certGer} Gtes y ${d.raw.certSub} Subs certificados`, `de ${d.raw.gerP + d.raw.subP} en plantilla`]), backgroundColor: '#1F3864', borderRadius: 6 });
-            if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', data: stats.map(d => d.ocup), rawData: stats.map(d => ["Promedio de ocupación de", `${d.raw.countOcup} registros consolidados`]), backgroundColor: '#4472C4', borderRadius: 6 });
-            if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', data: stats.map(d => d.rotacion), rawData: stats.map(d => [`${d.avgBajas} bajas promedio de`, `${d.plantilla} en plantilla ocupada`]), backgroundColor: '#eab308', borderRadius: 6 });
+            // Ocup. Plantilla y Rotación ocultos globalmente
+            // if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', ... });
+            // if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', ... });
 
             ChartsObj[id] = new Chart(document.getElementById(id).getContext('2d'), {
                 type: 'bar', data: { labels: stats.map(d => d.label), datasets: ds },
@@ -1911,9 +1912,8 @@
             if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => d.rawM2), backgroundColor: activePalette.m2, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => d.rawM3), backgroundColor: activePalette.m3, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => d.rawCert), backgroundColor: '#1F3864', borderRadius: 4 });
-            if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', data: stats.map(d => d.ocup), rawData: stats.map(d => d.rawOcup), backgroundColor: '#4472C4', borderRadius: 4 });
+            // Ocup. Plantilla y Rotación ocultos globalmente
             if (ind === 'Todos' || ind === 'rec') ds.push({ label: 'REC (Critical Visit)', data: stats.map(d => d.rec), rawData: stats.map(d => d.rawRec), backgroundColor: '#64748b', borderRadius: 4 });
-            if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', data: stats.map(d => d.rotacion), rawData: stats.map(d => d.rawRotacion), backgroundColor: '#eab308', borderRadius: 4 });
 
             ChartsObj['chart-distrito'] = new Chart(document.getElementById('chart-distrito').getContext('2d'), {
                 type: 'bar', data: { labels: stats.map(d => d.label), datasets: ds },
@@ -1964,9 +1964,8 @@
             if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => d.rawM2), backgroundColor: activePalette.m2, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => d.rawM3), backgroundColor: activePalette.m3, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => d.rawCert), backgroundColor: '#1F3864', borderRadius: 4 });
-            if (ind === 'Todos' || ind === 'ocup') ds.push({ label: 'Ocup. Plantilla', data: stats.map(d => d.ocup), rawData: stats.map(d => d.rawOcup), backgroundColor: '#4472C4', borderRadius: 4 });
+            // Ocup. Plantilla y Rotación ocultos globalmente
             if (ind === 'Todos' || ind === 'rec') ds.push({ label: 'REC (Critical Visit)', data: stats.map(d => d.rec), rawData: stats.map(d => d.rawRec), backgroundColor: '#64748b', borderRadius: 4 });
-            if (ind === 'Todos' || ind === 'rotacion') ds.push({ label: 'Rotación', data: stats.map(d => d.rotacion), rawData: stats.map(d => d.rawRotacion), backgroundColor: '#eab308', borderRadius: 4 });
 
             ChartsObj['chart-regional'] = new Chart(document.getElementById('chart-regional').getContext('2d'), {
                 type: 'bar', data: { labels: stats.map(d => d.label), datasets: ds },
