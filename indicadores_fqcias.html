@@ -1415,21 +1415,24 @@
         }
 
         function updateKPIs() {
-            let maxMonthIdx = -1, latestMes = null;
+            // Para cada sucursal, encontrar su mes más reciente CON datos reales
+            const tieneData = d => d.totalPlantillaAutorizada > 0 || d.totalPlantillaOcupada > 0 || d.m2 !== null || d.m3 !== null || d.srv !== null;
+            const sucursalLatestMes = {};
             FilteredData.forEach(d => {
+                if (!tieneData(d)) return;
                 const cleanMes = d.mes ? d.mes.toString().trim() : '';
                 const idx = MESES_NOM.indexOf(cleanMes);
-                // Solo considerar filas con datos reales para determinar el mes más reciente
-                const tieneData = d.totalPlantillaAutorizada > 0 || d.totalPlantillaOcupada > 0 || d.m2 !== null || d.m3 !== null || d.srv !== null;
-                if (tieneData && idx > maxMonthIdx) { maxMonthIdx = idx; latestMes = cleanMes; }
+                if (!(d.sucursal in sucursalLatestMes) || idx > sucursalLatestMes[d.sucursal].idx) {
+                    sucursalLatestMes[d.sucursal] = { idx, mes: cleanMes };
+                }
             });
 
             const uniqueSucursales = new Set();
-            FilteredData.forEach(d => { 
+            FilteredData.forEach(d => {
+                if (!tieneData(d)) return;
                 const cleanMes = d.mes ? d.mes.toString().trim() : '';
-                if (cleanMes === latestMes) {
-                    if (d.totalPlantillaAutorizada > 0 || d.totalPlantillaOcupada > 0 || d.m2 !== null || d.m3 !== null) uniqueSucursales.add(d.sucursal); 
-                }
+                const info = sucursalLatestMes[d.sucursal];
+                if (info && cleanMes === info.mes) uniqueSucursales.add(d.sucursal);
             });
             const count = uniqueSucursales.size;
             window.SucursalesActivas = uniqueSucursales; 
