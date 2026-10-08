@@ -339,6 +339,24 @@
                 </div>
             </div>
 
+            <div id="card-ace" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between hidden">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m1)]">ACE</p>
+                        <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 90%</span>
+                    </div>
+                    <h3 id="kpi-ace" class="text-4xl font-black text-slate-800 mt-1">-</h3>
+                    <div id="detail-ace" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        Auditoría operativa Pizza Hut<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-ace" class="h-full transition-all duration-1000 bg-[var(--color-m1)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
             <div id="card-rec" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-1">
@@ -1399,6 +1417,7 @@
             tVis('card-m2', showAll || ind === 'm2');
             tVis('card-altas', showAll || ind === 'm2');
             tVis('card-m3', !isTiendasGes && (showAll || ind === 'm3'));
+            tVis('card-ace', isPizzaHut && !isTiendasGes && showAll);
             tVis('card-rec', false); // inhabilitado hasta nuevo aviso
             tVis('card-cert', showAll || ind === 'cert');
             tVis('card-ocup', false); tVis('card-rotacion', false); tVis('card-sucesion', false);
@@ -1509,10 +1528,6 @@
             FilteredData.forEach(d => { const c = (d.cadena || '').toLowerCase(); if(c.includes('church')) hasChurchs = true; else if(c.includes('pizza')) hasPizzaHut = true; else hasMoteCentura = true; });
 
             let revText = [];
-            if (hasPizzaHut) {
-                const aceAvg = safeAvg(FilteredData.filter(d => d.rev26r1 && d.rev26r1.std !== null), d => d.rev26r1.std);
-                if (aceAvg !== null) revText.push("ACE: " + aceAvg.toFixed(1) + "%");
-            }
             if (hasMoteCentura) { if(c_std > 0) revText.push("Standard: " + c_std); }
             if (hasChurchs) {
                 const c_oer = FilteredData.filter(d => d.cadena.toLowerCase().includes('church') && d.rev26r1 && d.rev26r1.std !== null).length;
@@ -1537,6 +1552,11 @@
             document.getElementById('kpi-m2').innerText = m2 !== null ? (m2 <= 0 ? '0%' : m2.toFixed(1) + '%') : '-'; document.getElementById('bar-m2').style.width = widthKPI(m2);
             if(document.getElementById('kpi-altas')) { document.getElementById('kpi-altas').innerText = pctAltasTotal !== null ? (pctAltasTotal <= 0 ? '0%' : pctAltasTotal.toFixed(1) + '%') : '-'; document.getElementById('bar-altas').style.width = widthKPI(pctAltasTotal); }
             document.getElementById('kpi-m3').innerText = displayKPI(m3); document.getElementById('bar-m3').style.width = widthKPI(m3);
+            if (document.getElementById('kpi-ace')) {
+                const aceAvg = safeAvg(FilteredData.filter(d => d.rev26r1 && d.rev26r1.std !== null), d => d.rev26r1.std);
+                document.getElementById('kpi-ace').innerText = displayKPI(aceAvg);
+                if (document.getElementById('bar-ace')) document.getElementById('bar-ace').style.width = widthKPI(aceAvg);
+            }
 
             const cert = (sumGerP + sumSubP) > 0 ? ((sumCertGer + sumCertSub) / (sumGerP + sumSubP)) * 100 : null;
             const ocup = countOcup > 0 ? sumOcup / countOcup : null;
@@ -1552,8 +1572,9 @@
             if (document.getElementById('detail-altas')) document.getElementById('detail-altas').innerHTML = `${sumAltasCount} colaboradores de alta / ${sumTotalPlantillaOcupada} Plantilla ocupada<br>&nbsp;`;
             if (document.getElementById('detail-cert')) document.getElementById('detail-cert').innerHTML = `${sumCertGer} Gtes. Certificados / ${sumGerP} Plantilla ocupada<br>${sumCertSub} Sub. Certificados / ${sumSubP} Plantilla ocupada`;
             if (document.getElementById('detail-rev')) {
-                const revFallback = hasPizzaHut ? 'ACE: Sin datos registrados<br>&nbsp;' : 'Sin auditorías operativas registradas<br>&nbsp;';
-                document.getElementById('detail-rev').innerHTML = revText.length > 0 ? revText.join(' &bull; ') : revFallback;
+                const purelyPizzaHut = hasPizzaHut && !hasMoteCentura && !hasChurchs;
+                const revFallback = purelyPizzaHut ? 'Hut University — Plataforma de capacitación<br>&nbsp;' : 'Sin auditorías operativas registradas<br>&nbsp;';
+                document.getElementById('detail-rev').innerHTML = (purelyPizzaHut || revText.length === 0) ? revFallback : revText.join(' &bull; ');
             }
             if (document.getElementById('detail-rec')) document.getElementById('detail-rec').innerHTML = `Visitas Críticas generadas: ${c_rec}<br>&nbsp;`;
             if (document.getElementById('detail-sucesion')) document.getElementById('detail-sucesion').innerHTML = `${sumSucGer} Gtes. en sucesión<br>${sumSucSub} Sub. en sucesión`;
