@@ -575,24 +575,13 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div id="export-chart-bku-mensual" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
-                            <h3 id="bku-mensual-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Diaria BKU Planes</h3>
-                        </div>
-                        <div class="chart-container" style="min-height:300px">
-                            <canvas id="chart-bku-mensual"></canvas>
-                        </div>
+                <div id="export-chart-bku-mensual" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
+                        <h3 id="bku-mensual-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Diaria BKU — Planes vs Cursos</h3>
                     </div>
-                    <div id="export-chart-bku-cursos" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
-                            <h3 id="bku-cursos-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Diaria BKU Cursos</h3>
-                        </div>
-                        <div class="chart-container" style="min-height:300px">
-                            <canvas id="chart-bku-cursos"></canvas>
-                        </div>
+                    <div class="chart-container" style="min-height:300px">
+                        <canvas id="chart-bku-mensual"></canvas>
                     </div>
                 </div>
 
@@ -2028,7 +2017,6 @@
 
         function renderBkuTendenciaMensual() {
             if (ChartsObj['chart-bku-mensual']) ChartsObj['chart-bku-mensual'].destroy();
-            if (ChartsObj['chart-bku-cursos']) ChartsObj['chart-bku-cursos'].destroy();
             const canvasEl = document.getElementById('chart-bku-mensual');
             if (!canvasEl) return;
 
@@ -2061,9 +2049,7 @@
 
             if (mesFiltro !== 'Todos' && bkuSemanalRaw.length > 0) {
                 // === MODO DIARIO: tendencia por día dentro del mes seleccionado ===
-                if (tituloEl) tituloEl.textContent = `Tendencia Diaria BKU Planes — ${mesFiltro}`;
-                const elCursos = document.getElementById('export-chart-bku-cursos');
-                if (elCursos) elCursos.style.display = '';
+                if (tituloEl) tituloEl.textContent = `Tendencia Diaria BKU Planes vs Cursos — ${mesFiltro}`;
 
                 const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/^bk\s+/, '');
                 const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' ||
@@ -2090,32 +2076,24 @@
                     ? [selections.cadena]
                     : [...new Set(filtMes.map(d => d.cadena))];
 
-                // Chart Planes
-                const datasetPlanes = cadenasDia.map((cadena, idx) => {
-                    const data = fechas.map(fecha => {
+                // Planes y Cursos como datasets en el mismo chart
+                const solidColors  = ['#2F5597', '#1F3864'];
+                const dashedColors = ['#8FAADC', '#4472C4'];
+                const datasets = [];
+                cadenasDia.forEach((cadena, idx) => {
+                    const dataPlanes = fechas.map(fecha => {
                         const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuPlanes !== null);
-                        if (rows.length === 0) return null;
-                        return rows.reduce((s, d) => s + d.bkuPlanes, 0) / rows.length;
+                        return rows.length ? rows.reduce((s, d) => s + d.bkuPlanes, 0) / rows.length : null;
                     });
-                    return { label: cadena, data, borderColor: trendColors[idx % trendColors.length], backgroundColor: trendColors[idx % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[idx % trendColors.length], tension: 0.3, fill: false, spanGaps: true };
-                });
-                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasetPlanes));
+                    datasets.push({ label: cadena + ' — Planes', data: dataPlanes, borderColor: solidColors[idx % solidColors.length], backgroundColor: solidColors[idx % solidColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: solidColors[idx % solidColors.length], tension: 0.3, fill: false, spanGaps: true });
 
-                // Chart Cursos
-                const canvasCursos = document.getElementById('chart-bku-cursos');
-                if (canvasCursos) {
-                    const tituloC = document.getElementById('bku-cursos-titulo');
-                    if (tituloC) tituloC.textContent = `Tendencia Diaria BKU Cursos — ${mesFiltro}`;
-                    const datasetCursos = cadenasDia.map((cadena, idx) => {
-                        const data = fechas.map(fecha => {
-                            const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuCursos !== null);
-                            if (rows.length === 0) return null;
-                            return rows.reduce((s, d) => s + d.bkuCursos, 0) / rows.length;
-                        });
-                        return { label: cadena, data, borderColor: trendColors[(idx + 2) % trendColors.length], backgroundColor: trendColors[(idx + 2) % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[(idx + 2) % trendColors.length], tension: 0.3, fill: false, spanGaps: true };
+                    const dataCursos = fechas.map(fecha => {
+                        const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuCursos !== null);
+                        return rows.length ? rows.reduce((s, d) => s + d.bkuCursos, 0) / rows.length : null;
                     });
-                    ChartsObj['chart-bku-cursos'] = new Chart(canvasCursos.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasetCursos));
-                }
+                    datasets.push({ label: cadena + ' — Cursos', data: dataCursos, borderColor: dashedColors[idx % dashedColors.length], backgroundColor: dashedColors[idx % dashedColors.length] + '22', borderWidth: 2.5, borderDash: [6, 3], pointRadius: 4, pointBackgroundColor: dashedColors[idx % dashedColors.length], tension: 0.3, fill: false, spanGaps: true });
+                });
+                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasets));
 
             } else {
                 // === MODO MENSUAL: comparativa histórica Enero→mes actual ===
@@ -2144,9 +2122,6 @@
                     return { label: cadena, data, borderColor: trendColors[idx % trendColors.length], backgroundColor: trendColors[idx % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[idx % trendColors.length], tension: 0.3, fill: true, spanGaps: true };
                 });
                 ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(mesesPresentes, datasets));
-                // Ocultar chart cursos en modo mensual (no hay datos históricos)
-                const canvasCursosMens = document.getElementById('chart-bku-cursos');
-                if (canvasCursosMens) { const parent = document.getElementById('export-chart-bku-cursos'); if (parent) parent.style.display = 'none'; }
             }
         }
 
