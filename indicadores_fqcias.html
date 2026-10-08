@@ -357,6 +357,24 @@
                 </div>
             </div>
 
+            <div id="card-hutuniv-altas" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between hidden">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-black uppercase tracking-widest transition-colors duration-500 text-[var(--color-m2)]">Hut University Altas</p>
+                        <span id="badge-hutuniv-altas" class="bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                    </div>
+                    <h3 id="kpi-hutuniv-altas" class="text-4xl font-black text-slate-800 mt-1">-</h3>
+                    <div id="detail-hutuniv-altas" class="text-[9.5px] text-slate-400 font-bold mt-2 leading-tight">
+                        0 colaboradores de alta / 0 Plantilla ocupada<br>&nbsp;
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="bar-hutuniv-altas" class="h-full transition-all duration-1000 bg-[var(--color-m2)]" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
             <div id="card-rec" class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-1">
@@ -1037,7 +1055,7 @@
 
                             let gerAut, subAut, colAut, totalPlantillaAutorizada;
                             let gerP, subP, colP, totalPlantillaOcupada;
-                            let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null, cofepris = null;
+                            let gerSrv = null, subSrv = null, bkuCol = null, altasCount = null, hutunivAltasCount = null, cofepris = null;
                             let certGerNum = null, certSubNum = null;
                             // Todas las fuentes: A=Mes,B=Regional,C=Distrito,D=Formador,E=Gerente,F=Cadena,G=Negocio
                             let gerenteStr = row[4] && row[4].toString().trim() !== '' ? row[4].toString().trim() : 'Sin Gerente';
@@ -1074,6 +1092,7 @@
                                 srv = parsePct(row[15]);
                                 bkuCol = parseCount(row[16]); altasCount = parseCount(row[17]);
                                 m2 = parsePct(row[18]);          // Hutflix CERTIFICACION%
+                                hutunivAltasCount = parseCount(row[20]); // Hut University ALTAS (U)
                                 m3 = parsePct(row[21]);          // Hut University CERTIFICACION% (V)
                                 rev26r1.std = parsePct(row[22]); // ACE (W) — auditoria operativa Pizza Hut
                                 certGerNum = parseCount(row[23]); certSubNum = parseCount(row[24]); // X=CertGer, Y=CertSub
@@ -1177,7 +1196,7 @@
                                 sucursal: row[6] ? row[6].toString().trim() : 'S/S',
                                 gerente_sucursal: (row[6] ? row[6].toString().trim() : 'S/S') + ' - ' + gerenteStr,
                                 gerAut, subAut, colAut, totalPlantillaAutorizada, gerP, subP, colP, totalPlantillaOcupada,
-                                altasCount, pctAltas, gerSrv, subSrv, bkuCol, cofepris, certGerNum, certSubNum,
+                                altasCount, hutunivAltasCount, pctAltas, gerSrv, subSrv, bkuCol, cofepris, certGerNum, certSubNum,
                                 srv, m2, m3, promedio, rev26r1, rev26r2, rec26r1, rec26r2, bajas,
                                 rrhh, hasZeroProtocol: isZeroProtocol, zpIncidences
                             });
@@ -1417,6 +1436,7 @@
             tVis('card-m2', showAll || ind === 'm2');
             tVis('card-altas', showAll || ind === 'm2');
             tVis('card-m3', !isTiendasGes && (showAll || ind === 'm3'));
+            tVis('card-hutuniv-altas', isPizzaHut && !isTiendasGes && showAll);
             tVis('card-ace', isPizzaHut && !isTiendasGes && showAll);
             tVis('card-rec', false); // inhabilitado hasta nuevo aviso
             tVis('card-cert', showAll || ind === 'cert');
@@ -1492,7 +1512,7 @@
 
             let sumGerAut = 0, sumSubAut = 0, sumColAut = 0, sumTotalPlantillaAutorizada = 0;
             let sumGerP = 0, sumSubP = 0, sumColP = 0, sumTotalPlantillaOcupada = 0;
-            let sumGerSrv = 0, sumSubSrv = 0, sumBkuCol = 0, sumAltasCount = 0, sumCertGer = 0, sumCertSub = 0;
+            let sumGerSrv = 0, sumSubSrv = 0, sumBkuCol = 0, sumAltasCount = 0, sumHutunivAltasCount = 0, sumCertGer = 0, sumCertSub = 0;
             let sumSucGer = 0, sumSucSub = 0, sumOcup = 0, countOcup = 0, totalAvgBajas = 0, totalSuc = 0;
 
             Array.from(uniqueSucursales).forEach(suc => {
@@ -1509,7 +1529,7 @@
 
                 sumGerAut += getLatest('gerAut'); sumSubAut += getLatest('subAut'); sumColAut += getLatest('colAut'); sumTotalPlantillaAutorizada += getLatest('totalPlantillaAutorizada');
                 sumGerP += getLatest('gerP'); sumSubP += getLatest('subP'); sumColP += getLatest('colP'); sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
-                sumGerSrv += getLatest('gerSrv'); sumSubSrv += getLatest('subSrv'); sumBkuCol += getLatest('bkuCol'); sumAltasCount += getLatest('altasCount'); sumCertGer += getLatest('certGerNum'); sumCertSub += getLatest('certSubNum');
+                sumGerSrv += getLatest('gerSrv'); sumSubSrv += getLatest('subSrv'); sumBkuCol += getLatest('bkuCol'); sumAltasCount += getLatest('altasCount'); sumHutunivAltasCount += getLatest('hutunivAltasCount'); sumCertGer += getLatest('certGerNum'); sumCertSub += getLatest('certSubNum');
 
                 let branchBajas = 0;
                 sub.forEach(d => branchBajas += (d.bajas || 0));
@@ -1551,6 +1571,12 @@
             if (document.getElementById('kpi-cofepris')) { document.getElementById('kpi-cofepris').innerText = displayKPI(cofeprisAvg); document.getElementById('bar-cofepris').style.width = widthKPI(cofeprisAvg); }
             document.getElementById('kpi-m2').innerText = m2 !== null ? (m2 <= 0 ? '0%' : m2.toFixed(1) + '%') : '-'; document.getElementById('bar-m2').style.width = widthKPI(m2);
             if(document.getElementById('kpi-altas')) { document.getElementById('kpi-altas').innerText = pctAltasTotal !== null ? (pctAltasTotal <= 0 ? '0%' : pctAltasTotal.toFixed(1) + '%') : '-'; document.getElementById('bar-altas').style.width = widthKPI(pctAltasTotal); }
+            if(document.getElementById('kpi-hutuniv-altas')) {
+                const pctHutunivAltas = (sumTotalPlantillaOcupada > 0 && sumHutunivAltasCount > 0) ? (sumHutunivAltasCount / sumTotalPlantillaOcupada) * 100 : null;
+                document.getElementById('kpi-hutuniv-altas').innerText = pctHutunivAltas !== null ? (pctHutunivAltas <= 0 ? '0%' : pctHutunivAltas.toFixed(1) + '%') : '-';
+                if(document.getElementById('bar-hutuniv-altas')) document.getElementById('bar-hutuniv-altas').style.width = widthKPI(pctHutunivAltas);
+                if(document.getElementById('detail-hutuniv-altas')) document.getElementById('detail-hutuniv-altas').innerHTML = `${sumHutunivAltasCount} colaboradores de alta / ${sumTotalPlantillaOcupada} Plantilla ocupada<br>&nbsp;`;
+            }
             document.getElementById('kpi-m3').innerText = displayKPI(m3); document.getElementById('bar-m3').style.width = widthKPI(m3);
             if (document.getElementById('kpi-ace')) {
                 const aceAvg = safeAvg(FilteredData.filter(d => d.rev26r1 && d.rev26r1.std !== null), d => d.rev26r1.std);
