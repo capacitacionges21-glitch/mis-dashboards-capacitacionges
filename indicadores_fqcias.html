@@ -535,15 +535,30 @@
                     <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <p class="text-xs font-black uppercase tracking-widest" style="color:#8FAADC">BKU Promedio</p>
-                                <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                                <p class="text-xs font-black uppercase tracking-widest" style="color:#2F5597">BKU Planes Promedio</p>
+                                <span class="bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
                             </div>
                             <h3 id="bku-sem-kpi-avg" class="text-4xl font-black text-slate-800 mt-1">—</h3>
                             <p id="bku-sem-kpi-label" class="text-[9.5px] text-slate-400 font-bold mt-2">Sin datos</p>
                         </div>
                         <div class="mt-4">
                             <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                <div id="bku-sem-bar" class="h-full transition-all duration-1000" style="width:0%;background:#8FAADC"></div>
+                                <div id="bku-sem-bar" class="h-full transition-all duration-1000" style="width:0%;background:#2F5597"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kpi-card bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-xs font-black uppercase tracking-widest" style="color:#8FAADC">BKU Cursos Promedio</p>
+                                <span class="bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Meta 100%</span>
+                            </div>
+                            <h3 id="bku-sem-kpi-cursos" class="text-4xl font-black text-slate-800 mt-1">—</h3>
+                            <p id="bku-sem-kpi-cursos-label" class="text-[9.5px] text-slate-400 font-bold mt-2">Sin datos</p>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div id="bku-sem-bar-cursos" class="h-full transition-all duration-1000" style="width:0%;background:#8FAADC"></div>
                             </div>
                         </div>
                     </div>
@@ -560,26 +575,51 @@
                     </div>
                 </div>
 
-                <div id="export-chart-bku-mensual" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
-                        <h3 id="bku-mensual-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Mensual BKU</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div id="export-chart-bku-mensual" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
+                            <h3 id="bku-mensual-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Diaria BKU Planes</h3>
+                        </div>
+                        <div class="chart-container" style="min-height:300px">
+                            <canvas id="chart-bku-mensual"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-container" style="min-height:300px">
-                        <canvas id="chart-bku-mensual"></canvas>
+                    <div id="export-chart-bku-cursos" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
+                            <h3 id="bku-cursos-titulo" class="text-lg font-bold text-slate-800 tracking-tight">Tendencia Diaria BKU Cursos</h3>
+                        </div>
+                        <div class="chart-container" style="min-height:300px">
+                            <canvas id="chart-bku-cursos"></canvas>
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-6">
-                    <div id="bku-sem-negocios-section" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
-                            <h3 class="text-lg font-bold text-slate-800 tracking-tight">% BKU Diario por Negocio</h3>
-                            <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
+                    <div id="bku-sem-negocios-section" class="flex flex-col gap-6">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-2 h-8 rounded-full" style="background:#2F5597"></div>
+                                <h3 class="text-lg font-bold text-slate-800 tracking-tight">% BKU Diario Planes por Negocio</h3>
+                                <span id="bku-sem-chart-subtitle" class="text-xs text-slate-400 font-semibold ml-1"></span>
+                            </div>
+                            <div class="scrollable-chart-container">
+                                <div id="bku-sem-bar-wrapper" style="min-width:600px;height:320px">
+                                    <canvas id="chart-bku-sem-negocios"></canvas>
+                                </div>
+                            </div>
                         </div>
-                        <div class="scrollable-chart-container">
-                            <div id="bku-sem-bar-wrapper" style="min-width:600px;height:320px">
-                                <canvas id="chart-bku-sem-negocios"></canvas>
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-2 h-8 rounded-full" style="background:#8FAADC"></div>
+                                <h3 class="text-lg font-bold text-slate-800 tracking-tight">% BKU Diario Cursos por Negocio</h3>
+                                <span id="bku-sem-chart-subtitle-cursos" class="text-xs text-slate-400 font-semibold ml-1"></span>
+                            </div>
+                            <div class="scrollable-chart-container">
+                                <div id="bku-sem-bar-cursos-wrapper" style="min-width:600px;height:320px">
+                                    <canvas id="chart-bku-sem-negocios-cursos"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1988,6 +2028,7 @@
 
         function renderBkuTendenciaMensual() {
             if (ChartsObj['chart-bku-mensual']) ChartsObj['chart-bku-mensual'].destroy();
+            if (ChartsObj['chart-bku-cursos']) ChartsObj['chart-bku-cursos'].destroy();
             const canvasEl = document.getElementById('chart-bku-mensual');
             if (!canvasEl) return;
 
@@ -2020,7 +2061,9 @@
 
             if (mesFiltro !== 'Todos' && bkuSemanalRaw.length > 0) {
                 // === MODO DIARIO: tendencia por día dentro del mes seleccionado ===
-                if (tituloEl) tituloEl.textContent = `Tendencia Diaria BKU — ${mesFiltro}`;
+                if (tituloEl) tituloEl.textContent = `Tendencia Diaria BKU Planes — ${mesFiltro}`;
+                const elCursos = document.getElementById('export-chart-bku-cursos');
+                if (elCursos) elCursos.style.display = '';
 
                 const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/^bk\s+/, '');
                 const hayFiltroExtra = selections.region !== 'Todos' || selections.distrito !== 'Todos' ||
@@ -2047,16 +2090,32 @@
                     ? [selections.cadena]
                     : [...new Set(filtMes.map(d => d.cadena))];
 
-                const datasets = cadenasDia.map((cadena, idx) => {
+                // Chart Planes
+                const datasetPlanes = cadenasDia.map((cadena, idx) => {
                     const data = fechas.map(fecha => {
-                        const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bku !== null);
+                        const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuPlanes !== null);
                         if (rows.length === 0) return null;
-                        return rows.reduce((s, d) => s + d.bku, 0) / rows.length;
+                        return rows.reduce((s, d) => s + d.bkuPlanes, 0) / rows.length;
                     });
                     return { label: cadena, data, borderColor: trendColors[idx % trendColors.length], backgroundColor: trendColors[idx % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[idx % trendColors.length], tension: 0.3, fill: false, spanGaps: true };
                 });
+                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasetPlanes));
 
-                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasets));
+                // Chart Cursos
+                const canvasCursos = document.getElementById('chart-bku-cursos');
+                if (canvasCursos) {
+                    const tituloC = document.getElementById('bku-cursos-titulo');
+                    if (tituloC) tituloC.textContent = `Tendencia Diaria BKU Cursos — ${mesFiltro}`;
+                    const datasetCursos = cadenasDia.map((cadena, idx) => {
+                        const data = fechas.map(fecha => {
+                            const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuCursos !== null);
+                            if (rows.length === 0) return null;
+                            return rows.reduce((s, d) => s + d.bkuCursos, 0) / rows.length;
+                        });
+                        return { label: cadena, data, borderColor: trendColors[(idx + 2) % trendColors.length], backgroundColor: trendColors[(idx + 2) % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[(idx + 2) % trendColors.length], tension: 0.3, fill: false, spanGaps: true };
+                    });
+                    ChartsObj['chart-bku-cursos'] = new Chart(canvasCursos.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasetCursos));
+                }
 
             } else {
                 // === MODO MENSUAL: comparativa histórica Enero→mes actual ===
@@ -2084,8 +2143,10 @@
                     });
                     return { label: cadena, data, borderColor: trendColors[idx % trendColors.length], backgroundColor: trendColors[idx % trendColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: trendColors[idx % trendColors.length], tension: 0.3, fill: true, spanGaps: true };
                 });
-
                 ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(mesesPresentes, datasets));
+                // Ocultar chart cursos en modo mensual (no hay datos históricos)
+                const canvasCursosMens = document.getElementById('chart-bku-cursos');
+                if (canvasCursosMens) { const parent = document.getElementById('export-chart-bku-cursos'); if (parent) parent.style.display = 'none'; }
             }
         }
 
@@ -2455,10 +2516,11 @@
                         const semana = fecha.toUpperCase();
                         const cadena = (row[2] || '').toString().trim();
                         const negocio = (row[3] || '').toString().trim();
-                        const bkuRaw = (row[4] || '').toString().trim();
-                        const bku = bkuRaw === '' ? null : parseFloat(bkuRaw.replace('%', '').replace(',', '.'));
+                        const parseBkuVal = v => { const s = (v || '').toString().trim(); const n = parseFloat(s.replace('%', '').replace(',', '.')); return s === '' || isNaN(n) ? null : n; };
+                        const bkuPlanes = parseBkuVal(row[4]);
+                        const bkuCursos = parseBkuVal(row[5]);
                         if (!fecha || !cadena || !negocio) return;
-                        bkuSemanalRaw.push({ mes, semana, fecha, cadena, negocio, bku: isNaN(bku) ? null : bku });
+                        bkuSemanalRaw.push({ mes, semana, fecha, cadena, negocio, bku: bkuPlanes, bkuPlanes, bkuCursos });
                     });
                     populateBkuSemanaFilter();
                     updateBkuSemanal();
@@ -2543,23 +2605,34 @@
                 return true;
             });
 
-            const conDato = filtFull.filter(d => d.bku !== null);
-            const avg = conDato.length > 0 ? conDato.reduce((s, d) => s + d.bku, 0) / conDato.length : null;
+            const conDatoPlanes = filtFull.filter(d => d.bkuPlanes !== null);
+            const avgPlanes = conDatoPlanes.length > 0 ? conDatoPlanes.reduce((s, d) => s + d.bkuPlanes, 0) / conDatoPlanes.length : null;
+            const conDatoCursos = filtFull.filter(d => d.bkuCursos !== null);
+            const avgCursos = conDatoCursos.length > 0 ? conDatoCursos.reduce((s, d) => s + d.bkuCursos, 0) / conDatoCursos.length : null;
 
-            // KPI promedio
+            // KPI planes promedio
             const kpiAvg = document.getElementById('bku-sem-kpi-avg');
             const kpiBar = document.getElementById('bku-sem-bar');
-            if (avg !== null) {
-                kpiAvg.innerText = avg.toFixed(1) + '%';
-                kpiBar.style.width = Math.min(avg, 100) + '%';
-                const c1s = getCssVar('--color-m1') || '#2F5597';
-                const c2s = getCssVar('--color-m2') || '#8FAADC';
-                kpiBar.style.background = avg >= 100 ? '#22c55e' : avg >= 80 ? c2s : c1s;
-            } else {
-                kpiAvg.innerText = '—';
-                kpiBar.style.width = '0%';
-            }
+            const c1s = getCssVar('--color-m1') || '#2F5597';
+            const c2s = getCssVar('--color-m2') || '#8FAADC';
+            if (avgPlanes !== null) {
+                kpiAvg.innerText = avgPlanes.toFixed(1) + '%';
+                kpiBar.style.width = Math.min(avgPlanes, 100) + '%';
+                kpiBar.style.background = avgPlanes >= 100 ? '#22c55e' : c1s;
+            } else { kpiAvg.innerText = '—'; kpiBar.style.width = '0%'; }
             document.getElementById('bku-sem-kpi-label').innerText = diaActivo ? formatDia(diaActivo) : 'Sin datos';
+
+            // KPI cursos promedio
+            const kpiCursos = document.getElementById('bku-sem-kpi-cursos');
+            const kpiBarCursos = document.getElementById('bku-sem-bar-cursos');
+            if (kpiCursos && kpiBarCursos) {
+                if (avgCursos !== null) {
+                    kpiCursos.innerText = avgCursos.toFixed(1) + '%';
+                    kpiBarCursos.style.width = Math.min(avgCursos, 100) + '%';
+                    kpiBarCursos.style.background = avgCursos >= 100 ? '#22c55e' : c2s;
+                } else { kpiCursos.innerText = '—'; kpiBarCursos.style.width = '0%'; }
+                if (document.getElementById('bku-sem-kpi-cursos-label')) document.getElementById('bku-sem-kpi-cursos-label').innerText = diaActivo ? formatDia(diaActivo) : 'Sin datos';
+            }
 
             // KPI día — siempre muestra la fecha de hoy
             const hoyKpi = (() => { const h = new Date(); return `${h.getDate()} ${MESES_CORTOS[h.getMonth()]}`; })();
@@ -2573,12 +2646,13 @@
             document.getElementById('bku-sem-badge-centro').classList.toggle('hidden', !hasCentro);
 
             document.getElementById('bku-sem-chart-subtitle').innerText = diaActivo ? formatDia(diaActivo) : '';
+            if (document.getElementById('bku-sem-chart-subtitle-cursos')) document.getElementById('bku-sem-chart-subtitle-cursos').innerText = diaActivo ? formatDia(diaActivo) : '';
 
             renderBkuTendenciaMensual();
             const tieneFormadorFiltro = selections.formador !== 'Todos';
             const negSecEl = document.getElementById('bku-sem-negocios-section');
             if (negSecEl) negSecEl.classList.toggle('hidden', tieneFormadorFiltro);
-            if (!tieneFormadorFiltro) renderBkuSemNegocios(filtFull, diaActivo);
+            if (!tieneFormadorFiltro) { renderBkuSemNegocios(filtFull, diaActivo); renderBkuSemNegociosCursos(filtFull, diaActivo); }
             renderBkuSemFormador(cadenaFil, negociosPermitidos, diaActivo);
         }
 
@@ -2690,6 +2764,48 @@
                             min: 0, max: 110, display: false,
                             grid: { display: false }
                         },
+                        x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderBkuSemNegociosCursos(filtFull, semanaActiva) {
+            const sorted = [...filtFull].filter(d => d.bkuCursos !== null).sort((a, b) => (a.bkuCursos ?? -1) - (b.bkuCursos ?? -1));
+            const sortedAll = [...filtFull].sort((a, b) => (a.bkuCursos ?? -1) - (b.bkuCursos ?? -1));
+            const useRows = sortedAll.length > 0 ? sortedAll : sorted;
+            const labels = useRows.map(d => d.negocio);
+            const values = useRows.map(d => d.bkuCursos);
+            const c1 = getCssVar('--color-m1') || '#2F5597';
+            const c2 = getCssVar('--color-m2') || '#8FAADC';
+            const bgColors = values.map(v => v === null ? '#e2e8f0' : v >= 100 ? c2 : v >= 80 ? c2 : c2);
+
+            const wrapper = document.getElementById('bku-sem-bar-cursos-wrapper');
+            if (!wrapper) return;
+            const barThickness = Math.max(14, Math.min(50, Math.floor(900 / Math.max(labels.length, 1))));
+            const dynW = Math.max(400, labels.length * (barThickness + 10) + 80);
+            wrapper.style.width = dynW + 'px';
+            wrapper.style.height = '320px';
+
+            if (bkuSemanalCharts.negociosCursos) bkuSemanalCharts.negociosCursos.destroy();
+            const ctx = document.getElementById('chart-bku-sem-negocios-cursos');
+            if (!ctx) return;
+            bkuSemanalCharts.negociosCursos = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{ label: 'BKU Cursos %', data: values, backgroundColor: bgColors, borderRadius: 6, borderSkipped: false, barThickness }]
+                },
+                plugins: [ChartDataLabels],
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'x',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { anchor: 'end', align: 'top', formatter: v => v !== null ? v.toFixed(1) : 'N/D', font: { weight: '700', size: 9 }, color: '#475569' },
+                        tooltip: { callbacks: { label: ctx => ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato' } }
+                    },
+                    scales: {
+                        y: { min: 0, max: 110, display: false, grid: { display: false } },
                         x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } }
                     }
                 }
