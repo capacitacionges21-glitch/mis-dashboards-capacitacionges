@@ -2110,9 +2110,9 @@
                             legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }, padding: 16, usePointStyle: true } },
                             datalabels: {
                                 display: true,
-                                anchor: 'end',
+                                anchor: ctx => ctx.datasetIndex % 2 === 0 ? 'end' : 'start',
                                 align: ctx => ctx.datasetIndex % 2 === 0 ? 'top' : 'bottom',
-                                offset: 4,
+                                offset: 8,
                                 formatter: v => v !== null ? v.toFixed(1) + '%' : '',
                                 font: { weight: '700', size: 9 },
                                 color: ctx => ctx.datasetIndex % 2 === 0 ? '#2F5597' : '#8FAADC'
