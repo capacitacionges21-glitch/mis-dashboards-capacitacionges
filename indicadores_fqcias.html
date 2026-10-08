@@ -2778,7 +2778,7 @@
             const values = useRows.map(d => d.bkuCursos);
             const c1 = getCssVar('--color-m1') || '#2F5597';
             const c2 = getCssVar('--color-m2') || '#8FAADC';
-            const bgColors = values.map(v => v === null ? '#e2e8f0' : v >= 100 ? c2 : v >= 80 ? c2 : c2);
+            const bgColors = values.map(v => v === null ? '#e2e8f0' : v >= 100 ? c1 : v >= 80 ? c2 : c1);
 
             const wrapper = document.getElementById('bku-sem-bar-cursos-wrapper');
             if (!wrapper) return;
