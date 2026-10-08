@@ -2093,7 +2093,30 @@
                     });
                     datasets.push({ label: cadena + ' — Cursos', data: dataCursos, borderColor: dashedColors[idx % dashedColors.length], backgroundColor: dashedColors[idx % dashedColors.length] + '22', borderWidth: 2.5, borderDash: [6, 3], pointRadius: 4, pointBackgroundColor: dashedColors[idx % dashedColors.length], tension: 0.3, fill: false, spanGaps: true });
                 });
-                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), baseChartOpts(fechas.map(formatDia), datasets));
+                // Calcular rango dinámico para hacer zoom en los valores reales
+                const allVals = datasets.flatMap(ds => ds.data).filter(v => v !== null);
+                const minVal = allVals.length ? Math.min(...allVals) : 80;
+                const maxVal = allVals.length ? Math.max(...allVals) : 100;
+                const yMin = Math.max(0, Math.floor(minVal) - 3);
+                const yMax = Math.min(105, Math.ceil(maxVal) + 2);
+
+                ChartsObj['chart-bku-mensual'] = new Chart(canvasEl.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: fechas.map(formatDia), datasets },
+                    plugins: [ChartDataLabels],
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }, padding: 16, usePointStyle: true } },
+                            datalabels: { display: true, anchor: 'end', align: 'top', formatter: v => v !== null ? v.toFixed(1) + '%' : '', font: { weight: '700', size: 9 }, color: '#475569' },
+                            tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato') } }
+                        },
+                        scales: {
+                            y: { display: true, min: yMin, max: yMax, ticks: { callback: v => v + '%', font: { size: 10, weight: '600' }, stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                            x: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
+                        }
+                    }
+                });
 
             } else {
                 // === MODO MENSUAL: comparativa histórica Enero→mes actual ===
