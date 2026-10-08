@@ -2085,13 +2085,13 @@
                         const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuPlanes !== null);
                         return rows.length ? rows.reduce((s, d) => s + d.bkuPlanes, 0) / rows.length : null;
                     });
-                    datasets.push({ label: cadena + ' — Planes', data: dataPlanes, borderColor: solidColors[idx % solidColors.length], backgroundColor: solidColors[idx % solidColors.length] + '22', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: solidColors[idx % solidColors.length], tension: 0.3, fill: false, spanGaps: true });
+                    datasets.push({ label: cadena + ' — Planes', data: dataPlanes, borderColor: solidColors[idx % solidColors.length], backgroundColor: solidColors[idx % solidColors.length] + '22', borderWidth: 3, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: solidColors[idx % solidColors.length], pointStyle: 'circle', tension: 0.3, fill: false, spanGaps: true });
 
                     const dataCursos = fechas.map(fecha => {
                         const rows = filtMes.filter(d => d.cadena === cadena && d.fecha === fecha && d.bkuCursos !== null);
                         return rows.length ? rows.reduce((s, d) => s + d.bkuCursos, 0) / rows.length : null;
                     });
-                    datasets.push({ label: cadena + ' — Cursos', data: dataCursos, borderColor: dashedColors[idx % dashedColors.length], backgroundColor: dashedColors[idx % dashedColors.length] + '22', borderWidth: 2.5, borderDash: [6, 3], pointRadius: 4, pointBackgroundColor: dashedColors[idx % dashedColors.length], tension: 0.3, fill: false, spanGaps: true });
+                    datasets.push({ label: cadena + ' — Cursos', data: dataCursos, borderColor: dashedColors[idx % dashedColors.length], backgroundColor: dashedColors[idx % dashedColors.length] + '22', borderWidth: 3, borderDash: [7, 4], pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: dashedColors[idx % dashedColors.length], pointStyle: 'rectRot', tension: 0.3, fill: false, spanGaps: true });
                 });
                 // Calcular rango dinámico para hacer zoom en los valores reales
                 const allVals = datasets.flatMap(ds => ds.data).filter(v => v !== null);
@@ -2112,7 +2112,7 @@
                             tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : 'Sin dato') } }
                         },
                         scales: {
-                            y: { display: true, min: yMin, max: yMax, ticks: { callback: v => v + '%', font: { size: 10, weight: '600' }, stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                            y: { display: true, min: yMin, max: yMax, ticks: { display: false }, grid: { color: '#e2e8f0' }, border: { display: false } },
                             x: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
                         }
                     }
