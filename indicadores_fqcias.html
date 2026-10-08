@@ -838,10 +838,7 @@
                             <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">Subgerentes</th>
                             <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 text-center">Colaboradores</th>
                             
-                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 border-l border-slate-200 text-center">Cert. Ger</th>
-                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 text-center">Ocup. Plan</th>
-                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 border-r border-slate-200 text-center">Sucesión</th>
-                            <th class="p-4 text-[10px] font-black text-amber-500 bg-amber-50 uppercase tracking-wider border-b border-slate-100 border-r border-slate-200 text-center">Rotación</th>
+                            <th class="p-4 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100 border-l border-slate-200 border-r border-slate-200 text-center">Cert. Ger</th>
                             
                             <th class="p-4 text-[10px] font-black uppercase tracking-wider border-b border-slate-100 text-center transition-colors duration-500 text-[var(--color-m1)] bg-[var(--color-m1-light)]">S.Safe</th>
                             <th id="th-m2" class="p-4 text-[10px] font-black uppercase tracking-wider border-b border-slate-100 text-center transition-colors duration-500 text-[var(--color-m2)] bg-[var(--color-m2-light)]">M2</th>
@@ -2454,7 +2451,7 @@
             sorted.forEach(d => {
                 tableHtml += `<tr class="hover:bg-slate-100 transition-colors group">
                     <td class="p-4 text-xs font-medium text-slate-500">${d.region}</td><td class="p-4 text-xs font-medium text-slate-500">${d.distrito}</td><td class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-tighter">${d.cadena}</td><td class="p-4 text-sm font-extrabold text-slate-700">${d.sucursal}</td><td class="p-4 text-[10px] font-bold text-slate-400 uppercase italic">${d.gerente}</td><td class="p-4 text-center text-xs font-bold text-slate-500">${d.gerP}</td><td class="p-4 text-center text-xs font-bold text-slate-500">${d.subP}</td><td class="p-4 text-center text-xs font-bold text-slate-500">${d.colP}</td>
-                    <td class="p-4 text-center text-xs font-bold text-slate-500 border-l border-slate-200">${fmtPct(d.cert)}</td><td class="p-4 text-center text-xs font-bold text-slate-500">${fmtPct(d.ocup)}</td><td class="p-4 text-center text-xs font-bold text-slate-500 border-r border-slate-200">${d.sucesion || '-'}</td><td class="p-4 text-center font-bold" style="color: #d97706; background-color: #fef3c7;">${fmtPct(d.rotacion)}</td>
+                    <td class="p-4 text-center text-xs font-bold text-slate-500 border-l border-slate-200 border-r border-slate-200">${fmtPct(d.cert)}</td>
                     <td class="p-4 text-center font-bold" style="color: var(--color-m1); background-color: var(--color-m1-light);">${fmtPct(d.srv)}</td><td class="p-4 text-center font-bold" style="color: var(--color-m2); background-color: var(--color-m2-light);">${fmtPct(d.m2)}</td><td class="p-4 text-center font-bold" style="color: var(--color-m3); background-color: var(--color-m3-light);">${fmtPct(d.m3)}</td>
                 </tr>`;
             });
