@@ -1487,22 +1487,19 @@
         function updateKPIs() {
             // Para cada sucursal, encontrar su mes más reciente CON datos reales
             const tieneData = d => d.totalPlantillaAutorizada > 0 || d.totalPlantillaOcupada > 0 || d.m2 !== null || d.m3 !== null || d.srv !== null;
-            const sucursalLatestMes = {};
+            // Mes más reciente dentro del conjunto filtrado (global, no por sucursal)
+            let globalLatestIdx = -1;
             FilteredData.forEach(d => {
                 if (!tieneData(d)) return;
-                const cleanMes = d.mes ? d.mes.toString().trim() : '';
-                const idx = MESES_NOM.indexOf(cleanMes);
-                if (!(d.sucursal in sucursalLatestMes) || idx > sucursalLatestMes[d.sucursal].idx) {
-                    sucursalLatestMes[d.sucursal] = { idx, mes: cleanMes };
-                }
+                const idx = MESES_NOM.indexOf((d.mes || '').toString().trim());
+                if (idx > globalLatestIdx) globalLatestIdx = idx;
             });
 
             const uniqueSucursales = new Set();
             FilteredData.forEach(d => {
                 if (!tieneData(d)) return;
-                const cleanMes = d.mes ? d.mes.toString().trim() : '';
-                const info = sucursalLatestMes[d.sucursal];
-                if (info && cleanMes === info.mes) uniqueSucursales.add(d.sucursal);
+                const idx = MESES_NOM.indexOf((d.mes || '').toString().trim());
+                if (idx === globalLatestIdx) uniqueSucursales.add(d.sucursal);
             });
             const count = uniqueSucursales.size;
             window.SucursalesActivas = uniqueSucursales; 
