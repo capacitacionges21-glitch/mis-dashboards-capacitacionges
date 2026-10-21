@@ -1510,6 +1510,7 @@
             let sumGerAut = 0, sumSubAut = 0, sumColAut = 0, sumTotalPlantillaAutorizada = 0;
             let sumGerP = 0, sumSubP = 0, sumColP = 0, sumTotalPlantillaOcupada = 0;
             let sumGerSrv = 0, sumSubSrv = 0, sumBkuCol = 0, sumAltasCount = 0, sumHutunivAltasCount = 0, sumCertGer = 0, sumCertSub = 0;
+            let m2Sum = 0, m2Count = 0, m3Sum = 0, m3Count = 0;
             let sumSucGer = 0, sumSucSub = 0, sumOcup = 0, countOcup = 0, totalAvgBajas = 0, totalSuc = 0;
 
             Array.from(uniqueSucursales).forEach(suc => {
@@ -1527,6 +1528,10 @@
                 sumGerAut += getLatest('gerAut'); sumSubAut += getLatest('subAut'); sumColAut += getLatest('colAut'); sumTotalPlantillaAutorizada += getLatest('totalPlantillaAutorizada');
                 sumGerP += getLatest('gerP'); sumSubP += getLatest('subP'); sumColP += getLatest('colP'); sumTotalPlantillaOcupada += getLatest('totalPlantillaOcupada');
                 sumGerSrv += getLatest('gerSrv'); sumSubSrv += getLatest('subSrv'); sumBkuCol += getLatest('bkuCol'); sumAltasCount += getLatest('altasCount'); sumHutunivAltasCount += getLatest('hutunivAltasCount'); sumCertGer += getLatest('certGerNum'); sumCertSub += getLatest('certSubNum');
+                const latM2 = sub.filter(d => d.m2 !== null && d.m2 !== undefined && !isNaN(d.m2));
+                if (latM2.length) { m2Sum += latM2[latM2.length - 1].m2; m2Count++; }
+                const latM3 = sub.filter(d => d.m3 !== null && d.m3 !== undefined && !isNaN(d.m3));
+                if (latM3.length) { m3Sum += latM3[latM3.length - 1].m3; m3Count++; }
 
                 let branchBajas = 0;
                 sub.forEach(d => branchBajas += (d.bajas || 0));
@@ -1556,7 +1561,8 @@
             document.getElementById('kpi-sucursales').innerText = count;
             
             const srv = (sumGerP + sumSubP) > 0 ? ((sumGerSrv + sumSubSrv) / (sumGerP + sumSubP)) * 100 : null;
-            const m2 = safeAvg(FilteredData, d => d.m2), m3 = safeAvg(FilteredData, d => d.m3);
+            const m2 = m2Count > 0 ? m2Sum / m2Count : null;
+            const m3 = m3Count > 0 ? m3Sum / m3Count : null;
             let pctAltasTotal = (sumTotalPlantillaOcupada > 0 && !isNaN(sumAltasCount)) ? (sumAltasCount / sumTotalPlantillaOcupada) * 100 : null;
             let rotacionGral = sumTotalPlantillaOcupada > 0 ? (totalAvgBajas / sumTotalPlantillaOcupada) * 100 : null;
             
