@@ -10,6 +10,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- PapaParse para leer el CSV de Google Sheets correctamente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f4f7f9; }
@@ -43,7 +46,7 @@
         <p class="text-slate-500 text-sm mt-2">Agrupando registros y calculando comisiones reales</p>
     </div>
 
-    <div class="min-h-screen flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
+    <div id="dashboard-content" class="min-h-screen flex flex-col max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
         
         <!-- Header -->
         <header class="card-panel p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-4 z-50">
@@ -62,7 +65,15 @@
                 </div>
                 
                 <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <button onclick="loadData()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                    <div class="flex items-center gap-2" data-html2canvas-ignore="true">
+                        <button id="btn-download-pdf" onclick="downloadPDF()" class="bg-[#2F5597] hover:opacity-90 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
+                            <i data-lucide="file-text" class="w-4 h-4"></i> PDF
+                        </button>
+                        <button id="btn-download-pptx" onclick="downloadPPTX()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
+                            <i data-lucide="presentation" class="w-4 h-4"></i> PPTX
+                        </button>
+                    </div>
+                    <button onclick="loadData()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors" data-html2canvas-ignore="true">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                         Actualizar Datos
                     </button>
@@ -620,12 +631,13 @@
                             },
                             color: '#475569'
                         },
-                        legend: { 
+                        legend: {
                             display: true,
-                            position: 'top',
+                            position: 'bottom',
                             labels: {
                                 usePointStyle: true,
                                 boxWidth: 8,
+                                padding: 16,
                                 font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }
                             }
                         },
@@ -800,6 +812,43 @@
             }).join('');
 
             tbody.innerHTML = rowsHtml;
+        }
+
+        async function downloadPDF() {
+            const btn = document.getElementById('btn-download-pdf'), orig = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando PDF...'; lucide.createIcons();
+            try {
+                const canvas = await html2canvas(document.getElementById('dashboard-content'), { scale: 2, useCORS: true, backgroundColor: '#f4f7f9' });
+                const pdf = new window.jspdf.jsPDF({ orientation: canvas.width > canvas.height ? 'landscape' : 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, canvas.width, canvas.height);
+                pdf.save('Comisiones_Mixtas_Dashboard.pdf');
+            } catch (e) { console.error(e); alert('Error al generar PDF.'); } finally { btn.innerHTML = orig; lucide.createIcons(); }
+        }
+
+        async function downloadPPTX() {
+            const btn = document.getElementById('btn-download-pptx'), orig = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando PPTX...'; lucide.createIcons();
+            try {
+                const pres = new PptxGenJS();
+                pres.layout = 'LAYOUT_WIDE';
+                const primaryColor = '2F5597';
+                const sections = [
+                    { id: 'dashboard-content', title: 'Comisiones Mixtas — Dashboard General' }
+                ];
+                for (const { id, title } of sections) {
+                    const el = document.getElementById(id);
+                    if (!el) continue;
+                    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f4f7f9' });
+                    const slide = pres.addSlide();
+                    slide.background = { color: 'F4F7F9' };
+                    slide.addText(title, { x: 0.5, y: 0.2, w: 12, h: 0.5, fontSize: 20, bold: true, color: primaryColor, fontFace: 'Arial' });
+                    const ratio = canvas.width / canvas.height;
+                    const finalW = 12.5, finalH = finalW / ratio;
+                    const yPos = Math.max(0.8, (7.5 - finalH) / 2);
+                    slide.addImage({ data: canvas.toDataURL('image/jpeg', 0.92), x: 0.25, y: yPos, w: finalW, h: Math.min(finalH, 6.5) });
+                }
+                await pres.writeFile({ fileName: 'Comisiones_Mixtas_Dashboard.pptx' });
+            } catch (e) { console.error(e); alert('Error al generar PPTX.'); } finally { btn.innerHTML = orig; lucide.createIcons(); }
         }
 
         // Iniciar carga
