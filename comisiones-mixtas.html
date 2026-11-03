@@ -144,7 +144,7 @@
             </div>
 
             <!-- KPIs Principales -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div id="section-kpis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 
                 <!-- KPI Sucursales -->
                 <div class="card-panel p-5 relative overflow-hidden">
@@ -204,7 +204,7 @@
                 </div>
 
                 <!-- Gráfico Cumplimiento por Cadena -->
-                <div class="card-panel p-5 lg:col-span-2">
+                <div id="section-chart-cadena" class="card-panel p-5 lg:col-span-2">
                     <div class="flex items-center gap-2 mb-6">
                         <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#2F5597]"></i>
                         <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Cadena</h3>
@@ -215,7 +215,7 @@
                 </div>
 
                 <!-- Gráfico Cumplimiento por Región -->
-                <div class="card-panel p-5 lg:col-span-2">
+                <div id="section-chart-region" class="card-panel p-5 lg:col-span-2">
                     <div class="flex items-center gap-2 mb-6">
                         <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#2F5597]"></i>
                         <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Región</h3>
@@ -226,7 +226,7 @@
                 </div>
 
                 <!-- Gráfico Cumplimiento por Distrito -->
-                <div class="card-panel p-5 lg:col-span-2">
+                <div id="section-chart-distrito" class="card-panel p-5 lg:col-span-2">
                     <div class="flex items-center gap-2 mb-6">
                         <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#2F5597]"></i>
                         <h3 class="text-sm font-bold text-slate-800">% de Cumplimiento por Distrito</h3>
@@ -831,22 +831,27 @@
             try {
                 const pres = new PptxGenJS();
                 pres.layout = 'LAYOUT_WIDE';
-                const primaryColor = '2F5597';
-                const sections = [
-                    { id: 'dashboard-content', title: 'Comisiones Mixtas — Dashboard General' }
-                ];
-                for (const { id, title } of sections) {
-                    const el = document.getElementById(id);
-                    if (!el) continue;
-                    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f4f7f9' });
+                const COLOR = '2F5597';
+
+                const addSlide = async (elementId, title) => {
+                    const el = document.getElementById(elementId);
+                    if (!el || el.style.display === 'none' || el.classList.contains('hidden')) return;
+                    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
                     const slide = pres.addSlide();
                     slide.background = { color: 'F4F7F9' };
-                    slide.addText(title, { x: 0.5, y: 0.2, w: 12, h: 0.5, fontSize: 20, bold: true, color: primaryColor, fontFace: 'Arial' });
+                    slide.addText(title, { x: 0.4, y: 0.15, w: 12.2, h: 0.45, fontSize: 18, bold: true, color: COLOR, fontFace: 'Arial' });
                     const ratio = canvas.width / canvas.height;
-                    const finalW = 12.5, finalH = finalW / ratio;
-                    const yPos = Math.max(0.8, (7.5 - finalH) / 2);
-                    slide.addImage({ data: canvas.toDataURL('image/jpeg', 0.92), x: 0.25, y: yPos, w: finalW, h: Math.min(finalH, 6.5) });
-                }
+                    const W = 12.8, H = Math.min(W / ratio, 6.4);
+                    const yOff = 0.7 + Math.max(0, (6.4 - H) / 2);
+                    slide.addImage({ data: canvas.toDataURL('image/jpeg', 0.93), x: 0.1, y: yOff, w: W, h: H });
+                };
+
+                await addSlide('section-kpis',          'Comisiones Mixtas — Indicadores Generales');
+                await addSlide('containerChartMes',      'Comisiones Mixtas — Tendencia por Mes');
+                await addSlide('section-chart-cadena',   'Comisiones Mixtas — Cumplimiento por Cadena');
+                await addSlide('section-chart-region',   'Comisiones Mixtas — Cumplimiento por Región');
+                await addSlide('section-chart-distrito', 'Comisiones Mixtas — Cumplimiento por Distrito');
+
                 await pres.writeFile({ fileName: 'Comisiones_Mixtas_Dashboard.pptx' });
             } catch (e) { console.error(e); alert('Error al generar PPTX.'); } finally { btn.innerHTML = orig; lucide.createIcons(); }
         }
