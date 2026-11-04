@@ -1423,10 +1423,10 @@
             // Ocultar opciones de INDICADOR que no aplican según la cadena seleccionada
             const optSrv = document.querySelector('#filter-indicador option[value="srv"]');
             const optRec = document.querySelector('#filter-indicador option[value="rec"]');
-            if (optSrv) optSrv.hidden = isTiendasGes || isPizzaHut;
+            if (optSrv) optSrv.hidden = isTiendasGes;
             if (optRec) optRec.hidden = isTiendasGes || isPizzaHut || isChurchs;
             const curInd = selections.indicador;
-            if ((curInd === 'srv' && (isTiendasGes || isPizzaHut)) ||
+            if ((curInd === 'srv' && isTiendasGes) ||
                 (curInd === 'rec' && (isTiendasGes || isPizzaHut || isChurchs))) {
                 selections.indicador = 'Todos';
                 document.getElementById('filter-indicador').value = 'Todos';
