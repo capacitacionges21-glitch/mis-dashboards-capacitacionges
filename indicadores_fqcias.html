@@ -1420,6 +1420,18 @@
 
             const tVis = (id, show) => { const el = document.getElementById(id); if(el) show ? el.classList.remove('hidden') : el.classList.add('hidden'); };
 
+            // Ocultar opciones de INDICADOR que no aplican según la cadena seleccionada
+            const optSrv = document.querySelector('#filter-indicador option[value="srv"]');
+            const optRec = document.querySelector('#filter-indicador option[value="rec"]');
+            if (optSrv) optSrv.hidden = isTiendasGes || isPizzaHut;
+            if (optRec) optRec.hidden = isTiendasGes || isPizzaHut || isChurchs;
+            const curInd = selections.indicador;
+            if ((curInd === 'srv' && (isTiendasGes || isPizzaHut)) ||
+                (curInd === 'rec' && (isTiendasGes || isPizzaHut || isChurchs))) {
+                selections.indicador = 'Todos';
+                document.getElementById('filter-indicador').value = 'Todos';
+            }
+
             const ind = selections.indicador;
             const showAll = (ind === 'Todos');
 
