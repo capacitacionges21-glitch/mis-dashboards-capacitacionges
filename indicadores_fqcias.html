@@ -910,7 +910,8 @@
         let bkuSemanalRaw = [];
         let bkuSemanalCharts = {};
         let activePalette = PALETTES['default'];
-        let currentRevType = 'std'; 
+        let currentRevType = 'std';
+        let _isTiendasGes = false;
         
         const selections = { trimestre: 'Todos', mes: 'Todos', cadena: 'Todos', indicador: 'Todos', region: 'Todos', distrito: 'Todos', formador: 'Todos', gerente_sucursal: 'Todos' };
 
@@ -1367,6 +1368,8 @@
                     if (!c.includes('pizza') && !c.includes('hut')) isPizzaHut = false;
                 });
             }
+
+            _isTiendasGes = isTiendasGes && cadenas.length > 0;
 
             let labelM2 = "BKU / PTE", labelM3 = "REV / OER", labelAltas = "BKU / PTE ALTAS";
             let subtitleRevRec = "BK Norte y BK Centro/Sur";
@@ -1956,7 +1959,7 @@
             if (wrapperEl) wrapperEl.style.minWidth = Math.max(1000, stats.length * (isSucursal ? 120 : 250)) + 'px';
 
             const ind = selections.indicador, ds = [];
-            if (ind === 'Todos' || ind === 'srv') ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => [`${d.raw.gerSrv} Gtes y ${d.raw.subSrv} Subs certificados`, `de ${d.raw.gerP + d.raw.subP} en plantilla`]), backgroundColor: activePalette.m1, borderRadius: 6 });
+            if (!_isTiendasGes && (ind === 'Todos' || ind === 'srv')) ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => [`${d.raw.gerSrv} Gtes y ${d.raw.subSrv} Subs certificados`, `de ${d.raw.gerP + d.raw.subP} en plantilla`]), backgroundColor: activePalette.m1, borderRadius: 6 });
             if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => [`Promedio del Indicador: ${d.m2 !== null ? Math.round(d.m2) + "%" : "S/D"}`, `${d.raw.bku} certificados de ${d.plantilla} ocupados`]), backgroundColor: activePalette.m2, borderRadius: 6 });
             if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => ["Basado en el promedio de", `${d.raw.m3Count} auditorías evaluadas`]), backgroundColor: activePalette.m3, borderRadius: 6 });
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => [`${d.raw.certGer} Gtes y ${d.raw.certSub} Subs certificados`, `de ${d.raw.gerP + d.raw.subP} en plantilla`]), backgroundColor: '#1F3864', borderRadius: 6 });
@@ -2009,7 +2012,7 @@
 
             document.getElementById('chart-distrito-wrapper').style.minWidth = Math.max(1000, stats.length * 150) + 'px';
             const ds = [], ind = selections.indicador;
-            if (ind === 'Todos' || ind === 'srv') ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => d.rawSrv), backgroundColor: activePalette.m1, borderRadius: 4 });
+            if (!_isTiendasGes && (ind === 'Todos' || ind === 'srv')) ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => d.rawSrv), backgroundColor: activePalette.m1, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => d.rawM2), backgroundColor: activePalette.m2, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => d.rawM3), backgroundColor: activePalette.m3, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => d.rawCert), backgroundColor: '#1F3864', borderRadius: 4 });
@@ -2061,7 +2064,7 @@
 
             document.getElementById('chart-regional-wrapper').style.minWidth = Math.max(800, stats.length * 200) + 'px';
             const ds = [], ind = selections.indicador;
-            if (ind === 'Todos' || ind === 'srv') ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => d.rawSrv), backgroundColor: activePalette.m1, borderRadius: 4 });
+            if (!_isTiendasGes && (ind === 'Todos' || ind === 'srv')) ds.push({ label: 'ServSafe', data: stats.map(d => d.srv), rawData: stats.map(d => d.rawSrv), backgroundColor: activePalette.m1, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'm2') ds.push({ label: document.getElementById('label-m2').innerText, data: stats.map(d => d.m2), rawData: stats.map(d => d.rawM2), backgroundColor: activePalette.m2, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'm3') ds.push({ label: document.getElementById('label-m3').innerText, data: stats.map(d => d.m3), rawData: stats.map(d => d.rawM3), backgroundColor: activePalette.m3, borderRadius: 4 });
             if (ind === 'Todos' || ind === 'cert') ds.push({ label: 'Cert. Gerencial', data: stats.map(d => d.cert), rawData: stats.map(d => d.rawCert), backgroundColor: '#1F3864', borderRadius: 4 });
